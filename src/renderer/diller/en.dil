@@ -1,0 +1,253 @@
+# SVG Editor — English language file
+# Format: key = value   (lines starting with # are comments)
+# Curly braces like {ad} are replaced with variables at runtime.
+
+dil.ad = English
+
+uygulama.ad = SVG Editor
+
+# Menu
+menu.ac = Menu
+menu.grup.dosya = File
+menu.dosya.yeni = New
+menu.dosya.ac = Open…
+menu.dosya.son = Recent Files
+menu.dosya.kaydet = Save…
+menu.dosya.disaAktar = Export (wide compatibility)…
+menu.dosya.cikis = Quit
+dosya.yeniAd = untitled.svg
+menu.grup.duzen = Edit
+menu.duzen.geriAl = Undo
+menu.duzen.ileriAl = Redo
+menu.duzen.cogalt = Duplicate
+menu.duzen.sil = Delete
+menu.duzen.grupla = Group
+menu.duzen.coz = Ungroup
+menu.duzen.sembolYap = Make Symbol
+menu.duzen.sembolGenislet = Expand Symbol
+menu.grup.yol = Path
+menu.yol.birlesim = Union
+menu.yol.fark = Subtract (front)
+menu.yol.kesisim = Intersect
+menu.yol.disla = Exclude
+menu.yol.tersCevir = Reverse Path
+menu.yol.basitlestir = Simplify Path
+menu.grup.donustur = Transform
+menu.donustur.yansitYatay = Flip Horizontal
+menu.donustur.yansitDikey = Flip Vertical
+menu.grup.belge = Document
+menu.belge.temizle = Clean up unused definitions
+menu.belge.yuvarla = Round coordinates
+menu.belge.sadelestir = Simplify degenerate shapes (path→line, delete empty objects)
+belge.sadelestir.sonuc = {cizgi} paths converted to lines, {sil} zero-size objects deleted.
+belge.sadelestir.yok = No degenerate shapes to simplify.
+menu.grup.dil = Language
+menu.grup.yardim = Help
+menu.yardim.hakkinda = About
+
+# Boolean (path) operations
+bool.yetersiz = Select at least two closed shapes for a boolean operation.
+bool.bos = The operation produced an empty result.
+
+# File
+dosya.acilamadi = Could not open file.
+dosya.bulunamadi = File not found or could not be read: {yol}
+dosya.yenidenBaslat = Restart the app for recent files (to enable the new feature).
+dosya.kaydedilemedi = Could not save file.
+dosya.gecersizSvg = Invalid SVG: document could not be parsed.
+
+# Save confirmation (unsaved changes)
+dialog.kaydetSor.baslik = Save changes?
+dialog.kaydetSor.mesaj = The document "{ad}" has unsaved changes. Do you want to save before continuing?
+dialog.kaydet = Save
+dialog.kaydetme = Don't Save
+dialog.iptal = Cancel
+dialog.kapat = Close
+
+# Theme
+tema.etiket = Theme
+
+# Window controls (tooltip texts)
+pencere.simgelestir = Minimize
+pencere.kapla = Maximize
+pencere.geriAl = Restore
+pencere.kapat = Close
+
+# Tools
+araclar.yukariKaydir = Scroll up
+araclar.asagiKaydir = Scroll down
+arac.sec = Select
+arac.dugum = Node
+arac.sekilOlusturucu = Shape Builder (click regions, Enter to merge)
+arac.kalem = Pen (path)
+arac.kursunKalem = Pencil (freehand)
+arac.dikdortgen = Rectangle
+arac.elips = Ellipse
+arac.cizgi = Line
+arac.cokluCizgi = Polyline (click; Enter/click start to finish)
+arac.cokgen = Polygon (click; Enter/click start to finish)
+arac.yildiz = Star
+arac.spiral = Spiral
+arac.metin = Text
+arac.gorsel = Place Image
+arac.pipet = Eyedropper (first select target, then click source)
+arac.el = Pan (hand)
+arac.yakinlastir = Zoom
+
+# Tool notifications (toast)
+pipet.hedefYok = First select the object(s) to fill, then click the source.
+gorsel.yuklenemedi = Could not load image (invalid or unsupported file).
+
+# Paint (color) picker
+boya.sec = Pick color
+boya.mod.yok = None
+boya.mod.duz = Solid
+boya.mod.dogrusal = Linear
+boya.mod.radyal = Radial
+boya.yokAciklama = No fill/stroke (transparent).
+boya.durak = Stop
+boya.konum = Position
+boya.aci = Angle
+
+# Command palette (Ctrl+K)
+komutpalet.ara = Search command…
+komutpalet.ipucu = Command Palette — search and run (Ctrl/Cmd+K)
+komutpalet.bos = No matching command.
+komutpalet.arac = Tool
+
+# SVG code panel
+kod.baslik = SVG Code
+kod.uygula = Apply
+kod.gecersiz = Invalid SVG.
+kod.duzenle = Edit
+kod.goruntule = View
+kod.bosBelge = No document yet.
+
+# Tabs (multi-document)
+sekme.adsiz = untitled
+sekme.kapat = Close tab
+sekme.yeni = New tab
+sekme.degisti = Unsaved changes
+
+# Canvas (main work area)
+tuval.bosBelge = No file opened yet.
+
+# Timeline
+zaman.oynat = Play
+zaman.durakla = Pause
+zaman.basaSar = Rewind
+zaman.animasyonYok = No animation
+
+# Property Inspector panel (selection-aware)
+denetci.baslik = Property Inspector
+denetci.bosSecim = Select an element on the canvas to edit.
+denetci.belge = Document (canvas)
+denetci.grup.tuval = Canvas / Document
+denetci.altbaslik.olcu = Size
+denetci.altbaslik.viewbox = View box (viewBox)
+denetci.vb.x = X
+denetci.vb.y = Y
+denetci.vb.en = W
+denetci.vb.boy = H
+denetci.stilModu = Style writing
+denetci.stilModu.ipucu = Should styles be written inline or as an object-specific CSS class? Automatic follows the object's current method.
+denetci.stilModu.otomatik = Automatic
+denetci.stilModu.inline = Inline
+denetci.stilModu.css = CSS class
+denetci.eleman = Element
+denetci.alanYok = No editable fields for this element.
+denetci.grup.gorunum = Appearance
+denetci.grup.geometri = Geometry
+denetci.grup.marker = Markers
+denetci.marker.start = Start
+denetci.marker.mid = Mid
+denetci.marker.end = End
+denetci.marker.yok = None
+denetci.marker.bos = First create a marker from the Definitions panel.
+denetci.grup.tanimlar = Applied definitions
+denetci.tanim.filtre = Filter
+denetci.tanim.kirpma = Clip
+denetci.tanim.maske = Mask
+denetci.tanim.stiller = Style classes
+denetci.tanim.yok = none
+denetci.tanim.bos = No definitions to assign — create them in the Definitions panel.
+denetci.alan.fill = Fill
+denetci.alan.stroke = Stroke
+denetci.alan.strokeWidth = Stroke width
+denetci.alan.opacity = Opacity
+denetci.altbaslik.konum = Position
+denetci.altbaslik.boyut = Size
+denetci.altbaslik.kose = Corner radius
+denetci.altbaslik.uclar = Caps
+denetci.altbaslik.donusum = Transform
+denetci.don.tx = Move X
+denetci.don.ty = Move Y
+denetci.don.sx = Scale X
+denetci.don.sy = Scale Y
+denetci.don.donme = Rot °
+denetci.don.egme = Skew °
+denetci.grup.metadata = Title and description
+denetci.meta.baslik = Title
+denetci.meta.aciklama = Description
+denetci.meta.aria = Accessibility
+denetci.kose.bagli = Corners linked (equal)
+denetci.kose.bagimsiz = Corners independent
+denetci.geo.genislik = Width
+denetci.geo.yukseklik = Height
+denetci.geo.yaricap = Radius
+
+# Alignment
+hizala.sol = Align left
+hizala.yatay-merkez = Center horizontally
+hizala.sag = Align right
+hizala.ust = Align top
+hizala.dikey-orta = Center vertically
+hizala.alt = Align bottom
+hizala.dagit-yatay = Distribute horizontally
+hizala.dagit-dikey = Distribute vertically
+hizala.referans = Reference
+hizala.referans.ipucu = What alignment is relative to (reference preference)
+hizala.ref.son-secilen = To last selected
+hizala.ref.anahtar = To key object
+hizala.ref.secim = To selection
+hizala.ref.belge = To document
+
+# History panel
+gecmis.baslik = History
+gecmis.baslangic = Start
+gecmis.bos = No actions yet.
+
+# Layers panel
+katmanlar.baslik = Layers
+katmanlar.bos = No document.
+katmanlar.one = Bring forward
+katmanlar.arkaya = Send backward
+katmanlar.goster = Show / hide
+katmanlar.kilit = Lock / unlock
+katmanlar.artboardYap = Make artboard (page background)
+katmanlar.artboardKaldir = Remove artboard
+
+# Definitions and Extra Properties panel
+tanimlar.baslik = Definitions and Extra Properties
+tanimlar.turYok = No resource type registered yet.
+tanimlar.bosGrup = — none —
+tanimlar.olustur = + Create
+tanimlar.uygula = Apply
+tanimlar.sil = Delete
+tanimlar.silTemizlendi = Usage in {sayi} shapes was also cleaned up (undoable).
+tanimlar.duzenleYok = No editor for this resource yet — you can edit it from the SVG code panel.
+tanimlar.durakEkle = + Stop
+tanimlar.kimlik = Identifier
+tanimlar.sinifAdi = Class name
+tanimlar.kullanildigi = Used by: {sayi}
+tanimlar.kullananSec = Select
+tanimlar.adCakismasi = This name is already in use.
+tanimlar.adGecersiz = Invalid name (must start with a letter; letters/digits/-/_).
+tanimlar.yenidenAdlandirildi = {sayi} usage(s) updated too (undoable).
+
+# Status bar
+durum.surum = Version {surum}
+durum.electron = Electron {surum}
+durum.chromium = Chromium {surum}
+durum.node = Node {surum}
+durum.surumYukleniyor = Loading version info…

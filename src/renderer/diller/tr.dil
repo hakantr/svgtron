@@ -1,0 +1,253 @@
+# SVG Editör — Türkçe dil dosyası
+# Biçim: anahtar = değer   (# ile başlayan satırlar yorumdur)
+# {ad} gibi süslü parantezler çalışma anında değişkenle değiştirilir.
+
+dil.ad = Türkçe
+
+uygulama.ad = SVG Editör
+
+# Menü
+menu.ac = Menü
+menu.grup.dosya = Dosya
+menu.dosya.yeni = Yeni
+menu.dosya.ac = Aç…
+menu.dosya.son = Son Dosyalar
+menu.dosya.kaydet = Kaydet…
+menu.dosya.disaAktar = Dışa aktar (geniş uyumluluk)…
+menu.dosya.cikis = Çıkış
+dosya.yeniAd = adsiz.svg
+menu.grup.duzen = Düzen
+menu.duzen.geriAl = Geri Al
+menu.duzen.ileriAl = İleri Al
+menu.duzen.cogalt = Çoğalt
+menu.duzen.sil = Sil
+menu.duzen.grupla = Grupla
+menu.duzen.coz = Grubu çöz
+menu.duzen.sembolYap = Sembol Yap
+menu.duzen.sembolGenislet = Sembolü Genişlet
+menu.grup.yol = Yol
+menu.yol.birlesim = Birleştir
+menu.yol.fark = Çıkar (öndekini)
+menu.yol.kesisim = Kesiştir
+menu.yol.disla = Dışla
+menu.yol.tersCevir = Yolu Tersine Çevir
+menu.yol.basitlestir = Yolu Basitleştir
+menu.grup.donustur = Dönüştür
+menu.donustur.yansitYatay = Yatay Yansıt
+menu.donustur.yansitDikey = Dikey Yansıt
+menu.grup.belge = Belge
+menu.belge.temizle = Kullanılmayan tanımları temizle
+menu.belge.yuvarla = Koordinatları yuvarla
+menu.belge.sadelestir = Dejenere şekilleri sadeleştir (yol→çizgi, boş nesneleri sil)
+belge.sadelestir.sonuc = {cizgi} path çizgiye çevrildi, {sil} sıfır-boyut nesne silindi.
+belge.sadelestir.yok = Sadeleştirilecek dejenere şekil yok.
+menu.grup.dil = Dil
+menu.grup.yardim = Yardım
+menu.yardim.hakkinda = Hakkında
+
+# Boole (yol) işlemleri
+bool.yetersiz = Boole işlemi için en az iki kapalı şekil seçin.
+bool.bos = İşlem boş sonuç verdi.
+
+# Dosya
+dosya.acilamadi = Dosya açılamadı.
+dosya.bulunamadi = Dosya bulunamadı veya okunamadı: {yol}
+dosya.yenidenBaslat = Son dosyalar için uygulamayı yeniden başlatın (yeni özellik etkinleşsin).
+dosya.kaydedilemedi = Dosya kaydedilemedi.
+dosya.gecersizSvg = Geçersiz SVG: belge ayrıştırılamadı.
+
+# Kaydetme onayı (kaydedilmemiş değişiklik)
+dialog.kaydetSor.baslik = Değişiklikleri kaydet?
+dialog.kaydetSor.mesaj = "{ad}" belgesinde kaydedilmemiş değişiklikler var. Devam etmeden önce kaydetmek ister misiniz?
+dialog.kaydet = Kaydet
+dialog.kaydetme = Kaydetme
+dialog.iptal = İptal
+dialog.kapat = Kapat
+
+# Tema
+tema.etiket = Tema
+
+# Pencere kontrolleri (ipucu metinleri)
+pencere.simgelestir = Simge durumuna küçült
+pencere.kapla = Ekranı kapla
+pencere.geriAl = Önceki boyut
+pencere.kapat = Kapat
+
+# Araçlar
+araclar.yukariKaydir = Yukarı kaydır
+araclar.asagiKaydir = Aşağı kaydır
+arac.sec = Seç
+arac.dugum = Düğüm
+arac.sekilOlusturucu = Şekil Oluşturucu (bölgelere tıkla, Enter ile birleştir)
+arac.kalem = Kalem (yol)
+arac.kursunKalem = Kurşun Kalem (serbest)
+arac.dikdortgen = Dikdörtgen
+arac.elips = Elips
+arac.cizgi = Çizgi
+arac.cokluCizgi = Çoklu Çizgi (tıkla; Enter/başa tıkla bitir)
+arac.cokgen = Çokgen (tıkla; Enter/başa tıkla bitir)
+arac.yildiz = Yıldız
+arac.spiral = Spiral
+arac.metin = Metin
+arac.gorsel = Görsel Yerleştir
+arac.pipet = Pipet (önce hedefi seç, kaynağa tıkla)
+arac.el = Kaydır (el)
+arac.yakinlastir = Yakınlaştır
+
+# Araç bildirimleri (toast)
+pipet.hedefYok = Önce dolgu uygulanacak nesne(ler)i seçin, sonra kaynağa tıklayın.
+gorsel.yuklenemedi = Görsel yüklenemedi (geçersiz veya desteklenmeyen dosya).
+
+# Boya (renk) seçici
+boya.sec = Renk seç
+boya.mod.yok = Yok
+boya.mod.duz = Düz
+boya.mod.dogrusal = Doğrusal
+boya.mod.radyal = Radyal
+boya.yokAciklama = Dolgu/kontur yok (saydam).
+boya.durak = Durak
+boya.konum = Konum
+boya.aci = Açı
+
+# Komut paleti (Ctrl+K)
+komutpalet.ara = Komut ara…
+komutpalet.ipucu = Komut Paleti — ara ve çalıştır (Ctrl/Cmd+K)
+komutpalet.bos = Eşleşen komut yok.
+komutpalet.arac = Araç
+
+# SVG kod paneli
+kod.baslik = SVG Kodu
+kod.uygula = Uygula
+kod.gecersiz = Geçersiz SVG.
+kod.duzenle = Düzenle
+kod.goruntule = Görüntüle
+kod.bosBelge = Henüz belge yok.
+
+# Sekmeler (çoklu belge)
+sekme.adsiz = adsız
+sekme.kapat = Sekmeyi kapat
+sekme.yeni = Yeni sekme
+sekme.degisti = Kaydedilmemiş değişiklik
+
+# Tuval (ana çalışma alanı)
+tuval.bosBelge = Henüz dosya açılmadı.
+
+# Zaman çizelgesi
+zaman.oynat = Oynat
+zaman.durakla = Duraklat
+zaman.basaSar = Başa sar
+zaman.animasyonYok = Animasyon yok
+
+# Özellik Denetçisi paneli (seçime duyarlı)
+denetci.baslik = Özellik Denetçisi
+denetci.bosSecim = Düzenlemek için tuvalden bir eleman seçin.
+denetci.belge = Belge (tuval)
+denetci.grup.tuval = Tuval / Belge
+denetci.altbaslik.olcu = Ölçü
+denetci.altbaslik.viewbox = Görünüm kutusu (viewBox)
+denetci.vb.x = X
+denetci.vb.y = Y
+denetci.vb.en = En
+denetci.vb.boy = Boy
+denetci.stilModu = Stil yazımı
+denetci.stilModu.ipucu = Stiller satır içi mi, nesneye özel CSS sınıfı olarak mı yazılsın? Otomatik, nesnenin mevcut yöntemini izler.
+denetci.stilModu.otomatik = Otomatik
+denetci.stilModu.inline = Satır içi
+denetci.stilModu.css = CSS sınıfı
+denetci.eleman = Eleman
+denetci.alanYok = Bu eleman için düzenlenebilir alan yok.
+denetci.grup.gorunum = Görünüm
+denetci.grup.geometri = Geometri
+denetci.grup.marker = Uç işaretleri
+denetci.marker.start = Başlangıç
+denetci.marker.mid = Orta
+denetci.marker.end = Bitiş
+denetci.marker.yok = Yok
+denetci.marker.bos = Önce Tanımlar panelinden marker oluşturun.
+denetci.grup.tanimlar = Uygulanan tanımlar
+denetci.tanim.filtre = Filtre
+denetci.tanim.kirpma = Kırpma
+denetci.tanim.maske = Maske
+denetci.tanim.stiller = Stil sınıfları
+denetci.tanim.yok = yok
+denetci.tanim.bos = Atanacak tanım yok — Tanımlar panelinden oluşturun.
+denetci.alan.fill = Dolgu
+denetci.alan.stroke = Kontur
+denetci.alan.strokeWidth = Kontur kalınlığı
+denetci.alan.opacity = Saydamlık
+denetci.altbaslik.konum = Konum
+denetci.altbaslik.boyut = Boyut
+denetci.altbaslik.kose = Köşe yarıçapı
+denetci.altbaslik.uclar = Uçlar
+denetci.altbaslik.donusum = Dönüşüm
+denetci.don.tx = Öte X
+denetci.don.ty = Öte Y
+denetci.don.sx = Ölç X
+denetci.don.sy = Ölç Y
+denetci.don.donme = Dön °
+denetci.don.egme = Eğ °
+denetci.grup.metadata = Başlık ve açıklama
+denetci.meta.baslik = Başlık
+denetci.meta.aciklama = Açıklama
+denetci.meta.aria = Erişilebilirlik
+denetci.kose.bagli = Köşeler bağlı (eşit)
+denetci.kose.bagimsiz = Köşeler bağımsız
+denetci.geo.genislik = Genişlik
+denetci.geo.yukseklik = Yükseklik
+denetci.geo.yaricap = Yarıçap
+
+# Hizalama
+hizala.sol = Sola hizala
+hizala.yatay-merkez = Yatay ortala
+hizala.sag = Sağa hizala
+hizala.ust = Üste hizala
+hizala.dikey-orta = Dikey ortala
+hizala.alt = Alta hizala
+hizala.dagit-yatay = Yatay eşit dağıt
+hizala.dagit-dikey = Dikey eşit dağıt
+hizala.referans = Referans
+hizala.referans.ipucu = Hizalama neye göre yapılsın (referans tercihi)
+hizala.ref.son-secilen = Son seçilene göre
+hizala.ref.anahtar = Anahtar nesneye göre
+hizala.ref.secim = Seçime göre
+hizala.ref.belge = Belgeye göre
+
+# Geçmiş paneli
+gecmis.baslik = Geçmiş
+gecmis.baslangic = Başlangıç
+gecmis.bos = Henüz işlem yok.
+
+# Katmanlar paneli
+katmanlar.baslik = Katmanlar
+katmanlar.bos = Belge yok.
+katmanlar.one = Öne getir
+katmanlar.arkaya = Arkaya gönder
+katmanlar.goster = Göster / gizle
+katmanlar.kilit = Kilitle / aç
+katmanlar.artboardYap = Artboard yap (sayfa zemini)
+katmanlar.artboardKaldir = Artboard'u kaldır
+
+# Tanımlar ve Ek Özellikler paneli
+tanimlar.baslik = Tanımlar ve Ek Özellikler
+tanimlar.turYok = Henüz kaynak türü kayıtlı değil.
+tanimlar.bosGrup = — yok —
+tanimlar.olustur = + Oluştur
+tanimlar.uygula = Uygula
+tanimlar.sil = Sil
+tanimlar.silTemizlendi = {sayi} şekildeki kullanım da temizlendi (geri alınabilir).
+tanimlar.duzenleYok = Bu kaynak için düzenleyici henüz yok — SVG kod panelinden düzenleyebilirsiniz.
+tanimlar.durakEkle = + Durak
+tanimlar.kimlik = Kimlik
+tanimlar.sinifAdi = Sınıf adı
+tanimlar.kullanildigi = Kullanıldığı yerler: {sayi}
+tanimlar.kullananSec = Seç
+tanimlar.adCakismasi = Bu ad zaten kullanımda.
+tanimlar.adGecersiz = Geçersiz ad (harf ile başlamalı; harf/rakam/-/_).
+tanimlar.yenidenAdlandirildi = {sayi} şekildeki kullanım da güncellendi (geri alınabilir).
+
+# Durum çubuğu
+durum.surum = Sürüm {surum}
+durum.electron = Electron {surum}
+durum.chromium = Chromium {surum}
+durum.node = Node {surum}
+durum.surumYukleniyor = Sürüm bilgisi yükleniyor…

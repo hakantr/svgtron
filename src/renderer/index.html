@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      İçerik Güvenlik Politikası: yalnızca kendi kaynaklarımıza izin ver.
+      Lit, stil için bileşen gölge-DOM'unu kullanır; 'unsafe-inline' style
+      geliştirme kolaylığı içindir, ileride sıkılaştırılabilir.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVG Editör</title>
+    <style>
+      /* Temel reset; açılış titremesini önlemek için koyu varsayılan zemin.
+         Asıl renkler tema yöneticisi tarafından token olarak <html>'e yazılır. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #121316;
+      }
+      /* Masaüstü uygulaması: sürükleyerek statik metin (etiket, mesaj) SEÇİLMESİN.
+         user-select KALITSALdır → gölge-DOM'a da geçer. Düzenlenebilir alanlar
+         (input/textarea/contenteditable) ilgili bileşenlerde yeniden açılır. */
+      body {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Kabuk: boş çatı. Paneller ileride registry'den dolacak (İlke 5). -->
+    <uygulama-kabugu></uygulama-kabugu>
+    <script type="module" src="./index.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,54 @@
+# electron-builder yapılandırması — kendi kendine yeten çalıştırılabilirler.
+# Electron, Chromium + Node'u paketlediği için çıktı tüm gereksinimleri içerir;
+# indiren kişinin ayrıca bir çalışma zamanı/kütüphane kurmasına gerek yoktur.
+appId: com.hakanbiris.svgtron
+productName: svgtron
+copyright: © Hakan BİRİŞ
+
+directories:
+  buildResources: build
+  output: dist
+
+# Renderer/main/preload Vite ile out/ altında derlenir ve tüm bağımlılıklar
+# bundle'a gömülür; bu yüzden node_modules'ı paketlemeye gerek yok.
+files:
+  - out/**/*
+  - package.json
+
+asar: true
+# Tek mimari yerine her hedefte x64 + arm64 üretilir (CLI'da --x64 --arm64).
+artifactName: ${productName}-${version}-${arch}.${ext}
+
+# --- Linux: AppImage (tek dosya, kurulum gerektirmez) + tar.gz ---
+linux:
+  target:
+    - AppImage
+    - tar.gz
+  category: Graphics
+  icon: build/icon.png
+  synopsis: SVG editör ve animasyon gözlemleyici
+
+# --- macOS: dmg + zip (imzasız; sertifika gerektirmez) ---
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.graphics
+  icon: build/icon.png
+  identity: null
+
+# --- Windows: nsis kurucu + portable (tek exe, kurulum gerektirmez) ---
+win:
+  target:
+    - nsis
+    - portable
+  icon: build/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-${arch}-kurulum.${ext}
+
+portable:
+  artifactName: ${productName}-${version}-${arch}-portable.${ext}

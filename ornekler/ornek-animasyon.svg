@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240">
+  <!-- Tanımlar (defs): tanımlar modeli ve referans indeksi bunları görecek. -->
+  <defs>
+    <linearGradient id="gokyuzu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e3a8a" />
+      <stop offset="1" stop-color="#3b82f6" />
+    </linearGradient>
+    <filter id="yumusat" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" />
+    </filter>
+  </defs>
+
+  <!-- <style>: stil sınıfları (Faz E için zemin). -->
+  <style>
+    .zemin { fill: url(#gokyuzu); }
+    .etiket { font: 600 16px system-ui, sans-serif; fill: #e2e8f0; }
+  </style>
+
+  <!-- gradient referansı: referansIndeksi.kullananlar('gokyuzu') bunu bulur -->
+  <rect class="zemin" x="0" y="0" width="400" height="240" rx="12" />
+
+  <!-- SMIL ile hareket eden, filter kullanan daire -->
+  <circle cx="60" cy="120" r="26" fill="#fbbf24" filter="url(#yumusat)">
+    <animate attributeName="cx" values="60;340;60" dur="4s" repeatCount="indefinite" />
+    <animate attributeName="fill" values="#fbbf24;#f472b6;#fbbf24" dur="4s" repeatCount="indefinite" />
+  </circle>
+
+  <!-- Statik, düz dolgulu şekil: denetleyicide fill/opacity düzenlemeyi dene -->
+  <rect id="kare" x="300" y="150" width="70" height="60" rx="8" fill="#e879f9" opacity="0.9" />
+
+  <text class="etiket" x="20" y="40">SVG Editör — örnek animasyon</text>
+</svg>
