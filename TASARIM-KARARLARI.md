@@ -1115,3 +1115,97 @@ oturuyor, yoksa kabuk/sözleşme değişikliği mi istiyor?
 
 **Test:** `referans-yeniden-adlandir.test.ts` 5/5 (id+atıf, style/href, sınıf, çakışma/
 geçersiz, benzer-önek #g1≠#g10). i18n parity 208=208; typecheck/build/smoke temiz.
+
+---
+
+## TK-39 — El yazımı ayrıştırıcıları kütüphaneyle değiştirme değerlendirmesi
+
+**Kapsam:** Bir dış rapor, 6 el-yazımı parçanın kütüphaneye taşınmasını önerdi
+(path parser, CSS editör, renk, optimize/SVGO, kod paneli, sanitizasyon). Bu karar,
+her öneriyi projenin **değişmez ilkeleri** (özellikle İlke 1 saf çekirdek, İlke 8
+liberal içe aktarım/profilli dışa aktarım, İlke 10 editör-yorumu kalıcılığı) ve
+"minimal ama çalışan; çekirdeği kırma" ethos'u açısından değerlendirir. Sonuç:
+**körlemesine hepsini al değil**, kanıtlanmış kazanımı şimdi al, riskli/erken
+olanları gerekçeyle ertele/ret. Kullanıcı bu turda büyük-bağımlılık onayını önceden
+verdi (AGENTS §6 "dur ve sor" bu iş için bilinçli askıya alındı); gerekçe yine sunulur.
+
+**Karar / kabul ölçütleri (öneri başına):**
+
+1. **CSS `<style>` düzenleme → `css-tree`. ✅ ŞİMDİ ALINDI.** En net kazanım.
+   - *Neden:* Eski `stil-css.ts` regex tabanlıydı ve "yalnız basit sınıf kuralı"
+     sınırını kendisi yazıyordu; `@media`/`@keyframes` içine gömülü aynı-adlı bir
+     kuralı YANLIŞLIKLA düzenleyebiliyor, bildirim değeri `{`/`}` içerirse veya
+     gruplu seçici varsa kırılabiliyordu. CSS'i regex'le ayrıştırmak ilkesel olarak
+     hatalı.
+   - *Nasıl:* `css-tree` (saf JS, DOM'suz → İlke 1 ihlali yok; CSSO/SVGO da kullanır)
+     ile gerçek AST. Yalnız ÜST DÜZEY kurallar taranır (atrule içindekiler korunur);
+     düzenleme, hedef kuralın **konum aralığı** yerinde değiştirilerek yapılır →
+     kuralın DIŞINDAKİ her şey (yorum, @-kural, biçim) **bayt-bayt korunur**.
+     Ayrıştırılamayan CSS'e dokunulmaz (İlke 8). Fonksiyon imzaları (`cssKuralOku`/
+     `cssKuralYaz`) aynı → çağıranlar değişmedi.
+   - *Bedel:* Bundle ~522→880 KB (css-tree parser ~360 KB). Masaüstü (Electron, yerel
+     yükleme) için kabul edilebilir; robustluk kazanımı bunu haklı çıkarır.
+   - *Test:* `stil-css` 7/7 — @media yanlış-hedefleme yok · yorum/@keyframes korunur ·
+     gruplu seçici korunur · brace-değer bozmaz · oku/yaz/ekle/sil · sona-ekleme ·
+     boş/ayrıştırılamaz güvenli.
+
+2. **SVG path ayrıştırma (`yol.ts`) → svg-path-commander/svg-pathdata → ⏸️ ERTELE.**
+   - *Neden ertele:* `yol.ts` ÇEKİRDEKTEDİR (İlke 1, saf), iyi testlidir (round-trip/
+     yansıma/yay bayrakları… 16+7 test) ve normalizasyon seçimleri **düğüm
+     düzenlemeye sıkı bağlıdır** (TK-9: `A` aynen korunur, `S→C`, `T→Q`). Çalışan ve
+     en merkezî geometri modülünü değiştirmek, anlık kazanımı küçükken (zaten parse/
+     mutlaklaştır/normalize/yaz var) en kritik yerde regresyon riski taşır.
+   - *Ne zaman al:* Path özellikleri büyüyünce (şekil→path, sağlam path kesişimi,
+     outline/offset). O zaman **wholesale değiştirme değil, adapter** ile, mevcut
+     testli çekirdeği koruyarak.
+
+3. **Renk (`renk.ts`) → culori/Color.js → ⏸️ ERTELE.**
+   - *Neden ertele:* Editör `rgb()`/`rgba()` ÜRETİR; içe aktarılan renkler zaten
+     `getComputedStyle` üzerinden okunur (TK-5) ve tarayıcı `hsl()`/adlandırılmış/
+     `lab()`/`oklch()` girdilerini rgb'ye normalize eder. El-yazımı boşluk küçük.
+   - *Ne zaman al:* Geniş-gamut (lab/oklch/display-p3) renk ARAYÜZÜ eklenince culori.
+
+4. **SVG optimize/export → SVGO → ❌ ŞİMDİLİK REDDET (drop-in değil).**
+   - *Neden reddet:* Mevcut optimize, belge MODELİ üzerinde **Command'larla** çalışır
+     (geri-alınır, referans-indeksi-farkında) ve **İlke 10 editör yorumlarını**,
+     SMIL animasyonunu, atıf alan id'leri, erişilebilirlik metadata'sını korur. SVGO
+     serileştirilmiş METİN üzerinde, bu sistemin DIŞINDA çalışır ve tam da bunları
+     bozma riski taşır (raporun kendisi de tüm bu riskleri sayıyor). Yani bir yerine-
+     koyma değil, ayrı bir metin-geçişidir.
+   - *Olası gelecek:* Yalnız DIŞA AKTARIMDA, atılabilir bir kopya üzerinde, elle
+     seçilmiş tutucu eklenti kümesiyle, OPSİYONEL bir "agresif temizle" profili —
+     asla canlı model üzerinde değil. Varsayılan, değişmez-farkında el-yazımı geçiş
+     kalır.
+
+5. **Kod paneli (`kod-paneli.ts`) → CodeMirror 6 → 🔶 KARAR: AL, ama SONRA/DİKKATLİ.**
+   - *Neden al:* contenteditable mini-editör (TK-26) gerçekten kırılgan (Enter/ağaç-
+     yeniden-üretim/hover için bir sürü workaround); CM6 seçim/caret/undo/söz-dizimi
+     vurgu/arama/katlama/büyük-dosya başarımında sağlam.
+   - *Neden sonra:* Panelin AYIRT EDİCİ özelliği **çift-yönlü tuval↔kod seçim
+     senkronu** (eleman başına `data-kimlik` span'ları). CM6'da bunu yeniden kurmak
+     (model düğümü ↔ metin aralığı eşlemesi) önemli iş ve **ağırlıklı görsel/etkileşim**
+     → bu başsız ortamda gözle teyit edilemez (§5: görsel işi körlemesine "bitti"
+     sayma). Proje undo'su korunur: CM6 kendi metin-içi undo'sunu yönetir, "Uygula"
+     yine `KodUygulaKomutu` üretir (TK-26).
+   - *Sıra:* Bir sonraki somut kütüphane adımı budur; uygulama, görsel doğrulama
+     yapılabilecek bir oturuma/kullanıcı teyidine bağlanır.
+
+6. **Güvenli SVG sanitizasyon (`ice-aktar.ts`) → DOMPurify → ⏸️ ERTELE/DİKKATLİ.**
+   - *Neden ertele:* Mevcut ayıklama (TK-13) HEDEFLİDİR (`<script>`, `on*`,
+     `javascript:`) ve tehdit modeliyle örtüşür (editör betiği ASLA çalıştırmaz; CSP +
+     ana-süreç gezinme engeli ile katmanlı). DOMPurify savaş-testli ama felsefesi
+     "güvenli RENDER için temizle" → daha agresiftir ve **İlke 8 (liberal içe aktarım)
+     ile çakışabilir**: editörün korumak istediği meşru SVG2/`foreignObject`/öznitelikleri
+     ayıklayabilir (rapor da bunu işaret ediyor). Kesin tehdit (betik çalıştırma) zaten
+     kapalı.
+   - *Ne zaman al:* Hedefli yaklaşımın kaçırdığı bir sanitizasyon AÇIĞI bulunursa;
+     o zaman liberal içe aktarımı koruyan, izin-listeli/permissive bir SVG profiliyle.
+
+**Değiştirilmeyecekler (rapor da katılıyor, kayıt için):** Command/undo/seçim geçmişi/
+registry/belge deposu (proje omurgası — kütüphane değil mimari); Electron/preload IPC
+sözleşmesi (dar+tipli yüzey doğru); `polygon-clipping` (tek algoritmik bağımlılık, doğru
+yerde). Tuval etkileşimi için interact.js yalnız çoklu-dokunma/inertia kapsamı büyürse
+düşünülür; şu an seçim/kilit/Command-commit/koordinat dönüşümleri projeye çok özel.
+
+**Bağımlılık:** `css-tree@^3` (dep) + `@types/css-tree` (devDep). Saf JS, native build/
+postinstall yok.

@@ -17,10 +17,12 @@
     "dist:mac": "electron-vite build && electron-builder --mac --x64 --arm64"
   },
   "dependencies": {
+    "css-tree": "^3.2.1",
     "lit": "^3.3.3",
     "polygon-clipping": "^0.15.7"
   },
   "devDependencies": {
+    "@types/css-tree": "^2.3.11",
     "@types/node": "^25.9.2",
     "electron": "^42.4.0",
     "electron-builder": "^25.1.8",

@@ -1,32 +1,64 @@
+import { parse, generate, type CssNode, type Rule } from "css-tree";
+
 /**
- * `<style>` metni içinde tek bir BASİT sınıf kuralını (`.sinif { ... }`)
- * düzenleyen saf yardımcılar (DOM'a bağlı değil). CSS yazım modunun (TK-18)
- * "nesne başına sınıf" stratejisi bunları kullanır.
+ * `<style>` metni içinde tek bir kuralın bir özelliğini okuyan/yazan saf
+ * yardımcılar (DOM'a bağlı değil). CSS yazım modunun (TK-18) "nesne başına sınıf"
+ * stratejisi bunları kullanır.
  *
- * Önemli: yalnız hedef basit kural (iç içe brace YOK) düzenlenir; `@keyframes`/
- * `@media` blokları ve yorumlar AYNEN korunur (regex iç-brace içermeyen gövde
- * eşler; yeni kurallar metin sonuna eklenir).
+ * **TK-39 (css-tree):** Eskiden regex tabanlıydı ve dosyanın kendisi "yalnız basit
+ * sınıf kuralı, iç-brace yok" sınırını koyuyordu; `@media`/`@keyframes` içine gömülü
+ * bir kuralı YANLIŞLIKLA hedefleyebiliyor, bildirim değeri `{`/`}` içerirse ya da
+ * gruplu seçici varsa kırılabiliyordu. Artık `css-tree` ile **gerçek AST** üzerinden
+ * çalışır:
+ *  - Yalnız ÜST DÜZEY kurallar taranır → `@media`/`@keyframes` içindeki aynı-adlı
+ *    kurallar (alt düğümler) asla yanlışlıkla düzenlenmez.
+ *  - Düzenleme, hedef kuralın metin aralığı (konum bilgisiyle) yerinde değiştirilir;
+ *    kuralın DIŞINDAKİ her şey (yorumlar, @-kurallar, biçimlendirme) **bayt-bayt
+ *    korunur**.
+ *  - Ayrıştırılamayan CSS'e dokunulmaz (İlke 8 — kabul ederken esnek).
  */
 
-/** `a: b; c: d` gövdesini ad→değer haritasına ayrıştırır. */
-function bildirimAyristir(govde: string): Map<string, string> {
-  const harita = new Map<string, string>();
-  for (const parca of govde.split(';')) {
-    const i = parca.indexOf(':');
-    if (i === -1) continue;
-    const ad = parca.slice(0, i).trim();
-    const deger = parca.slice(i + 1).trim();
-    if (ad) harita.set(ad, deger);
+/** Bir üst düzey kuralın bildirimlerini ad→{deger, önemli} olarak toplar (sıra korunur). */
+function bildirimleriTopla(
+  kural: Rule,
+): Map<string, { deger: string; onemli: boolean }> {
+  const harita = new Map<string, { deger: string; onemli: boolean }>();
+  for (const c of kural.block.children.toArray()) {
+    if (c.type !== "Declaration") continue;
+    harita.set(c.property, {
+      deger: generate(c.value),
+      onemli: c.important !== false,
+    });
   }
   return harita;
 }
 
-function bildirimYaz(harita: Map<string, string>): string {
-  return [...harita].map(([k, v]) => `${k}: ${v}`).join('; ');
+/** Kuralın seçici metni (normalize). */
+function seciciMetni(kural: Rule): string {
+  try {
+    return generate(kural.prelude).trim();
+  } catch {
+    return "";
+  }
 }
 
-function kacis(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Kuralın özgün seçici metni (konumdan; gruplu/aralıklı seçici aynen korunur). */
+function seciciHam(styleMetni: string, kural: Rule): string {
+  const loc = kural.prelude.loc;
+  if (loc) return styleMetni.slice(loc.start.offset, loc.end.offset).trim();
+  return seciciMetni(kural);
+}
+
+/** Belgeyi ayrıştırıp ÜST DÜZEY kuralları (Atrule içindekiler hariç) verir. */
+function ustDuzeyKurallar(styleMetni: string, konum: boolean): Rule[] {
+  let ast: CssNode;
+  try {
+    ast = parse(styleMetni, konum ? { positions: true } : undefined);
+  } catch {
+    return [];
+  }
+  if (ast.type !== "StyleSheet") return [];
+  return ast.children.toArray().filter((n): n is Rule => n.type === "Rule");
 }
 
 /**
@@ -40,26 +72,44 @@ export function cssKuralYaz(
   ozellik: string,
   deger: string,
 ): string {
-  const re = new RegExp(`(${kacis(selector)}\\s*\\{)([^{}]*)(\\})`);
-  let bulundu = false;
-  const cikti = styleMetni.replace(re, (_tam, ac: string, govde: string, kapa: string) => {
-    bulundu = true;
-    const harita = bildirimAyristir(govde);
-    if (deger.trim() === '') harita.delete(ozellik);
-    else harita.set(ozellik, deger.trim());
-    const s = bildirimYaz(harita);
-    return s ? `${ac} ${s} ${kapa}` : `${ac} ${kapa}`;
-  });
-  if (bulundu) return cikti;
-  if (deger.trim() === '') return styleMetni; // eklenecek bir şey yok
-  const yeniKural = `${selector} { ${ozellik}: ${deger.trim()} }`;
-  return styleMetni.trim() ? `${styleMetni.replace(/\s+$/, '')}\n${yeniKural}\n` : `\n${yeniKural}\n`;
+  const hedef = deger.trim();
+  const sel = selector.trim();
+  for (const kural of ustDuzeyKurallar(styleMetni, true)) {
+    if (seciciMetni(kural) !== sel) continue;
+    const loc = kural.loc;
+    if (!loc) break; // konum yoksa yerinde değiştiremeyiz → sona ekleme yoluna düş
+    const harita = bildirimleriTopla(kural);
+    if (hedef === "") harita.delete(ozellik);
+    else harita.set(ozellik, { deger: hedef, onemli: false });
+    const govde = [...harita]
+      .map(([k, v]) => `${k}: ${v.deger}${v.onemli ? " !important" : ""}`)
+      .join("; ");
+    const hamSel = seciciHam(styleMetni, kural);
+    const yeniKural = govde ? `${hamSel} { ${govde} }` : `${hamSel} { }`;
+    return (
+      styleMetni.slice(0, loc.start.offset) +
+      yeniKural +
+      styleMetni.slice(loc.end.offset)
+    );
+  }
+  // Kural yok: değer doluysa sona ekle (önceki davranış korunur).
+  if (hedef === "") return styleMetni;
+  const yeniKural = `${sel} { ${ozellik}: ${hedef} }`;
+  return styleMetni.trim()
+    ? `${styleMetni.replace(/\s+$/, "")}\n${yeniKural}\n`
+    : `\n${yeniKural}\n`;
 }
 
-/** `<style>` metnindeki bir basit kuralın bir özelliğinin değeri (yoksa null). */
-export function cssKuralOku(styleMetni: string, selector: string, ozellik: string): string | null {
-  const re = new RegExp(`${kacis(selector)}\\s*\\{([^{}]*)\\}`);
-  const m = re.exec(styleMetni);
-  if (!m) return null;
-  return bildirimAyristir(m[1]!).get(ozellik) ?? null;
+/** `<style>` metnindeki bir kuralın bir özelliğinin değeri (yoksa null). */
+export function cssKuralOku(
+  styleMetni: string,
+  selector: string,
+  ozellik: string,
+): string | null {
+  const sel = selector.trim();
+  for (const kural of ustDuzeyKurallar(styleMetni, false)) {
+    if (seciciMetni(kural) !== sel) continue;
+    return bildirimleriTopla(kural).get(ozellik)?.deger ?? null;
+  }
+  return null;
 }
