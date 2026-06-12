@@ -12,7 +12,28 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 
 ---
 
-## 0. Son oturum — devir (2026-06-12)
+## 0. Son oturum — devir (2026-06-13)
+
+**Bu oturumda tamamlananlar (commit'li):**
+- **TK-37 #10 — Dışa aktarım profilleri görünür seçim oldu.** "Dosya › Dışa aktar"
+  artık profili (Uygulama-içi/Blink ↔ Geniş uyumluluk) bir modalla SORAR; eskiden
+  sessizce `genis-uyumluluk`'a sabitti. Yeni `disaAktarSor` servisi (`ozellikler/dosya/
+  disa-aktar-sor.ts`, görünüm durumu; `degisiklikSor` kuyruk/Promise + `hakkinda`
+  feature-tanımlı/kabuk-tüketir desenini birleştirir). Kabukta profil seçim modalı
+  (kart başına ad+açıklama; Enter=Geniş uyumluluk önerilen, Esc=iptal). Çıktı: blink →
+  `<ad>.svg`, genis → `<ad>-temiz.svg`. Kaydetme yine "blink" (İlke 10 korunur).
+  i18n: `dialog.disaAktar.*` (tr+en, parity 209=209). Menü etiketi "Dışa aktar…".
+- **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
+  (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
+  bu oturumda geçersiz.
+
+**Yeni saf-mantık testleri** (esbuild→`node --test`, §1; repoda tutulmaz):
+disaAktar profil farkı 4/4 (blink yorum yazar · genis ayıklar · yalnız-yorum-farkı ·
+bayraksızda özdeş) · `disaAktarSor` servisi 3/3 (çöz/iptal/kuyruk).
+
+---
+
+## 0b. Önceki oturum — devir (2026-06-12)
 
 > **Başka makineye geçiş:** Bu oturumdaki tüm iş `main` üzerinde **yerel commit**;
 > push otomatik modda engelli. Devretmek için bu makinede `git push origin main`,
@@ -37,8 +58,9 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 
 **Bekleyen (planlandı, henüz UYGULANMADI):**
 - **TK-36** macOS doğal uygulama menüsü + platforma uygun Hakkında ekranı.
-- **TK-37** geliştirme adayları yol haritası (oran kilidi, dışa aktarım profillerini
-  görünürleştirme vb. — bkz. TASARIM-KARARLARI.md TK-37).
+- **TK-37** geliştirme adayları yol haritası (oran kilidi vb. — bkz. TASARIM-KARARLARI.md
+  TK-37). **#10 (dışa aktarım profillerini görünürleştirme) 2026-06-13'te UYGULANDI;**
+  kalan adaylar bekliyor.
 - Ayrıca §6'daki ertelenenler (animasyon kolaylıkları, serbest-dönüştür, vb.).
 
 > Not: `AGENTS.md` artık `./AGENTS.md`'ye symlink (Codex `AGENTS.md`, Agents `AGENTS.md`

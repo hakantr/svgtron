@@ -13,7 +13,7 @@ menu.dosya.yeni = Yeni
 menu.dosya.ac = Aç…
 menu.dosya.son = Son Dosyalar
 menu.dosya.kaydet = Kaydet…
-menu.dosya.disaAktar = Dışa aktar (geniş uyumluluk)…
+menu.dosya.disaAktar = Dışa aktar…
 menu.dosya.cikis = Çıkış
 dosya.yeniAd = adsiz.svg
 menu.grup.duzen = Düzen
@@ -63,6 +63,14 @@ dialog.kaydet = Kaydet
 dialog.kaydetme = Kaydetme
 dialog.iptal = İptal
 dialog.kapat = Kapat
+
+# Dışa aktarım profili seçimi (TK-37 #10)
+dialog.disaAktar.baslik = Dışa aktarım profili
+dialog.disaAktar.mesaj = Çıktı hangi profile göre üretilsin? Bu yalnızca dışa aktarımı etkiler; kaydetme SVG biçiminde kalır.
+dialog.disaAktar.blink.ad = Uygulama-içi (Blink)
+dialog.disaAktar.blink.aciklama = En modern ve kısa SVG. Editör durumunu (kilit, artboard) yorumlarla korur.
+dialog.disaAktar.genis.ad = Geniş uyumluluk
+dialog.disaAktar.genis.aciklama = Safari dâhil her yerde aynı render olan güvenli alt küme. Editör yorumları ayıklanır.
 
 # Tema
 tema.etiket = Tema

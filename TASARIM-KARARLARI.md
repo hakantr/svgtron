@@ -1070,11 +1070,20 @@ oturuyor, yoksa kabuk/sözleşme değişikliği mi istiyor?
    olarak geçmişe girer. Boyutlandırmada oran kilidi tutamaç etkileşimine eklenir;
    kilit tercihi araç/görünüm durumudur, sürükleme sonucu tek Command'dır.
 
-10. **Dışa aktarım profillerini görünürleştirme.** "Uygulama-içi / Blink" ve
-    "Geniş uyumluluk / temiz SVG" profilleri Dosya/Dışa aktar akışında açık seçenek
-    olarak görünür. Seçim yalnız dışa aktarım ayarıdır; doğal kaydetme SVG formatında
-    kalır. Geniş uyumluluk profili editör yorumlarını ve destek riski olan yapıları
-    temiz/uyumlu biçimde ele alır; uygulama-içi profil editör durumunu korur.
+10. **Dışa aktarım profillerini görünürleştirme. ✅ UYGULANDI (2026-06-13).**
+    "Uygulama-içi / Blink" ve "Geniş uyumluluk / temiz SVG" profilleri Dosya/Dışa aktar
+    akışında açık seçenek olarak görünür. Seçim yalnız dışa aktarım ayarıdır; doğal
+    kaydetme SVG formatında kalır. Geniş uyumluluk profili editör yorumlarını ve destek
+    riski olan yapıları temiz/uyumlu biçimde ele alır; uygulama-içi profil editör
+    durumunu korur.
+    - *Uygulama:* "Dışa aktar" menü eylemi `disaAktarSor` servisini (görünüm durumu,
+      İlke 9; `degisiklikSor` kuyruk/Promise + `hakkinda` feature-tanımlı/kabuk-tüketir
+      deseni) çağırır; kabuk profil seçim modalını çizer (kart başına ad+açıklama,
+      Enter=Geniş uyumluluk önerilen, Esc/perde=iptal). Çekirdek `disaAktar(profil)`
+      zaten iki profili destekliyordu; bugünkü davranış farkı editör yorumlarıdır
+      (blink yazar, genis ayıklar — kara liste ikisinde de daima ayıklanır). Çıktı:
+      blink → `<ad>.svg`, genis → `<ad>-temiz.svg`. Kaydetme (İlke 10) "blink" kalır.
+      Birim test: disaAktar profil farkı 4/4 + servis 3/3. i18n parity 209=209.
 
 ---
 

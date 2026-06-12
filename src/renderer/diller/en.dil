@@ -13,7 +13,7 @@ menu.dosya.yeni = New
 menu.dosya.ac = Open…
 menu.dosya.son = Recent Files
 menu.dosya.kaydet = Save…
-menu.dosya.disaAktar = Export (wide compatibility)…
+menu.dosya.disaAktar = Export…
 menu.dosya.cikis = Quit
 dosya.yeniAd = untitled.svg
 menu.grup.duzen = Edit
@@ -63,6 +63,14 @@ dialog.kaydet = Save
 dialog.kaydetme = Don't Save
 dialog.iptal = Cancel
 dialog.kapat = Close
+
+# Export profile selection (TK-37 #10)
+dialog.disaAktar.baslik = Export profile
+dialog.disaAktar.mesaj = Which profile should the output use? This only affects export; saving stays in SVG format.
+dialog.disaAktar.blink.ad = In-app (Blink)
+dialog.disaAktar.blink.aciklama = The most modern, compact SVG. Preserves editor state (lock, artboard) via comments.
+dialog.disaAktar.genis.ad = Wide compatibility
+dialog.disaAktar.genis.aciklama = A safe subset that renders identically everywhere, including Safari. Editor comments are stripped.
 
 # Theme
 tema.etiket = Theme

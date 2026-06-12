@@ -5,6 +5,7 @@ import {
 import { t } from "../../diller/dil";
 import { sonDosyalar } from "./son-dosyalar";
 import { sekmeYoneticisi } from "../../sekmeler/sekme-yoneticisi";
+import { disaAktarSor } from "./disa-aktar-sor";
 
 /**
  * Dosya eylemleri — "Yeni / Aç… / Kaydet / Dışa aktar" menü ögelerini kaydeder
@@ -138,7 +139,11 @@ menuKayitDefteri.kaydet({
   },
 });
 
-/** Dışa aktar — geniş uyumluluk profili (editör yorumları ayıklanır). */
+/**
+ * Dışa aktar — profil kullanıcıya sorulur (TK-37 #10): "Uygulama-içi / Blink"
+ * (editör yorumları korunur) ya da "Geniş uyumluluk" (editör yorumları ayıklanır).
+ * Seçim yalnız dışa-aktarım ayarıdır; doğal kaydetme (İlke 10) "blink" kalır.
+ */
 menuKayitDefteri.kaydet({
   id: "dosya.disaAktar",
   grup: "dosya",
@@ -147,12 +152,14 @@ menuKayitDefteri.kaydet({
   calistir: async ({ depo, hataBildir }) => {
     const belge = depo.belge;
     if (!belge) return;
+    const profil = await disaAktarSor.sor();
+    if (!profil) return; // kullanıcı iptal etti
     const temelAd = (depo.kaynak?.ad ?? "cizim").replace(/\.svg$/i, "");
+    // Geniş uyumluluk çıktısı ayrı dosyaya gitsin (kaynağı ezmesin); uygulama-içi
+    // çıktı kaydetmeyle aynı profil olduğundan sade ad yeterli.
+    const ek = profil === "genis-uyumluluk" ? "-temiz" : "";
     try {
-      await window.api.dosyaKaydet(
-        belge.disaAktar("genis-uyumluluk"),
-        `${temelAd}-temiz.svg`,
-      );
+      await window.api.dosyaKaydet(belge.disaAktar(profil), `${temelAd}${ek}.svg`);
     } catch {
       hataBildir(t("dosya.kaydedilemedi"));
     }

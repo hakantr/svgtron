@@ -20,6 +20,7 @@ import type { MenuGorunumOgesi } from "./uygulama-menusu";
 import { duzenUygula } from "../ozellikler/duzen/duzen-eylemleri";
 import { sil, cogalt, grupla, coz } from "../ozellikler/duzen/duzenleme";
 import { sonDosyalar } from "../ozellikler/dosya/son-dosyalar";
+import { disaAktarSor } from "../ozellikler/dosya/disa-aktar-sor";
 import {
   yoldanYukle,
   kaydetBelge,
@@ -328,6 +329,35 @@ export class UygulamaKabugu extends LitElement {
       color: var(--metin-soluk);
     }
 
+    /* Dışa aktarım profili seçim kartları (TK-37 #10). */
+    .modal .profiller {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 0 0 0.9rem;
+    }
+    .modal button.profil {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.2rem;
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+    .modal button.profil .ad {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .modal button.profil .aciklama {
+      font-size: 0.76rem;
+      line-height: 1.35;
+      color: var(--metin-soluk);
+    }
+    .modal button.profil.birincil .aciklama {
+      color: var(--vurgu-metin);
+      opacity: 0.85;
+    }
+
     /* Menü çubuğu (menü modu) */
     .menu-cubugu {
       display: flex;
@@ -508,11 +538,14 @@ export class UygulamaKabugu extends LitElement {
   @state() private menuOdak = -1;
   /** Kaydedilmemiş değişiklik modalı açık mı? (Kaydet/Kaydetme/İptal sorusu.) */
   @state() private kaydetSorusu = false;
+  /** Dışa aktarım profili sorusu açık mı? (Dosya → Dışa aktar, TK-37 #10) */
+  @state() private disaAktarSorusu = false;
   /** Hakkında penceresi açık mı? (Yardım → Hakkında) */
   @state() private acikHakkinda = false;
   /** Üst çubuktaki dil (dünya simgesi) açılırı açık mı? */
   @state() private dilAcik = false;
   #degisiklikCoz?: () => void;
+  #disaAktarCoz?: () => void;
   #kapanisCoz?: () => void;
   #sekmeCoz?: () => void;
   #hakkindaCoz?: () => void;
@@ -575,6 +608,18 @@ export class UygulamaKabugu extends LitElement {
       } else if (olay.key === "Enter") {
         olay.preventDefault();
         degisiklikSor.cevapla("kaydet");
+      }
+      return;
+    }
+    // Dışa aktarım profili modalı (Esc=İptal, Enter=Geniş uyumluluk — önerilen,
+    // eski davranışla aynı varsayılan).
+    if (this.disaAktarSorusu) {
+      if (olay.key === "Escape") {
+        olay.preventDefault();
+        disaAktarSor.cevapla(null);
+      } else if (olay.key === "Enter") {
+        olay.preventDefault();
+        disaAktarSor.cevapla("genis-uyumluluk");
       }
       return;
     }
@@ -698,6 +743,10 @@ export class UygulamaKabugu extends LitElement {
     this.#degisiklikCoz = degisiklikSor.dinle(
       (acik) => (this.kaydetSorusu = acik),
     );
+    // Dışa aktarım profili sorusu açık/kapalı → modalı çiz (TK-37 #10).
+    this.#disaAktarCoz = disaAktarSor.dinle(
+      (acik) => (this.disaAktarSorusu = acik),
+    );
     // Pencere kapanış isteği → kaydedilmemiş değişiklik varsa sor, sonra kapat.
     this.#kapanisCoz = window.api.pencereKapanisinaAbone(
       () => void this.#kapanisIstegi(),
@@ -722,6 +771,7 @@ export class UygulamaKabugu extends LitElement {
     this.#dilCoz?.();
     this.#bildirimCoz?.();
     this.#degisiklikCoz?.();
+    this.#disaAktarCoz?.();
     this.#kapanisCoz?.();
     this.#sekmeCoz?.();
     this.#hakkindaCoz?.();
@@ -1078,7 +1128,50 @@ export class UygulamaKabugu extends LitElement {
           </div>`
         : ""}
       ${this.kaydetSorusu ? this.#kaydetModali() : ""}
+      ${this.disaAktarSorusu ? this.#disaAktarModali() : ""}
       ${this.acikHakkinda ? this.#hakkindaModali() : ""}
+    `;
+  }
+
+  /** Dışa aktarım profili seçim modalı (TK-37 #10): Uygulama-içi / Geniş uyumluluk. */
+  #disaAktarModali() {
+    return html`
+      <div
+        class="modal-perde"
+        @click=${(e: Event) => {
+          if (e.target === e.currentTarget) disaAktarSor.cevapla(null);
+        }}
+      >
+        <div class="modal disa-aktar" role="dialog" aria-modal="true">
+          <h2>${t("dialog.disaAktar.baslik")}</h2>
+          <p>${t("dialog.disaAktar.mesaj")}</p>
+          <div class="profiller">
+            <button
+              class="profil"
+              @click=${() => disaAktarSor.cevapla("blink")}
+            >
+              <span class="ad">${t("dialog.disaAktar.blink.ad")}</span>
+              <span class="aciklama"
+                >${t("dialog.disaAktar.blink.aciklama")}</span
+              >
+            </button>
+            <button
+              class="profil birincil"
+              @click=${() => disaAktarSor.cevapla("genis-uyumluluk")}
+            >
+              <span class="ad">${t("dialog.disaAktar.genis.ad")}</span>
+              <span class="aciklama"
+                >${t("dialog.disaAktar.genis.aciklama")}</span
+              >
+            </button>
+          </div>
+          <div class="dugmeler">
+            <button @click=${() => disaAktarSor.cevapla(null)}>
+              ${t("dialog.iptal")}
+            </button>
+          </div>
+        </div>
+      </div>
     `;
   }
 
