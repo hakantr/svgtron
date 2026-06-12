@@ -18,7 +18,15 @@ import { dilYonetici, t } from "../diller/dil";
 import { bildirimServisi, type Bildirim } from "./bildirim-servisi";
 import type { MenuGorunumOgesi } from "./uygulama-menusu";
 import { duzenUygula } from "../ozellikler/duzen/duzen-eylemleri";
-import { sil, cogalt, grupla, coz } from "../ozellikler/duzen/duzenleme";
+import {
+  sil,
+  cogalt,
+  grupla,
+  coz,
+  panoyaKopyala,
+  panoyaKes,
+  yapistir,
+} from "../ozellikler/duzen/duzenleme";
 import { sonDosyalar } from "../ozellikler/dosya/son-dosyalar";
 import { disaAktarSor } from "../ozellikler/dosya/disa-aktar-sor";
 import {
@@ -665,6 +673,16 @@ export class UygulamaKabugu extends LitElement {
     } else if (harf === "d") {
       olay.preventDefault();
       duzenUygula(baglam, cogalt);
+    } else if (harf === "c") {
+      olay.preventDefault();
+      const belge = this.#depo.belge;
+      if (belge) panoyaKopyala(belge, this.#secim);
+    } else if (harf === "x") {
+      olay.preventDefault();
+      duzenUygula(baglam, panoyaKes);
+    } else if (harf === "v") {
+      olay.preventDefault();
+      duzenUygula(baglam, yapistir);
     } else if (harf === "g") {
       olay.preventDefault();
       duzenUygula(baglam, olay.shiftKey ? coz : grupla);

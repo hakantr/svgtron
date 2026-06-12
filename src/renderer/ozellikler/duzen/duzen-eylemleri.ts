@@ -3,7 +3,16 @@ import {
   type MenuBaglami,
 } from "../../../cekirdek/registry/menu-registry";
 import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
-import { sil, cogalt, grupla, coz, type DuzenSonuc } from "./duzenleme";
+import {
+  sil,
+  cogalt,
+  grupla,
+  coz,
+  panoyaKopyala,
+  panoyaKes,
+  yapistir,
+  type DuzenSonuc,
+} from "./duzenleme";
 
 /**
  * Düzen eylemleri (İlke 5, §6): Geri Al / İleri Al + Sil / Çoğalt / Grupla / Çöz.
@@ -46,6 +55,36 @@ menuKayitDefteri.kaydet({
   etiketAnahtari: "menu.duzen.ileriAl",
   sira: 20,
   calistir: ({ gecmis }) => gecmis.ileriAl(),
+});
+
+/** Kes — panoya kopyala + sil (tek geri-al adımı). */
+menuKayitDefteri.kaydet({
+  id: "duzen.kes",
+  grup: "duzen",
+  etiketAnahtari: "menu.duzen.kes",
+  sira: 24,
+  calistir: (baglam) => duzenUygula(baglam, panoyaKes),
+});
+
+/** Kopyala — görünüm durumu (Command üretmez, undo'ya girmez). */
+menuKayitDefteri.kaydet({
+  id: "duzen.kopyala",
+  grup: "duzen",
+  etiketAnahtari: "menu.duzen.kopyala",
+  sira: 26,
+  calistir: ({ depo, secim }) => {
+    const belge = depo.belge;
+    if (belge) panoyaKopyala(belge, secim);
+  },
+});
+
+/** Yapıştır — yerinde (TK-37 #9); pano boşsa no-op. */
+menuKayitDefteri.kaydet({
+  id: "duzen.yapistir",
+  grup: "duzen",
+  etiketAnahtari: "menu.duzen.yapistir",
+  sira: 28,
+  calistir: (baglam) => duzenUygula(baglam, yapistir),
 });
 
 menuKayitDefteri.kaydet({

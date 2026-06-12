@@ -1,5 +1,6 @@
-import { dugumOlustur, type Dugum } from "../../../cekirdek/belge/model/dugum";
+import { dugumOlustur, gez, type Dugum } from "../../../cekirdek/belge/model/dugum";
 import type { Belge } from "../../../cekirdek/belge/belge";
+import { pano } from "./pano";
 import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
 import type { Komut } from "../../../cekirdek/komutlar/komut";
 import {
@@ -60,6 +61,48 @@ export function cogalt(belge: Belge, secim: SecimDeposu): DuzenSonuc | null {
   return komutlar.length
     ? { komut: new BilesikKomut("çoğalt", komutlar), sonraSec: yeniler }
     : null;
+}
+
+/**
+ * Seçili düğümleri panoya kopyalar (görünüm durumu — Command DEĞİL, undo'ya GİRMEZ).
+ * Her girdi id'siz derin kopya + kopyalandığı ebeveyn referansını tutar (yerinde
+ * yapıştırma hedefi için). `true` = kopyalandı.
+ */
+export function panoyaKopyala(belge: Belge, secim: SecimDeposu): boolean {
+  const girdiler = secim.secililer.map((d) => ({
+    kopya: kopyala(d),
+    ebeveyn: belge.ebeveyn(d),
+  }));
+  if (!girdiler.length) return false;
+  pano.yaz(girdiler);
+  return true;
+}
+
+/** Seçili düğümleri panoya kopyalar VE siler (kes). Silme tek BilesikKomut'tur. */
+export function panoyaKes(belge: Belge, secim: SecimDeposu): DuzenSonuc | null {
+  if (!panoyaKopyala(belge, secim)) return null;
+  return sil(belge, secim);
+}
+
+/**
+ * Panodaki düğümleri YERİNDE yapıştırır (TK-37 #9): kopyalandığı ebeveyn hâlâ
+ * belgedeyse oraya (aynı koordinat uzayı → görsel konum korunur), değilse köke
+ * ekler. Her yapıştırmada YENİ kopya türetilir (tekrar tekrar yapıştırılabilir;
+ * id'ler `kopyala` ile düşürülür → çakışma yok). Tek BilesikKomut; kopyalar seçilir.
+ */
+export function yapistir(belge: Belge, _secim: SecimDeposu): DuzenSonuc | null {
+  const girdiler = pano.oku();
+  if (!girdiler.length) return null;
+  const agacta = new Set(gez(belge.kok)); // ebeveyn hâlâ belgede mi?
+  const komutlar: Komut[] = [];
+  const yeniler: Dugum[] = [];
+  for (const g of girdiler) {
+    const ebeveyn = g.ebeveyn && agacta.has(g.ebeveyn) ? g.ebeveyn : belge.kok;
+    const kopya = kopyala(g.kopya);
+    yeniler.push(kopya);
+    komutlar.push(new DugumEkleKomutu(belge, ebeveyn, kopya));
+  }
+  return { komut: new BilesikKomut("yapıştır", komutlar), sonraSec: yeniler };
 }
 
 /** Seçili düğümleri (aynı ebeveyndeyse) bir <g> içine alır. */
