@@ -20,6 +20,7 @@ import { OznitelikDegistirKomutu } from "../../cekirdek/komutlar/oznitelik-degis
 import { BilesikKomut } from "../../cekirdek/komutlar/dugum-komutlari";
 import { say } from "./donusum";
 import type { Kilavuz } from "./yapisma";
+import { oranKilidi } from "./oran-kilidi";
 import { bildirimServisi } from "../kabuk/bildirim-servisi";
 
 /** Grup seçim çerçevesi içerik kenarından bu kadar px DIŞARIDA durur (TK-21). */
@@ -885,12 +886,14 @@ export class TuvalAlani extends LitElement {
       sx = (olay.clientX - pivotX) / ((sag ? b.right : b.left) - pivotX);
     if (dikey)
       sy = (olay.clientY - pivotY) / ((alt ? b.bottom : b.top) - pivotY);
-    // Shift VEYA döndürülmüş/eğik nesne → ÜNİFORM ölçek. Eksen-hizalı ekran
-    // bbox'tan türetilen non-uniform ölçek, nesnenin transform'undaki rotate ile
-    // birleşince shear (çarpıklık) üretir; tek ölçek faktörü (S(s,s)) bunu önler
-    // çünkü izotropik ölçek rotasyonla değişmelidir. (Tam yerel-eksen OBB resize
-    // ileri iş; bu mitigasyon skew bug'ını giderir — bkz. GELISTIRME-DURUMU §6.)
-    if (olay.shiftKey || asil.donmus) {
+    // ÜNİFORM ölçek koşulu:
+    //  - Döndürülmüş/eğik nesne → DAİMA üniform (doğruluk kısıtı: eksen-hizalı ekran
+    //    bbox'tan türetilen non-uniform ölçek, transform'daki rotate ile birleşince
+    //    shear üretir; izotropik ölçek rotasyonla değişmeli olduğundan S(s,s) bunu önler).
+    //  - Oran kilidi (TK-37 #9): kilit AÇIKSA üniform, Shift onu GEÇİCİ tersine çevirir;
+    //    kilit KAPALIYSA yalnız Shift üniform yapar. (oranKilidi.acik XOR shiftKey.)
+    const oranUniform = oranKilidi.acik ? !olay.shiftKey : olay.shiftKey;
+    if (oranUniform || asil.donmus) {
       const s =
         Math.max(yatay ? Math.abs(sx) : 0, dikey ? Math.abs(sy) : 0) || 1;
       sx = yatay ? Math.sign(sx || 1) * s : s;

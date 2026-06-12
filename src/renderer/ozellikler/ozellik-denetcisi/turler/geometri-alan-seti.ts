@@ -8,6 +8,7 @@ import { konumAlanlari, konumOku } from "../../../../cekirdek/belge/konum";
 import { OznitelikDegistirKomutu } from "../../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { t } from "../../../diller/dil";
 import { cizimErisimi } from "../../../tuval/cizim-erisimi";
+import { oranKilidi } from "../../../tuval/oran-kilidi";
 import {
   say,
   donusumAyristir,
@@ -344,6 +345,33 @@ function boyutBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
 }
 
 /**
+ * Oran kilidi toggle satırı (TK-37 #9): tuval boyutlandırma tutamacıyla ölçeklerken
+ * en/boy oranını koruma tercihi (görünüm durumu, undo'ya girmez). Padlock; tıkla-değiştir.
+ */
+function oranKilidiSatiri(baglam: AlanSetiBaglami): TemplateResult {
+  const acik = oranKilidi.acik;
+  return html`
+    <div class="alt-baslik kose">
+      <span>${t("denetci.oranKilidi.etiket")}</span>
+      <button
+        type="button"
+        class="kilit"
+        aria-pressed=${acik}
+        title=${acik
+          ? t("denetci.oranKilidi.acik")
+          : t("denetci.oranKilidi.kapali")}
+        @click=${() => {
+          oranKilidi.degistir();
+          baglam.tazele();
+        }}
+      >
+        ${acik ? KILIT_KAPALI : KILIT_ACIK}
+      </button>
+    </div>
+  `;
+}
+
+/**
  * "Geometri" alan seti — seçili şeklin TÜRÜNE göre konum + boyut alanları
  * (§9.3, §9.8). Tüm yazımlar komutla (İlke 2); boş/null girişe izin verilmez.
  */
@@ -364,10 +392,10 @@ const geometriAlanSeti: AlanSeti = {
   // tam denetim; rect resize'ının ürettiği scale buradan görülüp düzenlenir).
   render: (baglam) =>
     baglam.dugum.etiket === "g" || YOL_SEKILLERI.has(baglam.dugum.etiket)
-      ? html`${donusumGeometriBolumu(baglam)}`
-      : html`${konumBolumu(baglam)}${boyutBolumu(baglam)}${donusumBolumu(
+      ? html`${oranKilidiSatiri(baglam)}${donusumGeometriBolumu(baglam)}`
+      : html`${oranKilidiSatiri(baglam)}${konumBolumu(baglam)}${boyutBolumu(
           baglam,
-        )}`,
+        )}${donusumBolumu(baglam)}`,
 };
 
 alanSetiKayitDefteri.kaydet(geometriAlanSeti);
