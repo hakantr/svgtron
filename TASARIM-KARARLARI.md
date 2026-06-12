@@ -1,6 +1,6 @@
 # Tasarım Kararları
 
-> Bu dosya, **CLAUDE.md'deki mimari kuralları etkilemez.** Burada uygulamanın
+> Bu dosya, **AGENTS.md'deki mimari kuralları etkilemez.** Burada uygulamanın
 > davranış/etkileşim/görsel tasarımına dair, üzerinde anlaştığımız somut kararlar
 > tutulur. İleride "tasarım kararlarımıza uygun mu?" diye denetleme istendiğinde
 > ya da yeni bir iş yapıldığında, bu kararlar referans alınır.
@@ -85,7 +85,7 @@ dokunmaz.
    rx, ry, x1…) SVG/matematik gösterimi olarak kalır.
 3. **Boş/null giriş engellenir:** Sayısal kutuya boş ya da geçersiz değer girilip
    onaylanırsa yazılmaz; kutu eski değerine döner.
-4. **Konum modeli (CLAUDE.md §9.8):** Geometri içinde x/y (canlı) · sx/sy (sabit
+4. **Konum modeli (AGENTS.md §9.8):** Geometri içinde x/y (canlı) · sx/sy (sabit
    baseline, salt-okunur) · tx/ty (ofset, düzenlenebilir) gösterilir; `x = sx + tx`
    bağlayıcı kuralı korunur. (Bu madde kuralın uygulanışıdır; tasarım notu olarak
    burada da izlenir.)
@@ -238,7 +238,7 @@ hex (alfa/format/gradyan yok).
 1. **Bağımlılık (onaylı):** `polygon-clipping@^0.15.7` — saf JS, native bağımlılık
    yok, ~350KB, Martinez-Rueda (Turf.js de kullanır). Gerekçe: sağlam poligon
    boole'u (self-intersection, delik, çoklu-poligon, dejenere durumlar) elle yazmak
-   hataya çok açık; CLAUDE.md "büyük bağımlılıkta dur ve gerekçe sun" → kullanıcı
+   hataya çok açık; AGENTS.md "büyük bağımlılıkta dur ve gerekçe sun" → kullanıcı
    onayı alındı.
 2. **Düzleştirme ödünü:** şekiller **poligona** düzleştirilir (eğriler tarayıcının
    `getPointAtLength`'iyle örneklenir, ~2px adım). Sonuç poligonaldir — eğri-koruyan
@@ -652,7 +652,7 @@ editör de uygun adayı otomatik önerebilsin (kullanıcı isteği).
 1. **`en.dil` eklendi** (`src/renderer/diller/`). Dil yöneticisi `*.dil` dosyalarını
    derleme anında glob ile yükler → kod değişmeden yeni dil belirir; menüde "English"
    görünür.
-2. **`tr.dil` ANAHTAR DOSYASIDIR (CLAUDE.md §3).** Yeni anahtar önce `tr.dil`'e,
+2. **`tr.dil` ANAHTAR DOSYASIDIR (AGENTS.md §3).** Yeni anahtar önce `tr.dil`'e,
    sonra `en.dil`'e. İki dosya arasında **anahtar kümesi ya da `{yer-tutucu}` farkı**
    olursa **`tr.dil` daima doğru**; `en.dil` ona hizalanır. Çalışma anında eksik
    çeviri Türkçe'ye, o da yoksa anahtara düşer. (Parite betikle doğrulanır: 160/160.)

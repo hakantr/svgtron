@@ -1,7 +1,7 @@
-import { gez, type Dugum } from '../model/dugum';
+import { gez, type Dugum } from "../model/dugum";
 
 /**
- * Tanımlar modeli (CLAUDE.md §7.5 — defs/style için YAPISAL yer).
+ * Tanımlar modeli (AGENTS.md §7.5 — defs/style için YAPISAL yer).
  *
  * `<defs>` içindeki yeniden kullanılabilir kaynaklar (filter, gradient,
  * marker...) ve `<style>` düğümleri, soyut belge modelinde yapısal olarak
@@ -18,13 +18,13 @@ export class TanimlarModeli {
 
   constructor(kok: Dugum) {
     const hepsi = [...gez(kok)];
-    this.defs = hepsi.find((d) => d.etiket === 'defs') ?? null;
-    this.stilDugumleri = hepsi.filter((d) => d.etiket === 'style');
+    this.defs = hepsi.find((d) => d.etiket === "defs") ?? null;
+    this.stilDugumleri = hepsi.filter((d) => d.etiket === "style");
 
     const tanimlar = new Map<string, Dugum>();
-    for (const defs of hepsi.filter((d) => d.etiket === 'defs')) {
+    for (const defs of hepsi.filter((d) => d.etiket === "defs")) {
       for (const d of gez(defs)) {
-        const id = d.oznitelikler.get('id');
+        const id = d.oznitelikler.get("id");
         if (id && d !== defs) tanimlar.set(id, d);
       }
     }

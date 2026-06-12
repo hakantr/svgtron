@@ -1,5 +1,5 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { KANALLAR, type KopruApi } from '../ortak/api-sozlesmesi';
+import { contextBridge, ipcRenderer } from "electron";
+import { KANALLAR, type KopruApi } from "../ortak/api-sozlesmesi";
 
 /**
  * Preload köprüsü: renderer'a açılan TEK, dar ve tiplenmiş yüzey (İlke 4).
@@ -13,24 +13,29 @@ const api: KopruApi = {
   surumBilgisiAl: () => ipcRenderer.invoke(KANALLAR.surumBilgisi),
   dosyaAc: () => ipcRenderer.invoke(KANALLAR.dosyaAc),
   dosyaYoldanAc: (yol) => ipcRenderer.invoke(KANALLAR.dosyaYoldanAc, yol),
-  dosyaKaydet: (icerik, ad) => ipcRenderer.invoke(KANALLAR.dosyaKaydet, icerik, ad),
+  dosyaKaydet: (icerik, ad) =>
+    ipcRenderer.invoke(KANALLAR.dosyaKaydet, icerik, ad),
   gorselAc: () => ipcRenderer.invoke(KANALLAR.gorselAc),
-  dilDosyasiSenkron: (kod, eksik) => ipcRenderer.invoke(KANALLAR.dilSenkron, kod, eksik),
+  dilDosyasiSenkron: (kod, eksik) =>
+    ipcRenderer.invoke(KANALLAR.dilSenkron, kod, eksik),
   pencereSimgelestir: () => ipcRenderer.send(KANALLAR.pencereSimgelestir),
   pencereBuyutGeriAl: () => ipcRenderer.send(KANALLAR.pencereBuyutGeriAl),
   pencereKapat: () => ipcRenderer.send(KANALLAR.pencereKapat),
   pencereKapanisinaAbone: (geriCagri) => {
     const dinleyici = (): void => geriCagri();
     ipcRenderer.on(KANALLAR.pencereKapanisIstegi, dinleyici);
-    return () => ipcRenderer.removeListener(KANALLAR.pencereKapanisIstegi, dinleyici);
+    return () =>
+      ipcRenderer.removeListener(KANALLAR.pencereKapanisIstegi, dinleyici);
   },
   pencereKapatGercek: () => ipcRenderer.send(KANALLAR.pencereKapatGercek),
   pencereKaplandiMi: () => ipcRenderer.invoke(KANALLAR.pencereKaplandiMi),
   pencereDurumunaAbone: (geriCagri) => {
-    const dinleyici = (_olay: unknown, kaplandi: boolean): void => geriCagri(kaplandi);
+    const dinleyici = (_olay: unknown, kaplandi: boolean): void =>
+      geriCagri(kaplandi);
     ipcRenderer.on(KANALLAR.pencereDurumDegisti, dinleyici);
-    return () => ipcRenderer.removeListener(KANALLAR.pencereDurumDegisti, dinleyici);
+    return () =>
+      ipcRenderer.removeListener(KANALLAR.pencereDurumDegisti, dinleyici);
   },
 };
 
-contextBridge.exposeInMainWorld('api', api);
+contextBridge.exposeInMainWorld("api", api);

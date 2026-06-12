@@ -1,7 +1,10 @@
-import { menuKayitDefteri, type MenuBaglami } from '../../../cekirdek/registry/menu-registry';
-import { t } from '../../diller/dil';
-import { sonDosyalar } from './son-dosyalar';
-import { sekmeYoneticisi } from '../../sekmeler/sekme-yoneticisi';
+import {
+  menuKayitDefteri,
+  type MenuBaglami,
+} from "../../../cekirdek/registry/menu-registry";
+import { t } from "../../diller/dil";
+import { sonDosyalar } from "./son-dosyalar";
+import { sekmeYoneticisi } from "../../sekmeler/sekme-yoneticisi";
 
 /**
  * Dosya eylemleri — "Yeni / Aç… / Kaydet / Dışa aktar" menü ögelerini kaydeder
@@ -28,12 +31,15 @@ export async function kaydetBelge(baglam: MenuBaglami): Promise<boolean> {
   const belge = baglam.depo.belge;
   if (!belge) return true;
   try {
-    const yol = await window.api.dosyaKaydet(belge.disaAktar('blink'), baglam.depo.kaynak?.ad ?? 'cizim.svg');
+    const yol = await window.api.dosyaKaydet(
+      belge.disaAktar("blink"),
+      baglam.depo.kaynak?.ad ?? "cizim.svg",
+    );
     if (!yol) return false; // kullanıcı kaydetme penceresini iptal etti
     baglam.depo.kaydedildi();
     return true;
   } catch {
-    baglam.hataBildir(t('dosya.kaydedilemedi'));
+    baglam.hataBildir(t("dosya.kaydedilemedi"));
     return false;
   }
 }
@@ -58,30 +64,33 @@ function belgeyiKur(
     baglam.gecmis.temizle();
     return true;
   } catch {
-    baglam.hataBildir(t('dosya.acilamadi'));
+    baglam.hataBildir(t("dosya.acilamadi"));
     return false;
   }
 }
 
 /** "Yeni" — boş tasarıma hazır tuval (sekme mantığıyla: belge varsa yeni sekmede). */
 export function yeniBelge(baglam: MenuBaglami): void {
-  belgeyiKur(baglam, BOS_SVG, { ad: t('dosya.yeniAd') });
+  belgeyiKur(baglam, BOS_SVG, { ad: t("dosya.yeniAd") });
 }
 
 /** Son dosyalar listesinden bir yolu açar (kabuk menüsü çağırır; sekme mantığıyla). */
-export async function yoldanYukle(baglam: MenuBaglami, yol: string): Promise<void> {
+export async function yoldanYukle(
+  baglam: MenuBaglami,
+  yol: string,
+): Promise<void> {
   // Eski/bayat preload build'inde `dosyaYoldanAc` kanalı henüz yoktur (uygulama
   // güncellendi ama çalışan örnek eski) → kanalı YANLIŞLIKLA "dosya yok" sanıp
   // listeden düşürme; bunun yerine kullanıcıya yeniden başlatmayı söyle.
-  if (typeof window.api.dosyaYoldanAc !== 'function') {
-    baglam.hataBildir(t('dosya.yenidenBaslat'));
+  if (typeof window.api.dosyaYoldanAc !== "function") {
+    baglam.hataBildir(t("dosya.yenidenBaslat"));
     return;
   }
   try {
     const dosya = await window.api.dosyaYoldanAc(yol);
     if (!dosya) {
       // Kanal çalıştı ama dosya yok/okunamaz → listeden düş.
-      baglam.hataBildir(t('dosya.bulunamadi', { yol }));
+      baglam.hataBildir(t("dosya.bulunamadi", { yol }));
       sonDosyalar.cikar(yol);
       return;
     }
@@ -89,27 +98,30 @@ export async function yoldanYukle(baglam: MenuBaglami, yol: string): Promise<voi
       sonDosyalar.ekle({ yol: dosya.yol, ad: dosya.ad });
     }
   } catch {
-    baglam.hataBildir(t('dosya.acilamadi'));
+    baglam.hataBildir(t("dosya.acilamadi"));
   }
 }
 
 menuKayitDefteri.kaydet({
-  id: 'dosya.yeni',
-  grup: 'dosya',
-  etiketAnahtari: 'menu.dosya.yeni',
+  id: "dosya.yeni",
+  grup: "dosya",
+  etiketAnahtari: "menu.dosya.yeni",
   sira: 5,
   calistir: (baglam) => yeniBelge(baglam),
 });
 
 menuKayitDefteri.kaydet({
-  id: 'dosya.ac',
-  grup: 'dosya',
-  etiketAnahtari: 'menu.dosya.ac',
+  id: "dosya.ac",
+  grup: "dosya",
+  etiketAnahtari: "menu.dosya.ac",
   sira: 10,
   calistir: async (baglam) => {
     const dosya = await window.api.dosyaAc();
     if (!dosya) return; // iptal edildi
-    if (belgeyiKur(baglam, dosya.icerik, { ad: dosya.ad, yol: dosya.yol }) && dosya.yol) {
+    if (
+      belgeyiKur(baglam, dosya.icerik, { ad: dosya.ad, yol: dosya.yol }) &&
+      dosya.yol
+    ) {
       sonDosyalar.ekle({ yol: dosya.yol, ad: dosya.ad });
     }
   },
@@ -117,9 +129,9 @@ menuKayitDefteri.kaydet({
 
 /** Kaydet — uygulama profili (İlke 10: editör yorumları dâhil, saf SVG). */
 menuKayitDefteri.kaydet({
-  id: 'dosya.kaydet',
-  grup: 'dosya',
-  etiketAnahtari: 'menu.dosya.kaydet',
+  id: "dosya.kaydet",
+  grup: "dosya",
+  etiketAnahtari: "menu.dosya.kaydet",
   sira: 20,
   calistir: async (baglam) => {
     await kaydetBelge(baglam); // kayıt sonrası "değişti" sıfırlanır
@@ -128,27 +140,30 @@ menuKayitDefteri.kaydet({
 
 /** Dışa aktar — geniş uyumluluk profili (editör yorumları ayıklanır). */
 menuKayitDefteri.kaydet({
-  id: 'dosya.disaAktar',
-  grup: 'dosya',
-  etiketAnahtari: 'menu.dosya.disaAktar',
+  id: "dosya.disaAktar",
+  grup: "dosya",
+  etiketAnahtari: "menu.dosya.disaAktar",
   sira: 30,
   calistir: async ({ depo, hataBildir }) => {
     const belge = depo.belge;
     if (!belge) return;
-    const temelAd = (depo.kaynak?.ad ?? 'cizim').replace(/\.svg$/i, '');
+    const temelAd = (depo.kaynak?.ad ?? "cizim").replace(/\.svg$/i, "");
     try {
-      await window.api.dosyaKaydet(belge.disaAktar('genis-uyumluluk'), `${temelAd}-temiz.svg`);
+      await window.api.dosyaKaydet(
+        belge.disaAktar("genis-uyumluluk"),
+        `${temelAd}-temiz.svg`,
+      );
     } catch {
-      hataBildir(t('dosya.kaydedilemedi'));
+      hataBildir(t("dosya.kaydedilemedi"));
     }
   },
 });
 
 /** Çıkış — pencereyi kapatmayı dener (kaydedilmemiş değişiklik sorusu akışından geçer). */
 menuKayitDefteri.kaydet({
-  id: 'dosya.cikis',
-  grup: 'dosya',
-  etiketAnahtari: 'menu.dosya.cikis',
+  id: "dosya.cikis",
+  grup: "dosya",
+  etiketAnahtari: "menu.dosya.cikis",
   sira: 100,
   calistir: () => window.api.pencereKapat(),
 });

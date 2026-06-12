@@ -1,17 +1,19 @@
-import type { Playback } from './playback';
+import type { Playback } from "./playback";
 
 /** SMIL saat değerini ('4s', '500ms', '1.5min') saniyeye çevirir; geçersizse NaN. */
 function klokSaniye(deger: string | null | undefined): number {
   if (!deger) return NaN;
-  const m = String(deger).trim().match(/^([\d.]+)(ms|s|min|h)?$/);
+  const m = String(deger)
+    .trim()
+    .match(/^([\d.]+)(ms|s|min|h)?$/);
   if (!m) return NaN;
   const n = parseFloat(m[1]);
   switch (m[2]) {
-    case 'ms':
+    case "ms":
       return n / 1000;
-    case 'min':
+    case "min":
       return n * 60;
-    case 'h':
+    case "h":
       return n * 3600;
     default:
       return n;
@@ -21,12 +23,12 @@ function klokSaniye(deger: string | null | undefined): number {
 /** `begin` listesindeki ilk sayısal ofset (olay-temelli değerler 0 sayılır). */
 function ilkBeginOfseti(begin: string | null): number {
   if (!begin) return 0;
-  const s = klokSaniye(begin.split(';')[0]);
+  const s = klokSaniye(begin.split(";")[0]);
   return Number.isFinite(s) ? s : 0;
 }
 
 const ANIMASYON_SECICI =
-  'animate, animateTransform, animateMotion, animateColor, set';
+  "animate, animateTransform, animateMotion, animateColor, set";
 
 /**
  * SMIL animasyonlarının toplam süresini sezgisel olarak hesaplar.
@@ -38,15 +40,15 @@ function sureHesapla(svg: SVGSVGElement): { sure: number; sonsuz: boolean } {
   let sonsuz = false;
 
   for (const a of svg.querySelectorAll(ANIMASYON_SECICI)) {
-    const dur = klokSaniye(a.getAttribute('dur'));
-    const begin = ilkBeginOfseti(a.getAttribute('begin'));
-    const repeat = a.getAttribute('repeatCount');
-    const repeatDurHam = a.getAttribute('repeatDur');
+    const dur = klokSaniye(a.getAttribute("dur"));
+    const begin = ilkBeginOfseti(a.getAttribute("begin"));
+    const repeat = a.getAttribute("repeatCount");
+    const repeatDurHam = a.getAttribute("repeatDur");
     const repeatDur = klokSaniye(repeatDurHam);
     const birDongu = Number.isFinite(dur) ? dur : 0;
 
     let aktif: number;
-    if (repeat === 'indefinite' || repeatDurHam === 'indefinite') {
+    if (repeat === "indefinite" || repeatDurHam === "indefinite") {
       sonsuz = true;
       aktif = birDongu;
     } else if (Number.isFinite(repeatDur)) {
@@ -64,7 +66,7 @@ function sureHesapla(svg: SVGSVGElement): { sure: number; sonsuz: boolean } {
 }
 
 /**
- * SMIL tabanlı Playback (CLAUDE.md İlke 6).
+ * SMIL tabanlı Playback (AGENTS.md İlke 6).
  *
  * Bir `<svg>` kök elemanını sarar; `setCurrentTime` / `pauseAnimations` /
  * `unpauseAnimations` ile yönetir. Oynarken her animasyon karesinde dinleyicileri

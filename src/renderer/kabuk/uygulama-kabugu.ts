@@ -1,28 +1,35 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state, query } from 'lit/decorators.js';
-import type { SurumBilgisi } from '../../ortak/api-sozlesmesi';
-import { OynatmaDeposu } from '../../cekirdek/animasyon/oynatma-deposu';
-import { sekmeYoneticisi } from '../sekmeler/sekme-yoneticisi';
-import '../sekmeler/sekme-cubugu';
+import { LitElement, html, css } from "lit";
+import { customElement, state, query } from "lit/decorators.js";
+import type { SurumBilgisi } from "../../ortak/api-sozlesmesi";
+import { OynatmaDeposu } from "../../cekirdek/animasyon/oynatma-deposu";
+import { sekmeYoneticisi } from "../sekmeler/sekme-yoneticisi";
+import "../sekmeler/sekme-cubugu";
 import {
   panelKayitDefteri,
   type PanelBolgesi,
-} from '../../cekirdek/registry/panel-registry';
-import { temaKayitDefteri } from '../../cekirdek/registry/tema-registry';
-import { menuKayitDefteri, type MenuBaglami } from '../../cekirdek/registry/menu-registry';
-import { temaYonetici } from './tema-yonetici';
-import { dilYonetici, t } from '../diller/dil';
-import { bildirimServisi, type Bildirim } from './bildirim-servisi';
-import type { MenuGorunumOgesi } from './uygulama-menusu';
-import { duzenUygula } from '../ozellikler/duzen/duzen-eylemleri';
-import { sil, cogalt, grupla, coz } from '../ozellikler/duzen/duzenleme';
-import { sonDosyalar } from '../ozellikler/dosya/son-dosyalar';
-import { yoldanYukle, kaydetBelge, yeniBelge } from '../ozellikler/dosya/dosya-eylemleri';
-import { degisiklikSor } from './degisiklik-sor';
-import { hakkindaServisi } from '../ozellikler/yardim/hakkinda';
-import { komutPaletiDeposu } from '../ozellikler/komut-paleti/komut-paleti-deposu';
-import './pencere-kontrolleri';
-import './uygulama-menusu';
+} from "../../cekirdek/registry/panel-registry";
+import { temaKayitDefteri } from "../../cekirdek/registry/tema-registry";
+import {
+  menuKayitDefteri,
+  type MenuBaglami,
+} from "../../cekirdek/registry/menu-registry";
+import { temaYonetici } from "./tema-yonetici";
+import { dilYonetici, t } from "../diller/dil";
+import { bildirimServisi, type Bildirim } from "./bildirim-servisi";
+import type { MenuGorunumOgesi } from "./uygulama-menusu";
+import { duzenUygula } from "../ozellikler/duzen/duzen-eylemleri";
+import { sil, cogalt, grupla, coz } from "../ozellikler/duzen/duzenleme";
+import { sonDosyalar } from "../ozellikler/dosya/son-dosyalar";
+import {
+  yoldanYukle,
+  kaydetBelge,
+  yeniBelge,
+} from "../ozellikler/dosya/dosya-eylemleri";
+import { degisiklikSor } from "./degisiklik-sor";
+import { hakkindaServisi } from "../ozellikler/yardim/hakkinda";
+import { komutPaletiDeposu } from "../ozellikler/komut-paleti/komut-paleti-deposu";
+import "./pencere-kontrolleri";
+import "./uygulama-menusu";
 
 /** Üst Çubuktaki bir menü grubu (Dosya/Düzen/Dil…). */
 interface MenuGrubu {
@@ -33,7 +40,7 @@ interface MenuGrubu {
 /**
  * Uygulama kabuğu — çerçevesiz, özel Üst Çubuk, registry-sürümlü çatı.
  *
- * Üst Çubuk iki mod arasında geçer (CLAUDE.md §9.5; bu geçiş görünüm durumudur,
+ * Üst Çubuk iki mod arasında geçer (AGENTS.md §9.5; bu geçiş görünüm durumudur,
  * undo'ya girmez — İlke 9):
  *  - Toplu mod: ☰ hamburger · "SVG Editör" · açık dosya adı.
  *  - Menü modu: hamburger'a tıklanınca bunlar gizlenir, aynı yerden yatay menü
@@ -43,7 +50,7 @@ interface MenuGrubu {
  * Menü grupları/eylemleri menü registry'sinden gelir (İlke 5). Renkler tema
  * token'larından; metinler i18n'den (varsayılan Türkçe).
  */
-@customElement('uygulama-kabugu')
+@customElement("uygulama-kabugu")
 export class UygulamaKabugu extends LitElement {
   static override styles = css`
     :host {
@@ -52,7 +59,11 @@ export class UygulamaKabugu extends LitElement {
          (artık Yardım → Hakkında'da gösterilir, kullanıcı isteği). */
       grid-template-rows: auto 1fr auto;
       height: 100vh;
-      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        sans-serif;
       color: var(--metin);
       background: var(--zemin);
     }
@@ -73,7 +84,7 @@ export class UygulamaKabugu extends LitElement {
       -webkit-app-region: drag;
     }
     /* macOS: yerel trafik-ışıklarına yer aç. */
-    :host([data-platform='darwin']) .ust-bar {
+    :host([data-platform="darwin"]) .ust-bar {
       padding-left: 80px;
     }
 
@@ -334,7 +345,7 @@ export class UygulamaKabugu extends LitElement {
        genişliğinde değil), çubuğun alt kenarında — öğe bitişi ile menü başlangıcı
        arasında (TK-1). */
     .menu-grup.acik::after {
-      content: '';
+      content: "";
       position: absolute;
       left: 0;
       right: 0;
@@ -506,14 +517,14 @@ export class UygulamaKabugu extends LitElement {
   #sekmeCoz?: () => void;
   #hakkindaCoz?: () => void;
   /** Sağ rayda açık panelin id'si (null = tümü kapalı) — Y7. */
-  @state() private aktifSag: string | null = 'ozellik-denetcisi';
+  @state() private aktifSag: string | null = "ozellik-denetcisi";
   /** Sağ içerik genişliği (px; tutamaçla değişir). */
   @state() private sagGenislik = 300;
 
-  @query('.sol') private sol!: HTMLElement;
-  @query('.tuval-kap') private tuvalKap!: HTMLElement;
-  @query('.sag-icerik') private sagIcerik!: HTMLElement;
-  @query('.alt-bolge') private altBolge!: HTMLElement;
+  @query(".sol") private sol!: HTMLElement;
+  @query(".tuval-kap") private tuvalKap!: HTMLElement;
+  @query(".sag-icerik") private sagIcerik!: HTMLElement;
+  @query(".alt-bolge") private altBolge!: HTMLElement;
   /** Sağ panel id → DOM elemanı (görünürlük rayla değişir). */
   readonly #sagPanelleri = new Map<string, HTMLElement>();
 
@@ -525,14 +536,14 @@ export class UygulamaKabugu extends LitElement {
     depo: this.#depo,
     secim: this.#secim,
     gecmis: this.#gecmis,
-    hataBildir: (mesaj) => bildirimServisi.bildir(mesaj, 'hata'),
+    hataBildir: (mesaj) => bildirimServisi.bildir(mesaj, "hata"),
   };
 
   /** Toast bildirimi gösterir ve türüne göre süreyle kendiliğinden kapatır. */
   #bildirimGoster(b: Bildirim): void {
     if (this.#bildirimZaman) clearTimeout(this.#bildirimZaman);
     this.bildirim = b;
-    const sure = b.tur === 'hata' ? 5000 : b.tur === 'uyari' ? 4000 : 2500;
+    const sure = b.tur === "hata" ? 5000 : b.tur === "uyari" ? 4000 : 2500;
     this.#bildirimZaman = setTimeout(() => {
       this.bildirim = undefined;
       this.#bildirimZaman = undefined;
@@ -542,15 +553,15 @@ export class UygulamaKabugu extends LitElement {
   // Klavye: menü modu gezinmesi + düzenleme kısayolları (giriş alanında değilken).
   readonly #klavye = (olay: KeyboardEvent): void => {
     // Dil açılırı açıkken Esc kapatır.
-    if (this.dilAcik && olay.key === 'Escape') {
+    if (this.dilAcik && olay.key === "Escape") {
       olay.preventDefault();
       this.dilAcik = false;
-      window.removeEventListener('pointerdown', this.#disDil, true);
+      window.removeEventListener("pointerdown", this.#disDil, true);
       return;
     }
     // Hakkında penceresi açıkken Esc/Enter kapatır.
     if (this.acikHakkinda) {
-      if (olay.key === 'Escape' || olay.key === 'Enter') {
+      if (olay.key === "Escape" || olay.key === "Enter") {
         olay.preventDefault();
         this.acikHakkinda = false;
       }
@@ -558,12 +569,12 @@ export class UygulamaKabugu extends LitElement {
     }
     // Kaydetme modalı açıkken klavye onu yönetir (Esc=İptal, Enter=Kaydet).
     if (this.kaydetSorusu) {
-      if (olay.key === 'Escape') {
+      if (olay.key === "Escape") {
         olay.preventDefault();
-        degisiklikSor.cevapla('iptal');
-      } else if (olay.key === 'Enter') {
+        degisiklikSor.cevapla("iptal");
+      } else if (olay.key === "Enter") {
         olay.preventDefault();
-        degisiklikSor.cevapla('kaydet');
+        degisiklikSor.cevapla("kaydet");
       }
       return;
     }
@@ -574,11 +585,21 @@ export class UygulamaKabugu extends LitElement {
     const hedef = olay.composedPath()[0];
     const yaziAlani =
       hedef instanceof HTMLElement &&
-      (hedef.tagName === 'INPUT' || hedef.tagName === 'TEXTAREA' || hedef.isContentEditable);
-    const baglam = { depo: this.#depo, secim: this.#secim, gecmis: this.#gecmis };
+      (hedef.tagName === "INPUT" ||
+        hedef.tagName === "TEXTAREA" ||
+        hedef.isContentEditable);
+    const baglam = {
+      depo: this.#depo,
+      secim: this.#secim,
+      gecmis: this.#gecmis,
+    };
 
     // Sil — Delete/Backspace (modifiersiz, giriş alanında değilken).
-    if (!olay.ctrlKey && !olay.metaKey && (olay.key === 'Delete' || olay.key === 'Backspace')) {
+    if (
+      !olay.ctrlKey &&
+      !olay.metaKey &&
+      (olay.key === "Delete" || olay.key === "Backspace")
+    ) {
       if (yaziAlani) return;
       olay.preventDefault();
       duzenUygula(baglam, sil);
@@ -590,16 +611,16 @@ export class UygulamaKabugu extends LitElement {
     if (yaziAlani) return;
 
     const harf = olay.key.toLowerCase();
-    if (harf === 'z' && !olay.shiftKey) {
+    if (harf === "z" && !olay.shiftKey) {
       olay.preventDefault();
       this.#gecmis.geriAl();
-    } else if ((harf === 'z' && olay.shiftKey) || harf === 'y') {
+    } else if ((harf === "z" && olay.shiftKey) || harf === "y") {
       olay.preventDefault();
       this.#gecmis.ileriAl();
-    } else if (harf === 'd') {
+    } else if (harf === "d") {
       olay.preventDefault();
       duzenUygula(baglam, cogalt);
-    } else if (harf === 'g') {
+    } else if (harf === "g") {
       olay.preventDefault();
       duzenUygula(baglam, olay.shiftKey ? coz : grupla);
     }
@@ -615,26 +636,28 @@ export class UygulamaKabugu extends LitElement {
     const ogeler = gruplar[grupIdx]?.ogeler ?? [];
 
     switch (olay.key) {
-      case 'Escape':
+      case "Escape":
         this.menuModunuKapat();
         break;
-      case 'ArrowRight':
+      case "ArrowRight":
         olay.preventDefault();
         this.grupAc(gruplar[(grupIdx + 1) % gruplar.length]!.id);
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         olay.preventDefault();
-        this.grupAc(gruplar[(grupIdx - 1 + gruplar.length) % gruplar.length]!.id);
+        this.grupAc(
+          gruplar[(grupIdx - 1 + gruplar.length) % gruplar.length]!.id,
+        );
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         olay.preventDefault();
         this.menuOdak = Math.min(this.menuOdak + 1, ogeler.length - 1);
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         olay.preventDefault();
         this.menuOdak = Math.max(this.menuOdak - 1, 0);
         break;
-      case 'Enter': {
+      case "Enter": {
         olay.preventDefault();
         const oge = ogeler[this.menuOdak];
         if (oge && !oge.altOgeler) {
@@ -650,7 +673,9 @@ export class UygulamaKabugu extends LitElement {
   readonly #disMenu = (olay: Event): void => {
     const iceride = olay
       .composedPath()
-      .some((d) => d instanceof HTMLElement && d.classList.contains('menu-cubugu'));
+      .some(
+        (d) => d instanceof HTMLElement && d.classList.contains("menu-cubugu"),
+      );
     if (!iceride) this.menuModunuKapat();
   };
 
@@ -670,9 +695,13 @@ export class UygulamaKabugu extends LitElement {
     // Geçici bildirimlere (araç/menü/dosya) abone ol → toast.
     this.#bildirimCoz = bildirimServisi.dinle((b) => this.#bildirimGoster(b));
     // Kaydetme sorusu açık/kapalı → modalı çiz.
-    this.#degisiklikCoz = degisiklikSor.dinle((acik) => (this.kaydetSorusu = acik));
+    this.#degisiklikCoz = degisiklikSor.dinle(
+      (acik) => (this.kaydetSorusu = acik),
+    );
     // Pencere kapanış isteği → kaydedilmemiş değişiklik varsa sor, sonra kapat.
-    this.#kapanisCoz = window.api.pencereKapanisinaAbone(() => void this.#kapanisIstegi());
+    this.#kapanisCoz = window.api.pencereKapanisinaAbone(
+      () => void this.#kapanisIstegi(),
+    );
     // Yardım → Hakkında isteği → modalı aç.
     this.#hakkindaCoz = hakkindaServisi.dinle(() => (this.acikHakkinda = true));
     // Sekme listesi/aktif değişimi → çubuğu/başlığı tazele.
@@ -681,9 +710,9 @@ export class UygulamaKabugu extends LitElement {
       this.requestUpdate();
       // Sekme çubuğu görünür/gizli olunca tuval boyutu değişir → tuvalin seçim/sayfa
       // çerçevelerini yeniden konumlandırması için (bir kare sonra) resize tetikle.
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
     });
-    window.addEventListener('keydown', this.#klavye);
+    window.addEventListener("keydown", this.#klavye);
 
     void this.surumYukle();
   }
@@ -697,9 +726,9 @@ export class UygulamaKabugu extends LitElement {
     this.#sekmeCoz?.();
     this.#hakkindaCoz?.();
     if (this.#bildirimZaman) clearTimeout(this.#bildirimZaman);
-    window.removeEventListener('pointerdown', this.#disMenu, true);
-    window.removeEventListener('pointerdown', this.#disDil, true);
-    window.removeEventListener('keydown', this.#klavye);
+    window.removeEventListener("pointerdown", this.#disMenu, true);
+    window.removeEventListener("pointerdown", this.#disDil, true);
+    window.removeEventListener("keydown", this.#klavye);
     super.disconnectedCallback();
   }
 
@@ -718,11 +747,11 @@ export class UygulamaKabugu extends LitElement {
       for (const { i } of kirliler) {
         sekmeYoneticisi.aktifSec(i); // modal + kaydetme bu sekmeyi hedefler
         const cevap = await degisiklikSor.sor();
-        if (cevap === 'iptal') {
+        if (cevap === "iptal") {
           kapat = false;
           break;
         }
-        if (cevap === 'kaydet' && !(await kaydetBelge(this.#menuBaglami))) {
+        if (cevap === "kaydet" && !(await kaydetBelge(this.#menuBaglami))) {
           kapat = false; // kayıt iptal/başarısız → kapatma
           break;
         }
@@ -747,8 +776,8 @@ export class UygulamaKabugu extends LitElement {
     if (sekme.belge.degisti) {
       sekmeYoneticisi.aktifSec(indis); // soru/kayıt bu sekmeyi hedeflesin
       const cevap = await degisiklikSor.sor();
-      if (cevap === 'iptal') return;
-      if (cevap === 'kaydet' && !(await kaydetBelge(this.#menuBaglami))) return;
+      if (cevap === "iptal") return;
+      if (cevap === "kaydet" && !(await kaydetBelge(this.#menuBaglami))) return;
     }
     sekmeYoneticisi.sekmeKapat(indis);
   }
@@ -774,17 +803,17 @@ export class UygulamaKabugu extends LitElement {
         kap.append(kayit.olustur(baglam));
       }
     };
-    yerlestir('sol', this.sol);
-    yerlestir('merkez', this.tuvalKap); // tuval, sekme çubuğunun altındaki kaba
-    yerlestir('alt', this.altBolge);
+    yerlestir("sol", this.sol);
+    yerlestir("merkez", this.tuvalKap); // tuval, sekme çubuğunun altındaki kaba
+    yerlestir("alt", this.altBolge);
     // Sağ paneller içeriğe konur ama aynı anda yalnız biri görünür (Y7).
-    for (const kayit of panelKayitDefteri.bolgedekiler('sag')) {
+    for (const kayit of panelKayitDefteri.bolgedekiler("sag")) {
       const el = kayit.olustur(baglam);
       this.#sagPanelleri.set(kayit.id, el);
       this.sagIcerik.append(el);
     }
-    if (!this.#sagPanelleri.has(this.aktifSag ?? '')) {
-      this.aktifSag = panelKayitDefteri.bolgedekiler('sag')[0]?.id ?? null;
+    if (!this.#sagPanelleri.has(this.aktifSag ?? "")) {
+      this.aktifSag = panelKayitDefteri.bolgedekiler("sag")[0]?.id ?? null;
     }
     this.#sagGorunurluk();
   }
@@ -792,7 +821,7 @@ export class UygulamaKabugu extends LitElement {
   /** Yalnız aktif sağ paneli gösterir (diğerlerini gizler). */
   #sagGorunurluk(): void {
     for (const [id, el] of this.#sagPanelleri) {
-      el.style.display = id === this.aktifSag ? '' : 'none';
+      el.style.display = id === this.aktifSag ? "" : "none";
     }
   }
 
@@ -808,14 +837,17 @@ export class UygulamaKabugu extends LitElement {
     const basX = olay.clientX;
     const basGenislik = this.sagGenislik;
     const hareket = (o: PointerEvent): void => {
-      this.sagGenislik = Math.max(180, Math.min(640, basGenislik + (basX - o.clientX)));
+      this.sagGenislik = Math.max(
+        180,
+        Math.min(640, basGenislik + (basX - o.clientX)),
+      );
     };
     const birak = (): void => {
-      window.removeEventListener('pointermove', hareket);
-      window.removeEventListener('pointerup', birak);
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", birak);
     };
-    window.addEventListener('pointermove', hareket);
-    window.addEventListener('pointerup', birak);
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", birak);
   }
 
   /** Registry menü grupları, görünüm öğeleri olarak. (Dil artık üst çubukta — dünya simgesi.) */
@@ -829,13 +861,15 @@ export class UygulamaKabugu extends LitElement {
     }));
     // Dosya grubuna dinamik "Son Dosyalar" alt menüsünü enjekte et (registry
     // statik; bu liste oturuma göre değişir).
-    const dosyaGrubu = gruplar.find((g) => g.id === 'dosya');
+    const dosyaGrubu = gruplar.find((g) => g.id === "dosya");
     const son = sonDosyalar.liste();
     if (dosyaGrubu && son.length > 0) {
-      const acIdx = dosyaGrubu.ogeler.findIndex((o) => o.etiket === t('menu.dosya.ac'));
+      const acIdx = dosyaGrubu.ogeler.findIndex(
+        (o) => o.etiket === t("menu.dosya.ac"),
+      );
       const ekIndis = acIdx >= 0 ? acIdx + 1 : dosyaGrubu.ogeler.length;
       dosyaGrubu.ogeler.splice(ekIndis, 0, {
-        etiket: t('menu.dosya.son'),
+        etiket: t("menu.dosya.son"),
         altOgeler: son.map((r) => ({
           etiket: r.ad,
           ipucu: r.yol, // tam yol hover'da görünür (yalnız ad değil)
@@ -851,7 +885,7 @@ export class UygulamaKabugu extends LitElement {
     this.menuOdak = -1;
     // TK-1: menü açılınca ilk grup (Dosya) zaten açık olur.
     this.acikGrup = this.menuGruplari()[0]?.id ?? null;
-    window.addEventListener('pointerdown', this.#disMenu, true);
+    window.addEventListener("pointerdown", this.#disMenu, true);
   }
 
   private menuModunuKapat(): void {
@@ -859,7 +893,7 @@ export class UygulamaKabugu extends LitElement {
     this.menuModu = false;
     this.acikGrup = null;
     this.menuOdak = -1;
-    window.removeEventListener('pointerdown', this.#disMenu, true);
+    window.removeEventListener("pointerdown", this.#disMenu, true);
   }
 
   // TK-1: gruplar arası geçiş hover ile (tıklama da çalışır).
@@ -877,94 +911,121 @@ export class UygulamaKabugu extends LitElement {
   /** Dil açılırını aç/kapat; açıkken dışarı tıklama dinleyicisi ekler/çıkarır. */
   #dilAcKapat(): void {
     this.dilAcik = !this.dilAcik;
-    if (this.dilAcik) window.addEventListener('pointerdown', this.#disDil, true);
-    else window.removeEventListener('pointerdown', this.#disDil, true);
+    if (this.dilAcik)
+      window.addEventListener("pointerdown", this.#disDil, true);
+    else window.removeEventListener("pointerdown", this.#disDil, true);
   }
 
   /** Dili seçer ve açılırı kapatır. */
   #dilSec(kod: string): void {
     dilYonetici.ayarla(kod);
     this.dilAcik = false;
-    window.removeEventListener('pointerdown', this.#disDil, true);
+    window.removeEventListener("pointerdown", this.#disDil, true);
   }
 
   /** Dil açılırı dışına tıklama → kapat (composedPath gölge-DOM'u kapsar). */
   readonly #disDil = (olay: Event): void => {
     const iceride = olay
       .composedPath()
-      .some((d) => d instanceof HTMLElement && d.classList.contains('dil-secim'));
+      .some(
+        (d) => d instanceof HTMLElement && d.classList.contains("dil-secim"),
+      );
     if (!iceride) {
       this.dilAcik = false;
-      window.removeEventListener('pointerdown', this.#disDil, true);
+      window.removeEventListener("pointerdown", this.#disDil, true);
     }
   };
 
   override render() {
-    const macOS = window.api.platform === 'darwin';
+    const macOS = window.api.platform === "darwin";
 
     return html`
-      <header class="ust-bar" @dblclick=${() => window.api.pencereBuyutGeriAl()}>
+      <header
+        class="ust-bar"
+        @dblclick=${() => window.api.pencereBuyutGeriAl()}
+      >
         ${this.menuModu ? this.menuCubuguGorunumu() : this.topluGorunumu()}
 
         <span class="bosluk"></span>
 
         <button
           class="komut-ara"
-          title=${t('komutpalet.ipucu')}
+          title=${t("komutpalet.ipucu")}
           @click=${() => komutPaletiDeposu.ayarla(true)}
         >
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.4">
+          <svg
+            viewBox="0 0 16 16"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+          >
             <circle cx="7" cy="7" r="4.5" />
             <path d="M11 11 L14.5 14.5" stroke-linecap="round" />
           </svg>
-          <span class="etiket">${t('komutpalet.ara')}</span>
-          <kbd>${window.api.platform === 'darwin' ? '⌘K' : 'Ctrl+K'}</kbd>
+          <span class="etiket">${t("komutpalet.ara")}</span>
+          <kbd>${window.api.platform === "darwin" ? "⌘K" : "Ctrl+K"}</kbd>
         </button>
 
         <span class="bosluk"></span>
 
         <label class="tema-secim">
-          ${t('tema.etiket')}
+          ${t("tema.etiket")}
           <select @change=${this.temaSec} .value=${this.temaId}>
-            ${temaKayitDefteri.hepsi().map(
-              (tema) => html`
-                <option value=${tema.id} ?selected=${tema.id === this.temaId}>
-                  ${tema.etiket}
-                </option>
-              `,
-            )}
+            ${temaKayitDefteri
+              .hepsi()
+              .map(
+                (tema) => html`
+                  <option value=${tema.id} ?selected=${tema.id === this.temaId}>
+                    ${tema.etiket}
+                  </option>
+                `,
+              )}
           </select>
         </label>
 
         <div class="dil-secim">
           <button
-            class="dil-dugme ${this.dilAcik ? 'acik' : ''}"
-            title=${t('menu.grup.dil')}
-            aria-label=${t('menu.grup.dil')}
+            class="dil-dugme ${this.dilAcik ? "acik" : ""}"
+            title=${t("menu.grup.dil")}
+            aria-label=${t("menu.grup.dil")}
             @click=${() => this.#dilAcKapat()}
           >
-            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.2">
+            <svg
+              viewBox="0 0 16 16"
+              width="15"
+              height="15"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.2"
+            >
               <circle cx="8" cy="8" r="6.3" />
               <path d="M1.8 8h12.4" />
-              <path d="M8 1.7c2.5 1.8 2.5 10.8 0 12.6 M8 1.7c-2.5 1.8-2.5 10.8 0 12.6" />
+              <path
+                d="M8 1.7c2.5 1.8 2.5 10.8 0 12.6 M8 1.7c-2.5 1.8-2.5 10.8 0 12.6"
+              />
             </svg>
           </button>
           ${this.dilAcik
             ? html`<div class="dil-menu">
                 ${dilYonetici.dilleriAl().map(
-                  (dil) => html`<button
-                    class="dil-oge"
-                    @click=${() => this.#dilSec(dil.kod)}
-                  >
-                    <span>${dil.ad}</span>
-                    ${dil.kod === dilYonetici.mevcut ? html`<span class="iz">✓</span>` : ''}
-                  </button>`,
+                  (dil) =>
+                    html`<button
+                      class="dil-oge"
+                      @click=${() => this.#dilSec(dil.kod)}
+                    >
+                      <span>${dil.ad}</span>
+                      ${dil.kod === dilYonetici.mevcut
+                        ? html`<span class="iz">✓</span>`
+                        : ""}
+                    </button>`,
                 )}
               </div>`
-            : ''}
+            : ""}
         </div>
 
-        ${macOS ? '' : html`<pencere-kontrolleri></pencere-kontrolleri>`}
+        ${macOS ? "" : html`<pencere-kontrolleri></pencere-kontrolleri>`}
       </header>
 
       <div class="govde">
@@ -972,10 +1033,11 @@ export class UygulamaKabugu extends LitElement {
         <main class="merkez">
           ${sekmeYoneticisi.sekmeler.length >= 2
             ? html`<sekme-cubugu
-                @sekme-kapat=${(e: CustomEvent<number>) => void this.#sekmeKapat(e.detail)}
+                @sekme-kapat=${(e: CustomEvent<number>) =>
+                  void this.#sekmeKapat(e.detail)}
                 @sekme-yeni=${() => void this.#sekmeYeni()}
               ></sekme-cubugu>`
-            : ''}
+            : ""}
           <div class="tuval-kap"></div>
         </main>
         <aside class="sag">
@@ -984,20 +1046,26 @@ export class UygulamaKabugu extends LitElement {
             title="Genişliği sürükle"
             @pointerdown=${(e: PointerEvent) => this.sagBoyutBasla(e)}
           ></div>
-          <div class="sag-icerik" ?hidden=${this.aktifSag === null} style="width:${this.sagGenislik}px"></div>
+          <div
+            class="sag-icerik"
+            ?hidden=${this.aktifSag === null}
+            style="width:${this.sagGenislik}px"
+          ></div>
           <nav class="sag-ray">
-            ${panelKayitDefteri.bolgedekiler('sag').map(
-              (p) => html`
-                <button
-                  class=${this.aktifSag === p.id ? 'aktif' : ''}
-                  title=${p.baslik}
-                  aria-label=${p.baslik}
-                  @click=${() => this.sagSec(p.id)}
-                >
-                  ${p.ikon ?? p.baslik.slice(0, 1).toLocaleUpperCase('tr')}
-                </button>
-              `,
-            )}
+            ${panelKayitDefteri
+              .bolgedekiler("sag")
+              .map(
+                (p) => html`
+                  <button
+                    class=${this.aktifSag === p.id ? "aktif" : ""}
+                    title=${p.baslik}
+                    aria-label=${p.baslik}
+                    @click=${() => this.sagSec(p.id)}
+                  >
+                    ${p.ikon ?? p.baslik.slice(0, 1).toLocaleUpperCase("tr")}
+                  </button>
+                `,
+              )}
           </nav>
         </aside>
       </div>
@@ -1005,11 +1073,12 @@ export class UygulamaKabugu extends LitElement {
       <div class="alt-bolge"></div>
 
       ${this.bildirim
-        ? html`<div class="toast ${this.bildirim.tur}" role="status">${this.bildirim.mesaj}</div>`
-        : ''}
-
-      ${this.kaydetSorusu ? this.#kaydetModali() : ''}
-      ${this.acikHakkinda ? this.#hakkindaModali() : ''}
+        ? html`<div class="toast ${this.bildirim.tur}" role="status">
+            ${this.bildirim.mesaj}
+          </div>`
+        : ""}
+      ${this.kaydetSorusu ? this.#kaydetModali() : ""}
+      ${this.acikHakkinda ? this.#hakkindaModali() : ""}
     `;
   }
 
@@ -1023,18 +1092,25 @@ export class UygulamaKabugu extends LitElement {
         }}
       >
         <div class="modal hakkinda" role="dialog" aria-modal="true">
-          <h2>${t('uygulama.ad')}</h2>
+          <h2>${t("uygulama.ad")}</h2>
           ${this.surum
             ? html`<div class="surumler">
-                <span>${t('durum.surum', { surum: this.surum.uygulama })}</span>
-                <span>${t('durum.electron', { surum: this.surum.electron })}</span>
-                <span>${t('durum.chromium', { surum: this.surum.chrome })}</span>
-                <span>${t('durum.node', { surum: this.surum.node })}</span>
+                <span>${t("durum.surum", { surum: this.surum.uygulama })}</span>
+                <span
+                  >${t("durum.electron", { surum: this.surum.electron })}</span
+                >
+                <span
+                  >${t("durum.chromium", { surum: this.surum.chrome })}</span
+                >
+                <span>${t("durum.node", { surum: this.surum.node })}</span>
               </div>`
-            : html`<p>${t('durum.surumYukleniyor')}</p>`}
+            : html`<p>${t("durum.surumYukleniyor")}</p>`}
           <div class="dugmeler">
-            <button class="birincil" @click=${() => (this.acikHakkinda = false)}>
-              ${t('dialog.kapat')}
+            <button
+              class="birincil"
+              @click=${() => (this.acikHakkinda = false)}
+            >
+              ${t("dialog.kapat")}
             </button>
           </div>
         </div>
@@ -1044,24 +1120,32 @@ export class UygulamaKabugu extends LitElement {
 
   /** Kaydedilmemiş değişiklik modalı (Kaydet / Kaydetme / İptal). */
   #kaydetModali() {
-    const ad = this.acikDosyaAdi ?? t('dosya.yeniAd');
+    const ad = this.acikDosyaAdi ?? t("dosya.yeniAd");
     return html`
       <div
         class="modal-perde"
         @click=${(e: Event) => {
-          if (e.target === e.currentTarget) degisiklikSor.cevapla('iptal');
+          if (e.target === e.currentTarget) degisiklikSor.cevapla("iptal");
         }}
       >
         <div class="modal" role="dialog" aria-modal="true">
-          <h2>${t('dialog.kaydetSor.baslik')}</h2>
-          <p>${t('dialog.kaydetSor.mesaj', { ad })}</p>
+          <h2>${t("dialog.kaydetSor.baslik")}</h2>
+          <p>${t("dialog.kaydetSor.mesaj", { ad })}</p>
           <div class="dugmeler">
-            <button class="tehlike" @click=${() => degisiklikSor.cevapla('kaydetme')}>
-              ${t('dialog.kaydetme')}
+            <button
+              class="tehlike"
+              @click=${() => degisiklikSor.cevapla("kaydetme")}
+            >
+              ${t("dialog.kaydetme")}
             </button>
-            <button @click=${() => degisiklikSor.cevapla('iptal')}>${t('dialog.iptal')}</button>
-            <button class="birincil" @click=${() => degisiklikSor.cevapla('kaydet')}>
-              ${t('dialog.kaydet')}
+            <button @click=${() => degisiklikSor.cevapla("iptal")}>
+              ${t("dialog.iptal")}
+            </button>
+            <button
+              class="birincil"
+              @click=${() => degisiklikSor.cevapla("kaydet")}
+            >
+              ${t("dialog.kaydet")}
             </button>
           </div>
         </div>
@@ -1074,14 +1158,16 @@ export class UygulamaKabugu extends LitElement {
     return html`
       <button
         class="hamburger"
-        title=${t('menu.ac')}
-        aria-label=${t('menu.ac')}
+        title=${t("menu.ac")}
+        aria-label=${t("menu.ac")}
         @click=${this.menuModaGec}
       >
         <span></span><span></span><span></span>
       </button>
-      <span class="ad">${t('uygulama.ad')}</span>
-      ${this.acikDosyaAdi ? html`<span class="dosya">${this.acikDosyaAdi}</span>` : ''}
+      <span class="ad">${t("uygulama.ad")}</span>
+      ${this.acikDosyaAdi
+        ? html`<span class="dosya">${this.acikDosyaAdi}</span>`
+        : ""}
     `;
   }
 
@@ -1091,7 +1177,7 @@ export class UygulamaKabugu extends LitElement {
       <nav class="menu-cubugu">
         ${this.menuGruplari().map(
           (grup) => html`
-            <div class="menu-grup ${this.acikGrup === grup.id ? 'acik' : ''}">
+            <div class="menu-grup ${this.acikGrup === grup.id ? "acik" : ""}">
               <button
                 class="grup-dugme"
                 @mouseenter=${() => this.grupAc(grup.id)}
@@ -1108,7 +1194,7 @@ export class UygulamaKabugu extends LitElement {
                       ></uygulama-menusu>
                     </div>
                   `
-                : ''}
+                : ""}
             </div>
           `,
         )}
@@ -1119,6 +1205,6 @@ export class UygulamaKabugu extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'uygulama-kabugu': UygulamaKabugu;
+    "uygulama-kabugu": UygulamaKabugu;
   }
 }

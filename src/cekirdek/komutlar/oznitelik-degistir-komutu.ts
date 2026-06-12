@@ -1,6 +1,6 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "./komut";
 
 /**
  * Bir düğümün tek bir özniteliğini değiştiren komut (İlke 2).

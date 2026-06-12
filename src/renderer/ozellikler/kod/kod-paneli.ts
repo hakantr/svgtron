@@ -1,13 +1,13 @@
-import { LitElement, html, css, nothing, type TemplateResult } from 'lit';
-import { customElement, state, query } from 'lit/decorators.js';
-import type { BelgeDeposu } from '../../../cekirdek/belge/belge-deposu';
-import type { Belge } from '../../../cekirdek/belge/belge';
-import type { SecimDeposu } from '../../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import { KodUygulaKomutu } from '../../../cekirdek/komutlar/kod-uygula-komutu';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { dilYonetici, t } from '../../diller/dil';
-import { kodGorunumu } from './kod-goster';
+import { LitElement, html, css, nothing, type TemplateResult } from "lit";
+import { customElement, state, query } from "lit/decorators.js";
+import type { BelgeDeposu } from "../../../cekirdek/belge/belge-deposu";
+import type { Belge } from "../../../cekirdek/belge/belge";
+import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import { KodUygulaKomutu } from "../../../cekirdek/komutlar/kod-uygula-komutu";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import { dilYonetici, t } from "../../diller/dil";
+import { kodGorunumu } from "./kod-goster";
 
 /**
  * Canlı SVG kod paneli (§11.4) — ÇİFT YÖNLÜ senkron + YERİNDE DÜZENLEME:
@@ -23,7 +23,7 @@ import { kodGorunumu } from './kod-goster';
  * değişiminde sadece `.secili` sınıfı imperatif güncellenir. Düzenleme sırasında
  * (odakta/uygulanmamış değişiklik) ağaç YENİDEN ÜRETİLMEZ → yazılanlar korunur.
  */
-@customElement('kod-paneli')
+@customElement("kod-paneli")
 export class KodPaneli extends LitElement {
   static override styles = css`
     :host {
@@ -120,7 +120,7 @@ export class KodPaneli extends LitElement {
   @state() private kirli = false;
   @state() private hata?: string;
   /** Son kaydırılan seçim imzası (gereksiz scroll'u önler). */
-  #sonScrollImza = '';
+  #sonScrollImza = "";
   /** Memoize edilmiş kod ağacı + kaynağı (belge içeriği değişince yeniden kurulur). */
   #kodAgaciCache: TemplateResult | typeof nothing = nothing;
   #kodCacheBelge: Belge | null = null;
@@ -133,7 +133,7 @@ export class KodPaneli extends LitElement {
   #secimCoz?: () => void;
   #dilCoz?: () => void;
 
-  @query('pre.kod') private kodEl?: HTMLPreElement;
+  @query("pre.kod") private kodEl?: HTMLPreElement;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -152,7 +152,7 @@ export class KodPaneli extends LitElement {
   /** Belge içeriği değişti: kod ağacı önbelleğini geçersiz kıl + yeniden çiz. */
   #modelDegisti(): void {
     this.#kodKirli = true;
-    this.#sonScrollImza = ''; // düğümler yeni konuma kaymış olabilir → yeniden kaydır
+    this.#sonScrollImza = ""; // düğümler yeni konuma kaymış olabilir → yeniden kaydır
     this.requestUpdate();
   }
 
@@ -164,9 +164,9 @@ export class KodPaneli extends LitElement {
   #vurguGuncelle(): void {
     if (!this.acik || !this.kodEl) return;
     const secili = new Set(this.secim.secililer.map((d) => d.kimlik));
-    for (const el of this.kodEl.querySelectorAll<HTMLElement>('.el')) {
-      const k = el.getAttribute('data-kimlik');
-      el.classList.toggle('secili', !!k && secili.has(k));
+    for (const el of this.kodEl.querySelectorAll<HTMLElement>(".el")) {
+      const k = el.getAttribute("data-kimlik");
+      el.classList.toggle("secili", !!k && secili.has(k));
     }
     this.#seciliyeKaydir();
   }
@@ -174,25 +174,27 @@ export class KodPaneli extends LitElement {
   /** Seçim değişince ilk seçili elemanı görünüre kaydır (düzenlerken DEĞİL — caret zıplamasın). */
   #seciliyeKaydir(): void {
     if (!this.kodEl || this.#odakta) return;
-    const imza = this.secim.secililer.map((d) => d.kimlik).join(',');
+    const imza = this.secim.secililer.map((d) => d.kimlik).join(",");
     if (imza === this.#sonScrollImza) return;
     this.#sonScrollImza = imza;
     if (!imza) return;
-    const ilk = this.kodEl.querySelector<HTMLElement>('.el.secili');
-    ilk?.scrollIntoView({ block: 'nearest' });
+    const ilk = this.kodEl.querySelector<HTMLElement>(".el.secili");
+    ilk?.scrollIntoView({ block: "nearest" });
   }
 
   /** Fare üzerine gelince yalnız EN-İÇTEKİ elemanı vurgula (iç içe span sorunu). */
   readonly #hover = (olay: PointerEvent): void => {
     const hedef =
-      olay.target instanceof Element ? (olay.target.closest('.el') as HTMLElement | null) : null;
+      olay.target instanceof Element
+        ? (olay.target.closest(".el") as HTMLElement | null)
+        : null;
     if (hedef === this.#vurgulu) return;
-    this.#vurgulu?.classList.remove('vurgu');
+    this.#vurgulu?.classList.remove("vurgu");
     this.#vurgulu = hedef;
-    hedef?.classList.add('vurgu');
+    hedef?.classList.add("vurgu");
   };
   readonly #hoverCik = (): void => {
-    this.#vurgulu?.classList.remove('vurgu');
+    this.#vurgulu?.classList.remove("vurgu");
     this.#vurgulu = null;
   };
 
@@ -203,9 +205,12 @@ export class KodPaneli extends LitElement {
    * by-pass et (kritik: çok satırlı düzenleme bozulmasın).
    */
   readonly #girisOnce = (olay: InputEvent): void => {
-    if (olay.inputType === 'insertParagraph' || olay.inputType === 'insertLineBreak') {
+    if (
+      olay.inputType === "insertParagraph" ||
+      olay.inputType === "insertLineBreak"
+    ) {
       olay.preventDefault();
-      document.execCommand('insertText', false, '\n');
+      document.execCommand("insertText", false, "\n");
     }
   };
 
@@ -214,8 +219,8 @@ export class KodPaneli extends LitElement {
     const belge = this.depo.belge;
     const hedef = olay.target;
     if (!belge || !(hedef instanceof Element)) return;
-    const span = hedef.closest('[data-kimlik]');
-    const kimlik = span?.getAttribute('data-kimlik');
+    const span = hedef.closest("[data-kimlik]");
+    const kimlik = span?.getAttribute("data-kimlik");
     if (!kimlik) return;
     const dugum = belge.dugumBul(kimlik);
     if (!dugum || dugum === belge.kok) return; // kök (svg) seçilmez
@@ -227,7 +232,7 @@ export class KodPaneli extends LitElement {
   private uygula(): void {
     if (!this.kodEl || !this.kirli) return;
     const belge = this.depo.belge;
-    const metin = this.kodEl.textContent ?? '';
+    const metin = this.kodEl.textContent ?? "";
     try {
       if (belge) {
         this.gecmis.calistir(new KodUygulaKomutu(belge, metin)); // aynı belge örneğinde yerinde
@@ -238,7 +243,7 @@ export class KodPaneli extends LitElement {
       this.kirli = false;
       this.hata = undefined;
     } catch {
-      this.hata = t('kod.gecersiz');
+      this.hata = t("kod.gecersiz");
     }
   }
 
@@ -258,9 +263,9 @@ export class KodPaneli extends LitElement {
     const belge = this.depo.belge;
     return html`
       <div class="baslik" @click=${() => (this.acik = !this.acik)}>
-        <span class="ok">${this.acik ? '▾' : '▸'}</span>
-        <span class="ad">${t('kod.baslik')}</span>
-        ${this.hata ? html`<span class="hata">${this.hata}</span>` : ''}
+        <span class="ok">${this.acik ? "▾" : "▸"}</span>
+        <span class="ad">${t("kod.baslik")}</span>
+        ${this.hata ? html`<span class="hata">${this.hata}</span>` : ""}
         ${this.acik && this.kirli
           ? html`<button
               @click=${(e: Event) => {
@@ -268,16 +273,16 @@ export class KodPaneli extends LitElement {
                 this.uygula();
               }}
             >
-              ${t('kod.uygula')}
+              ${t("kod.uygula")}
             </button>`
-          : ''}
+          : ""}
       </div>
-      ${this.acik ? this.#govde(belge) : ''}
+      ${this.acik ? this.#govde(belge) : ""}
     `;
   }
 
   #govde(belge: Belge | null) {
-    if (!belge) return html`<div class="bos">${t('kod.bosBelge')}</div>`;
+    if (!belge) return html`<div class="bos">${t("kod.bosBelge")}</div>`;
     return html`<pre
       class="kod"
       contenteditable="plaintext-only"
@@ -295,20 +300,22 @@ export class KodPaneli extends LitElement {
       @focusout=${() => {
         this.#odakta = false;
       }}
-    >${this.#kodAgaci(belge)}</pre>`;
+    >
+${this.#kodAgaci(belge)}</pre
+    >`;
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'kod-paneli': KodPaneli;
+    "kod-paneli": KodPaneli;
   }
 }
 
 panelKayitDefteri.kaydet({
-  id: 'kod',
-  baslik: 'SVG Kodu',
-  bolge: 'alt',
+  id: "kod",
+  baslik: "SVG Kodu",
+  bolge: "alt",
   olustur: ({ depo, secim, gecmis }) => {
     const panel = new KodPaneli();
     panel.depo = depo;

@@ -1,15 +1,15 @@
-import type { Komut } from './komut';
+import type { Komut } from "./komut";
 
 /**
- * Birleşik geçmiş girdisi (CLAUDE.md §9.6 d) — iki tür:
+ * Birleşik geçmiş girdisi (AGENTS.md §9.6 d) — iki tür:
  *  - `duzenleme`: belge Command'ı (İlke 2), undo/redo'ya tam girer.
  *  - `secim`: belgeyi DEĞİŞTİRMEYEN seçim anlık görüntüsü (önceki/sonraki kimlik
  *    listeleri). Geri-al önceki seçimi, ileri-al sonraki seçimi geri yükler.
  */
 export type Girdi =
-  | { readonly tur: 'duzenleme'; readonly komut: Komut }
+  | { readonly tur: "duzenleme"; readonly komut: Komut }
   | {
-      readonly tur: 'secim';
+      readonly tur: "secim";
       readonly onceki: readonly string[];
       readonly sonraki: readonly string[];
       readonly etiket: string;
@@ -19,7 +19,7 @@ export type Girdi =
 const SECIM_PENCERESI = 5;
 
 /**
- * Komut geçmişi — BİRLEŞİK undo/redo zaman çizelgesi (CLAUDE.md İlke 2 + §9.6).
+ * Komut geçmişi — BİRLEŞİK undo/redo zaman çizelgesi (AGENTS.md İlke 2 + §9.6).
  *
  * Tek bir girdi listesi (`#girdiler`) + tek bir konum işaretçisi (`#konum`,
  * uygulanmış girdi sayısı) tutar. Liste iki tür girdi içerir: **düzenleme**
@@ -57,7 +57,7 @@ export class KomutGecmisi {
   calistir(komut: Komut): void {
     komut.uygula();
     this.#girdiler.length = this.#konum; // ileri (redo) dalını at
-    this.#girdiler.push({ tur: 'duzenleme', komut });
+    this.#girdiler.push({ tur: "duzenleme", komut });
     this.#konum++;
     this.#bildir();
   }
@@ -67,9 +67,18 @@ export class KomutGecmisi {
    * pencereyi uygular. Seçimi BURADA uygulamaz — seçim zaten kullanıcı eyleminde
    * değişti; bu yalnız geçmişe yazılan anlık görüntüdür.
    */
-  secimAdimiEkle(onceki: readonly string[], sonraki: readonly string[], etiket: string): void {
+  secimAdimiEkle(
+    onceki: readonly string[],
+    sonraki: readonly string[],
+    etiket: string,
+  ): void {
     this.#girdiler.length = this.#konum; // ileri (redo) dalını at
-    this.#girdiler.push({ tur: 'secim', onceki: [...onceki], sonraki: [...sonraki], etiket });
+    this.#girdiler.push({
+      tur: "secim",
+      onceki: [...onceki],
+      sonraki: [...sonraki],
+      etiket,
+    });
     this.#konum++;
     this.#secimSinirla();
     this.#bildir();
@@ -78,9 +87,9 @@ export class KomutGecmisi {
   /** Seçim adımlarını 5 ile sınırlar: fazlaysa EN ESKİ seçim adımını düşürür (§9.6 e). */
   #secimSinirla(): void {
     let say = 0;
-    for (const g of this.#girdiler) if (g.tur === 'secim') say++;
+    for (const g of this.#girdiler) if (g.tur === "secim") say++;
     while (say > SECIM_PENCERESI) {
-      const idx = this.#girdiler.findIndex((g) => g.tur === 'secim');
+      const idx = this.#girdiler.findIndex((g) => g.tur === "secim");
       if (idx === -1) break;
       this.#girdiler.splice(idx, 1);
       if (idx < this.#konum) this.#konum--; // düşen girdi uygulanmıştı → konum kayar
@@ -103,7 +112,7 @@ export class KomutGecmisi {
     if (this.#konum === 0) return;
     const g = this.#girdiler[this.#konum - 1]!;
     this.#konum--;
-    if (g.tur === 'duzenleme') g.komut.geriAl();
+    if (g.tur === "duzenleme") g.komut.geriAl();
     else this.#secimUygula?.(g.onceki);
     this.#bildir();
   }
@@ -113,7 +122,7 @@ export class KomutGecmisi {
     if (this.#konum >= this.#girdiler.length) return;
     const g = this.#girdiler[this.#konum]!;
     this.#konum++;
-    if (g.tur === 'duzenleme') g.komut.uygula();
+    if (g.tur === "duzenleme") g.komut.uygula();
     else this.#secimUygula?.(g.sonraki);
     this.#bildir();
   }
@@ -144,9 +153,9 @@ export class KomutGecmisi {
    * ileri (yeniden uygulanabilir) konumdadır. `tur` ile panel seçim adımlarını
    * düzenleme adımlarından görsel ayırabilir (§9.6 d).
    */
-  girisler(): { etiket: string; uygulandi: boolean; tur: Girdi['tur'] }[] {
+  girisler(): { etiket: string; uygulandi: boolean; tur: Girdi["tur"] }[] {
     return this.#girdiler.map((g, i) => ({
-      etiket: g.tur === 'duzenleme' ? (g.komut.etiket ?? '') : g.etiket,
+      etiket: g.tur === "duzenleme" ? (g.komut.etiket ?? "") : g.etiket,
       uygulandi: i < this.#konum,
       tur: g.tur,
     }));

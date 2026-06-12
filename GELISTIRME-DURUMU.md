@@ -3,7 +3,7 @@
 > **Bu dosya ne işe yarar:** Başka bir makinede ya da yeni bir oturumda kaldığımız
 > yerden devam edebilmek için projenin **güncel uygulama durumunu**, edinilen
 > **teknik dersleri**, doğrulama rutinini ve **bekleyen işleri** tutar.
-> `CLAUDE.md` = değişmez kurallar; `TASARIM-KARARLARI.md` = anlaşılan davranış/UI
+> `AGENTS.md` = değişmez kurallar; `TASARIM-KARARLARI.md` = anlaşılan davranış/UI
 > kararları (TK-1..TK-12); **bu dosya** = "şu an nerede kaldık + nasıl çalışıyoruz".
 > Yeni oturuma başlarken **önce bunu oku.**
 
@@ -41,8 +41,8 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
   görünürleştirme vb. — bkz. TASARIM-KARARLARI.md TK-37).
 - Ayrıca §6'daki ertelenenler (animasyon kolaylıkları, serbest-dönüştür, vb.).
 
-> Not: `AGENTS.md` artık `./CLAUDE.md`'ye symlink (Codex `AGENTS.md`, Claude `CLAUDE.md`
-> okur; tek doğruluk kaynağı CLAUDE.md). Eski `AGENT.md` symlink'i kaldırıldı.
+> Not: `AGENTS.md` artık `./AGENTS.md`'ye symlink (Codex `AGENTS.md`, Agents `AGENTS.md`
+> okur; tek doğruluk kaynağı AGENTS.md). Eski `AGENT.md` symlink'i kaldırıldı.
 
 ---
 
@@ -63,7 +63,7 @@ Smoke (uygulama hatasız açılıyor mu):
 ELECTRON_ENABLE_LOGGING=1 timeout 9 node node_modules/electron/cli.js . 2>&1 | \
   grep -iE "Uncaught|CONSOLE.*error|TypeError|cannot read|zaten kayıtlı" | \
   grep -viE "GPU|sandbox|zygote|network_service|GetTerminationStatus"
-# Çıktı boşsa temiz. (Claude'un kum havuzunda exit 124 = temiz kapanış; GPU/sandbox
+# Çıktı boşsa temiz. (Agents'un kum havuzunda exit 124 = temiz kapanış; GPU/sandbox
 # satırları kum-havuzu artefaktıdır, gerçek hata değil.)
 ```
 
@@ -76,7 +76,7 @@ npx esbuild src/cekirdek/belge/model/yol.ts --format=esm --outfile=/tmp/t/yol.mj
 Test edilmiş saf modüller: `yol.ts` (16), `yol-duzenleme.ts` (7), `bool-geometri.ts`
 (10), `bool.ts/atomikYuzler` (9), `sekil-geometri.ts` (6).
 
-> Not (yalnız Claude kum havuzu): `npm install` postinstall'u engellenirse Electron
+> Not (yalnız Agents kum havuzu): `npm install` postinstall'u engellenirse Electron
 > binari'sini elle indir: `node node_modules/electron/install.js`. Smoke için
 > `dangerouslyDisableSandbox` gerekir. Kullanıcının gerçek makinesinde bunlar gereksiz.
 
@@ -84,7 +84,7 @@ Test edilmiş saf modüller: `yol.ts` (16), `yol-duzenleme.ts` (7), `bool-geomet
 
 ## 2. Mimari hatırlatıcılar (kısa)
 
-10 değişmez ilke `CLAUDE.md`'de. Pratikte en çok dokunulan desenler:
+10 değişmez ilke `AGENTS.md`'de. Pratikte en çok dokunulan desenler:
 
 - **Her düzenleme bir Command'dır** (`uygula`/`geriAl`). DOM'a komut dışında kalıcı
   mutasyon yok. Sürükleme sırasında DOM'a *önizleme* yazılır (görünüm durumu),
@@ -195,7 +195,7 @@ latest` ile izlenir. electron-builder.yml + build/icon.png.
 ## 5. Çalışma kuralları (bu projede edinilen)
 
 - Küçük, odaklı commit'ler; çalışmayan ara durum bırakma. Commit mesajı sonunda:
-  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+  `Co-Authored-By: Agents Opus 4.8 (1M context) <noreply@anthropic.com>`.
 - İş bitince commit + `git push origin main` (push CI'ı tetikler).
 - Her yeni davranış/UI kararını **TASARIM-KARARLARI.md**'ye TK-n olarak ekle.
 - §8.4 kuralı: özelliğe başlamadan "mevcut ilkeyi mi kullanıyor, yoksa kabuğu/

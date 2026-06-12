@@ -1,20 +1,20 @@
-import { LitElement, html, css, svg, type TemplateResult } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import type { BelgeDeposu } from '../../../cekirdek/belge/belge-deposu';
-import type { SecimDeposu } from '../../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
-import { OznitelikDegistirKomutu } from '../../../cekirdek/komutlar/oznitelik-degistir-komutu';
-import { KilitKomutu } from '../../../cekirdek/komutlar/kilit-komutu';
-import { ArtboardKomutu } from '../../../cekirdek/komutlar/artboard-komutu';
-import { SiraKomutu } from '../../../cekirdek/komutlar/dugum-komutlari';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { cizimErisimi } from '../../tuval/cizim-erisimi';
-import { stilAyarla } from '../../boya/stil';
-import { dilYonetici, t } from '../../diller/dil';
+import { LitElement, html, css, svg, type TemplateResult } from "lit";
+import { customElement } from "lit/decorators.js";
+import type { BelgeDeposu } from "../../../cekirdek/belge/belge-deposu";
+import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { KilitKomutu } from "../../../cekirdek/komutlar/kilit-komutu";
+import { ArtboardKomutu } from "../../../cekirdek/komutlar/artboard-komutu";
+import { SiraKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import { cizimErisimi } from "../../tuval/cizim-erisimi";
+import { stilAyarla } from "../../boya/stil";
+import { dilYonetici, t } from "../../diller/dil";
 
 /** Ağaçta gösterilmeyen kapsayıcı/tanım etiketleri. */
-const GIZLI = new Set(['defs', 'style', 'title', 'desc', 'metadata']);
+const GIZLI = new Set(["defs", "style", "title", "desc", "metadata"]);
 /**
  * Artboard ADAYI olabilecek (render edilen, geometrisi olan) etiketler — beyaz liste.
  * Kök altına doğrudan konan tanım/paint-server elemanları (linearGradient, filter,
@@ -22,7 +22,16 @@ const GIZLI = new Set(['defs', 'style', 'title', 'desc', 'metadata']);
  * aday DEĞİLDİR; beyaz liste, ileride yeni tanım türleri gelse de yanlış adayı önler.
  */
 const ARTBOARD_GRAFIKSEL = new Set([
-  'rect', 'circle', 'ellipse', 'path', 'polygon', 'polyline', 'line', 'image', 'g', 'use',
+  "rect",
+  "circle",
+  "ellipse",
+  "path",
+  "polygon",
+  "polyline",
+  "line",
+  "image",
+  "g",
+  "use",
 ]);
 /** Artboard ölçü eşleşmesinde kabul edilen sapma (~%2). */
 const ARTBOARD_TOLERANS = 0.02;
@@ -39,7 +48,7 @@ const ARTBOARD_IKON = svg`<svg viewBox="0 0 16 16" width="13" height="13" fill="
  * seçme (kilitli dâhil), görünürlük, kilit, öne/arkaya işlemleri sunar. Sıralama
  * ve görünürlük belge durumudur → Command (İlke 2). Liste ÜSTÜ = ön (üst z).
  */
-@customElement('katmanlar-paneli')
+@customElement("katmanlar-paneli")
 export class KatmanlarPaneli extends LitElement {
   static override styles = css`
     :host {
@@ -138,15 +147,21 @@ export class KatmanlarPaneli extends LitElement {
   }
 
   private gizliMi(d: Dugum): boolean {
-    const s = d.oznitelikler.get('style') ?? '';
-    return /display\s*:\s*none/.test(s) || d.oznitelikler.get('display') === 'none';
+    const s = d.oznitelikler.get("style") ?? "";
+    return (
+      /display\s*:\s*none/.test(s) || d.oznitelikler.get("display") === "none"
+    );
   }
 
   private gorunurlukDegistir(d: Dugum): void {
     const belge = this.depo.belge;
     if (!belge) return;
-    const yeni = stilAyarla(d.oznitelikler.get('style') ?? null, 'display', this.gizliMi(d) ? '' : 'none');
-    this.gecmis.calistir(new OznitelikDegistirKomutu(belge, d, 'style', yeni));
+    const yeni = stilAyarla(
+      d.oznitelikler.get("style") ?? null,
+      "display",
+      this.gizliMi(d) ? "" : "none",
+    );
+    this.gecmis.calistir(new OznitelikDegistirKomutu(belge, d, "style", yeni));
   }
 
   private kilitDegistir(d: Dugum): void {
@@ -168,16 +183,25 @@ export class KatmanlarPaneli extends LitElement {
   #kokHedef(): { minX: number; minY: number; g: number; y: number } | null {
     const kok = this.depo.belge?.kok;
     if (!kok) return null;
-    const vb = kok.oznitelikler.get('viewBox');
+    const vb = kok.oznitelikler.get("viewBox");
     if (vb) {
-      const p = vb.trim().split(/[\s,]+/).map(Number);
-      if (p.length === 4 && p.every((n) => Number.isFinite(n)) && p[2]! > 0 && p[3]! > 0) {
+      const p = vb
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number);
+      if (
+        p.length === 4 &&
+        p.every((n) => Number.isFinite(n)) &&
+        p[2]! > 0 &&
+        p[3]! > 0
+      ) {
         return { minX: p[0]!, minY: p[1]!, g: p[2]!, y: p[3]! };
       }
     }
-    const g = this.#mutlakSayi(kok.oznitelikler.get('width'));
-    const y = this.#mutlakSayi(kok.oznitelikler.get('height'));
-    if (g !== null && y !== null && g > 0 && y > 0) return { minX: 0, minY: 0, g, y };
+    const g = this.#mutlakSayi(kok.oznitelikler.get("width"));
+    const y = this.#mutlakSayi(kok.oznitelikler.get("height"));
+    if (g !== null && y !== null && g > 0 && y > 0)
+      return { minX: 0, minY: 0, g, y };
     return null;
   }
 
@@ -208,14 +232,17 @@ export class KatmanlarPaneli extends LitElement {
   }
 
   /** Aday düğüm SVG'yi tam kapsıyor mu? (öznitelik yüzde/eşit ya da render bbox.) */
-  #tamKapsarMi(aday: Dugum, hedef: { minX: number; minY: number; g: number; y: number }): boolean {
+  #tamKapsarMi(
+    aday: Dugum,
+    hedef: { minX: number; minY: number; g: number; y: number },
+  ): boolean {
     // 1) Öznitelik tabanlı: width/height tam kapsıyor + köşe 0 (sayısaldan bağımsız).
     const oz = (ad: string) => aday.oznitelikler.get(ad);
     if (
-      this.#boyutKapsar(oz('width'), hedef.g) &&
-      this.#boyutKapsar(oz('height'), hedef.y) &&
-      this.#sifirKonum(oz('x')) &&
-      this.#sifirKonum(oz('y'))
+      this.#boyutKapsar(oz("width"), hedef.g) &&
+      this.#boyutKapsar(oz("height"), hedef.y) &&
+      this.#sifirKonum(oz("x")) &&
+      this.#sifirKonum(oz("y"))
     ) {
       return true;
     }
@@ -247,7 +274,10 @@ export class KatmanlarPaneli extends LitElement {
     // Yüzde eşiği toleransla tutarlı (≥%98): sayısal/bbox dalıyla aynı sapmayı paylaşır.
     if (yuzde) return parseFloat(yuzde[1]!) >= (1 - ARTBOARD_TOLERANS) * 100;
     const sayi = parseFloat(s);
-    return Number.isFinite(sayi) && Math.abs(sayi - hedef) <= hedef * ARTBOARD_TOLERANS;
+    return (
+      Number.isFinite(sayi) &&
+      Math.abs(sayi - hedef) <= hedef * ARTBOARD_TOLERANS
+    );
   }
 
   /** x/y köşesi başlangıçta (0 ya da yok) mı? (yüzde/px ~0). */
@@ -270,62 +300,110 @@ export class KatmanlarPaneli extends LitElement {
     const kok = this.depo.belge?.kok;
     const aday = this.#artboardAdayi();
     return html`
-      <div class="baslik">${t('katmanlar.baslik')}</div>
+      <div class="baslik">${t("katmanlar.baslik")}</div>
       ${kok
         ? this.#agac(kok, 0, aday)
-        : html`<div class="bos">${t('katmanlar.bos')}</div>`}
+        : html`<div class="bos">${t("katmanlar.bos")}</div>`}
     `;
   }
 
   /** Bir ebeveynin çocuklarını TERS sırada (ön üstte) çizer. */
   #agac(ebeveyn: Dugum, derinlik: number, aday: Dugum | null): TemplateResult {
     const cocuklar = ebeveyn.cocuklar.filter((c) => !GIZLI.has(c.etiket));
-    return html`${[...cocuklar].reverse().map((c) => this.#satir(ebeveyn, c, derinlik, aday))}`;
+    return html`${[...cocuklar]
+      .reverse()
+      .map((c) => this.#satir(ebeveyn, c, derinlik, aday))}`;
   }
 
-  #satir(ebeveyn: Dugum, d: Dugum, derinlik: number, aday: Dugum | null): TemplateResult {
-    const id = d.oznitelikler.get('id');
+  #satir(
+    ebeveyn: Dugum,
+    d: Dugum,
+    derinlik: number,
+    aday: Dugum | null,
+  ): TemplateResult {
+    const id = d.oznitelikler.get("id");
     const secili = this.secim.icindeMi(d);
     const gizli = this.gizliMi(d);
     // Artboard butonu: zaten artboard ise (kaldır) ya da geçerli aday ise (yap).
     const artboardGoster = d.artboard || d === aday;
     return html`
       <div
-        class="satir ${secili ? 'secili' : ''}"
+        class="satir ${secili ? "secili" : ""}"
         style="padding-left:${0.3 + derinlik * 0.85}rem"
         @click=${() => this.secim.sec(d)}
       >
-        <span class="ad">${d.etiket} ${id ? html`<code>#${id}</code>` : ''}</span>
+        <span class="ad"
+          >${d.etiket} ${id ? html`<code>#${id}</code>` : ""}</span
+        >
         <span class="ikonlar">
           ${artboardGoster
             ? html`<button
-                class=${d.artboard ? 'etkin' : ''}
-                title=${d.artboard ? t('katmanlar.artboardKaldir') : t('katmanlar.artboardYap')}
-                @click=${(e: Event) => { e.stopPropagation(); this.artboardDegistir(d); }}
-              >${ARTBOARD_IKON}</button>`
-            : ''}
-          <button title=${t('katmanlar.one')} @click=${(e: Event) => { e.stopPropagation(); this.siraDegistir(ebeveyn, d, 1); }}>▲</button>
-          <button title=${t('katmanlar.arkaya')} @click=${(e: Event) => { e.stopPropagation(); this.siraDegistir(ebeveyn, d, -1); }}>▼</button>
-          <button title=${t('katmanlar.goster')} @click=${(e: Event) => { e.stopPropagation(); this.gorunurlukDegistir(d); }}>${gizli ? GOZ_KAPALI : GOZ}</button>
-          <button title=${t('katmanlar.kilit')} @click=${(e: Event) => { e.stopPropagation(); this.kilitDegistir(d); }}>${d.kilitli ? KILITLI : KILITSIZ}</button>
+                class=${d.artboard ? "etkin" : ""}
+                title=${d.artboard
+                  ? t("katmanlar.artboardKaldir")
+                  : t("katmanlar.artboardYap")}
+                @click=${(e: Event) => {
+                  e.stopPropagation();
+                  this.artboardDegistir(d);
+                }}
+              >
+                ${ARTBOARD_IKON}
+              </button>`
+            : ""}
+          <button
+            title=${t("katmanlar.one")}
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              this.siraDegistir(ebeveyn, d, 1);
+            }}
+          >
+            ▲
+          </button>
+          <button
+            title=${t("katmanlar.arkaya")}
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              this.siraDegistir(ebeveyn, d, -1);
+            }}
+          >
+            ▼
+          </button>
+          <button
+            title=${t("katmanlar.goster")}
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              this.gorunurlukDegistir(d);
+            }}
+          >
+            ${gizli ? GOZ_KAPALI : GOZ}
+          </button>
+          <button
+            title=${t("katmanlar.kilit")}
+            @click=${(e: Event) => {
+              e.stopPropagation();
+              this.kilitDegistir(d);
+            }}
+          >
+            ${d.kilitli ? KILITLI : KILITSIZ}
+          </button>
         </span>
       </div>
-      ${d.etiket === 'g' ? this.#agac(d, derinlik + 1, aday) : ''}
+      ${d.etiket === "g" ? this.#agac(d, derinlik + 1, aday) : ""}
     `;
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'katmanlar-paneli': KatmanlarPaneli;
+    "katmanlar-paneli": KatmanlarPaneli;
   }
 }
 
 // Registry'ye kaydol (İlke 5) — sağ bölge (denetçi ile tanımlar arasında).
 panelKayitDefteri.kaydet({
-  id: 'katmanlar',
-  baslik: 'Katmanlar',
-  bolge: 'sag',
+  id: "katmanlar",
+  baslik: "Katmanlar",
+  bolge: "sag",
   ikon: svg`<svg viewBox="0 0 18 18" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M9 2 16 6 9 10 2 6Z"/><path d="M2.4 9.4 9 13.2 15.6 9.4"/><path d="M2.4 12.6 9 16.4 15.6 12.6"/></svg>`,
   olustur: ({ depo, secim, gecmis }) => {
     const panel = new KatmanlarPaneli();

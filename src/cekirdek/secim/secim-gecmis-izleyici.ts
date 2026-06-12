@@ -1,10 +1,10 @@
-import type { Dugum } from '../belge/model/dugum';
-import type { SecimDeposu } from './secim-deposu';
-import type { KomutGecmisi } from '../komutlar/komut-gecmisi';
-import { secimKaydiBastirildiMi } from './secim-kayit-bastir';
+import type { Dugum } from "../belge/model/dugum";
+import type { SecimDeposu } from "./secim-deposu";
+import type { KomutGecmisi } from "../komutlar/komut-gecmisi";
+import { secimKaydiBastirildiMi } from "./secim-kayit-bastir";
 
 /**
- * Seçim geçmişi izleyicisi (CLAUDE.md §9.6 d–g).
+ * Seçim geçmişi izleyicisi (AGENTS.md §9.6 d–g).
  *
  * `SecimDeposu`'nu izler ve seçim geçişlerini birleşik geçmişe (`KomutGecmisi`)
  * **seçim adımı** olarak yazar. Üç kuralı uygular:
@@ -75,7 +75,7 @@ export class SecimGecmisIzleyici {
   /** Bir kimliğin görüntü adı: id > etiket > kimlik. */
   #ad(kimlik: string): string {
     const d = this.cozumle(kimlik);
-    return d ? (d.oznitelikler.get('id') ?? d.etiket) : kimlik;
+    return d ? (d.oznitelikler.get("id") ?? d.etiket) : kimlik;
   }
 
   /** "sec" adımı etiketi (eklenen nesnelere göre). */
@@ -89,11 +89,17 @@ export class SecimGecmisIzleyici {
 
   /** "bırak" adımı etiketi. */
   #etiketBirak(onceki: readonly string[]): string {
-    return onceki.length === 1 ? `${this.#ad(onceki[0]!)} bırakıldı` : `${onceki.length} nesne bırakıldı`;
+    return onceki.length === 1
+      ? `${this.#ad(onceki[0]!)} bırakıldı`
+      : `${onceki.length} nesne bırakıldı`;
   }
 
   /** Bir seçim adımını geçmişe yazar (taban'ı günceller). */
-  #yaz(onceki: readonly string[], sonraki: readonly string[], etiket: string): void {
+  #yaz(
+    onceki: readonly string[],
+    sonraki: readonly string[],
+    etiket: string,
+  ): void {
     this.gecmis.secimAdimiEkle(onceki, sonraki, etiket);
   }
 
@@ -116,7 +122,11 @@ export class SecimGecmisIzleyici {
     if (n >= 2) {
       // Çoklu → işle. Bekleyen tek varsa önce onu flush et (§9.6 f).
       if (this.#bekleyen) {
-        this.#yaz(this.#taban, this.#bekleyen, this.#etiketSec(this.#taban, this.#bekleyen));
+        this.#yaz(
+          this.#taban,
+          this.#bekleyen,
+          this.#etiketSec(this.#taban, this.#bekleyen),
+        );
         this.#taban = this.#bekleyen;
         this.#bekleyen = null;
       }
@@ -130,12 +140,16 @@ export class SecimGecmisIzleyici {
       }
     } else if (n === 1) {
       // Tek → ertele. Bekleyen yoksa ve taban dolu+farklıysa önce bırakma yaz.
-      if (!this.#bekleyen && this.#taban.length > 0 && !this.#esitKume(this.#taban, yeni)) {
+      if (
+        !this.#bekleyen &&
+        this.#taban.length > 0 &&
+        !this.#esitKume(this.#taban, yeni)
+      ) {
         // Kalan tek nesne eski seçimin alt kümesiyse "daraltma" (hâlâ seçili), aksi
         // halde gerçek bırakma — etiket buna göre (§9.6 f, panel okunabilirliği).
         const tabanKume = new Set(this.#taban);
         const etiket = yeni.every((k) => tabanKume.has(k))
-          ? 'seçim daraltıldı'
+          ? "seçim daraltıldı"
           : this.#etiketBirak(this.#taban);
         this.#yaz(this.#taban, [], etiket);
         this.#taban = [];

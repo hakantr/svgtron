@@ -1,12 +1,12 @@
-import type { TemplateResult } from 'lit';
-import type { Dugum } from '../../cekirdek/belge/model/dugum';
-import type { BelgeDeposu } from '../../cekirdek/belge/belge-deposu';
-import type { SecimDeposu } from '../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../cekirdek/komutlar/komut-gecmisi';
-import type { Kilavuz } from '../tuval/yapisma';
+import type { TemplateResult } from "lit";
+import type { Dugum } from "../../cekirdek/belge/model/dugum";
+import type { BelgeDeposu } from "../../cekirdek/belge/belge-deposu";
+import type { SecimDeposu } from "../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../cekirdek/komutlar/komut-gecmisi";
+import type { Kilavuz } from "../tuval/yapisma";
 
 /**
- * Araç altyapısı (CLAUDE.md §9.2, İlke 5).
+ * Araç altyapısı (AGENTS.md §9.2, İlke 5).
  *
  * Her araç registry'ye kaydolur; Tuval, aktif aracın işaretçi olaylarını
  * (bas/sürükle/bırak/tıkla) çağırır ve gerekli bağlamı (koordinat dönüşümü,
@@ -48,7 +48,9 @@ export interface AracBaglami {
   /** Görünümü merkez etrafında ölçekler (faktör > 1 yakınlaştırır). */
   gorunumYakinlastir(faktor: number): void;
   /** Kement (alan seçimi) dikdörtgenini çizer (ekran koordinatları); null gizler. */
-  kementCiz(dortgen: { x: number; y: number; w: number; h: number } | null): void;
+  kementCiz(
+    dortgen: { x: number; y: number; w: number; h: number } | null,
+  ): void;
   /** Akıllı hizalama kılavuzlarını çizer (ekran koord.); boş dizi gizler (§11.1). */
   kilavuzCiz(kilavuzlar: readonly Kilavuz[]): void;
   /**
@@ -62,7 +64,7 @@ export interface AracBaglami {
    * undo'ya GİRMEZ, Command üretmez. Araç sessiz no-op yerine geri bildirim
    * versin diye (örn. Pipet'te hedef seçilmemiş). Varsayılan tür 'bilgi'.
    */
-  bildir(mesaj: string, tur?: 'bilgi' | 'uyari' | 'hata'): void;
+  bildir(mesaj: string, tur?: "bilgi" | "uyari" | "hata"): void;
 }
 
 /** Bir araç. */
@@ -134,7 +136,7 @@ export const aracKayitDefteri = new AracKayitDefteri();
  * durumu; İlke 9 — undo'ya girmez). Varsayılan 'sec'.
  */
 class AracDeposu {
-  #aktifId = 'sec';
+  #aktifId = "sec";
   readonly #dinleyiciler = new Set<() => void>();
 
   get aktifId(): string {

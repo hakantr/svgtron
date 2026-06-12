@@ -1,9 +1,9 @@
-import type { TemplateResult } from 'lit';
-import type { Arac, TuvalNoktasi } from './arac';
-import { dugumOlustur } from '../../cekirdek/belge/model/dugum';
-import { DugumEkleKomutu } from '../../cekirdek/komutlar/dugum-komutlari';
+import type { TemplateResult } from "lit";
+import type { Arac, TuvalNoktasi } from "./arac";
+import { dugumOlustur } from "../../cekirdek/belge/model/dugum";
+import { DugumEkleKomutu } from "../../cekirdek/komutlar/dugum-komutlari";
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** Bir çizim aracı tanımı (şekil üretir). */
 export interface CizimTanimi {
@@ -20,7 +20,11 @@ export interface CizimTanimi {
   /** Tek tıkla oluştur (sürükleme gerektirmez; örn. metin). */
   readonly tikKur?: boolean;
   /** Başlangıç ve güncel noktadan geometri özniteliklerini üretir. */
-  geometri(bas: TuvalNoktasi, simdi: TuvalNoktasi, oranli: boolean): Record<string, string>;
+  geometri(
+    bas: TuvalNoktasi,
+    simdi: TuvalNoktasi,
+    oranli: boolean,
+  ): Record<string, string>;
 }
 
 /**
@@ -32,15 +36,19 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
   let bas: TuvalNoktasi | null = null;
   let onizleme: SVGElement | null = null;
 
-  const oznitelikleriUygula = (el: SVGElement, ek: Record<string, string>): void => {
-    for (const [k, v] of Object.entries({ ...tanim.varsayilan, ...ek })) el.setAttribute(k, v);
+  const oznitelikleriUygula = (
+    el: SVGElement,
+    ek: Record<string, string>,
+  ): void => {
+    for (const [k, v] of Object.entries({ ...tanim.varsayilan, ...ek }))
+      el.setAttribute(k, v);
   };
 
   return {
     id: tanim.id,
     etiketAnahtari: tanim.etiketAnahtari,
     ikon: tanim.ikon,
-    imlec: 'crosshair',
+    imlec: "crosshair",
     sira: tanim.sira,
 
     bas(olay, baglam) {
@@ -55,7 +63,10 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
 
     surukle(olay, baglam) {
       if (!bas || !onizleme) return;
-      oznitelikleriUygula(onizleme, tanim.geometri(bas, baglam.svgKonum(olay), olay.shiftKey));
+      oznitelikleriUygula(
+        onizleme,
+        tanim.geometri(bas, baglam.svgKonum(olay), olay.shiftKey),
+      );
     },
 
     birak(olay, baglam) {
@@ -67,7 +78,9 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
       if (!baslangic || !belge) return;
 
       const simdi = baglam.svgKonum(olay);
-      const yeterli = tanim.tikKur || Math.hypot(simdi.x - baslangic.x, simdi.y - baslangic.y) > 2;
+      const yeterli =
+        tanim.tikKur ||
+        Math.hypot(simdi.x - baslangic.x, simdi.y - baslangic.y) > 2;
       if (!yeterli) return;
 
       const geo = tanim.geometri(baslangic, simdi, olay.shiftKey);

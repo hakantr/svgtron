@@ -1,5 +1,5 @@
 /**
- * Komut sözleşmesi (CLAUDE.md İlke 2).
+ * Komut sözleşmesi (AGENTS.md İlke 2).
  *
  * Belge üzerindeki HER düzenleme bir komuttur: `uygula` / `geriAl` çiftiyle.
  * Belgeye komut dışında doğrudan mutasyon yapmak yasaktır. Bu sayede undo/redo,

@@ -1,5 +1,5 @@
 /**
- * Playback (oynatma) arayüzü — CLAUDE.md İlke 6.
+ * Playback (oynatma) arayüzü — AGENTS.md İlke 6.
  *
  * Zaman çizelgesi UI'ı YALNIZCA bu arayüzle konuşur; arkasında SMIL ya da WAAPI
  * olduğunu bilmez. Böylece animasyon teknolojisi UI'ı bozmadan değiştirilebilir

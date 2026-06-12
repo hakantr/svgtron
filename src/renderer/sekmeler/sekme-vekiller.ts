@@ -1,8 +1,11 @@
-import { BelgeDeposu, type BelgeKaynagi } from '../../cekirdek/belge/belge-deposu';
-import { SecimDeposu } from '../../cekirdek/secim/secim-deposu';
-import { KomutGecmisi } from '../../cekirdek/komutlar/komut-gecmisi';
-import type { Dugum } from '../../cekirdek/belge/model/dugum';
-import type { Komut } from '../../cekirdek/komutlar/komut';
+import {
+  BelgeDeposu,
+  type BelgeKaynagi,
+} from "../../cekirdek/belge/belge-deposu";
+import { SecimDeposu } from "../../cekirdek/secim/secim-deposu";
+import { KomutGecmisi } from "../../cekirdek/komutlar/komut-gecmisi";
+import type { Dugum } from "../../cekirdek/belge/model/dugum";
+import type { Komut } from "../../cekirdek/komutlar/komut";
 
 /**
  * Sekme (çoklu belge) VEKİL store'ları.
@@ -117,10 +120,16 @@ export class KomutGecmisiVekil extends KomutGecmisi {
   override calistir(k: Komut): void {
     this.#aktif.calistir(k);
   }
-  override secimUygulayiciAyarla(fn: (kimlikler: readonly string[]) => void): void {
+  override secimUygulayiciAyarla(
+    fn: (kimlikler: readonly string[]) => void,
+  ): void {
     this.#aktif.secimUygulayiciAyarla(fn);
   }
-  override secimAdimiEkle(onceki: readonly string[], sonraki: readonly string[], etiket: string): void {
+  override secimAdimiEkle(
+    onceki: readonly string[],
+    sonraki: readonly string[],
+    etiket: string,
+  ): void {
     this.#aktif.secimAdimiEkle(onceki, sonraki, etiket);
   }
   override get geriAlinabilir(): boolean {
@@ -141,7 +150,7 @@ export class KomutGecmisiVekil extends KomutGecmisi {
   override temizle(): void {
     this.#aktif.temizle();
   }
-  override girisler(): ReturnType<KomutGecmisi['girisler']> {
+  override girisler(): ReturnType<KomutGecmisi["girisler"]> {
     return this.#aktif.girisler();
   }
   override get konum(): number {
@@ -166,11 +175,26 @@ export class KomutGecmisiVekil extends KomutGecmisi {
  * varsa yüksek sesle bildir (çekirdek store'a yeni üye eklenince fark edilir).
  */
 function vekilTamMi(vekilProto: object, tabanProto: object, ad: string): void {
-  const taban = Object.getOwnPropertyNames(tabanProto).filter((n) => n !== 'constructor');
+  const taban = Object.getOwnPropertyNames(tabanProto).filter(
+    (n) => n !== "constructor",
+  );
   const vekil = new Set(Object.getOwnPropertyNames(vekilProto));
   const eksik = taban.filter((n) => !vekil.has(n));
-  if (eksik.length) console.error(`[sekme-vekil] ${ad} eksik override: ${eksik.join(', ')}`);
+  if (eksik.length)
+    console.error(`[sekme-vekil] ${ad} eksik override: ${eksik.join(", ")}`);
 }
-vekilTamMi(BelgeDeposuVekil.prototype, BelgeDeposu.prototype, 'BelgeDeposuVekil');
-vekilTamMi(SecimDeposuVekil.prototype, SecimDeposu.prototype, 'SecimDeposuVekil');
-vekilTamMi(KomutGecmisiVekil.prototype, KomutGecmisi.prototype, 'KomutGecmisiVekil');
+vekilTamMi(
+  BelgeDeposuVekil.prototype,
+  BelgeDeposu.prototype,
+  "BelgeDeposuVekil",
+);
+vekilTamMi(
+  SecimDeposuVekil.prototype,
+  SecimDeposu.prototype,
+  "SecimDeposuVekil",
+);
+vekilTamMi(
+  KomutGecmisiVekil.prototype,
+  KomutGecmisi.prototype,
+  "KomutGecmisiVekil",
+);

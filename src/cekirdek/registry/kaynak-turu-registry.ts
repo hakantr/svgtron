@@ -1,9 +1,9 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from '../komutlar/komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "../komutlar/komut";
 
 /**
- * Kaynak türü kayıt defteri (CLAUDE.md §8.1 — tek desen, çok tür).
+ * Kaynak türü kayıt defteri (AGENTS.md §8.1 — tek desen, çok tür).
  *
  * Sağ paneldeki her grup, buraya kayıtlı bir "kaynak türü" tarafından sürülür.
  * Her tür dört şey sağlar (fazlasını değil): listele · düzenle · uygula · önizle.
@@ -32,11 +32,15 @@ export interface KaynakTuru {
    * (stil sınıfları). Güvenli silmenin doğru referansları (kullananlar vs
    * sinifiKullananlar) bulması için. Belirtilmezse 'url' kabul edilir.
    */
-  readonly referansTuru?: 'url' | 'sinif';
+  readonly referansTuru?: "url" | "sinif";
   /** Belgedeki bu türden kaynakları döndürür. */
   listele(belge: Belge): KaynakOgesi[];
   /** Kaynağı seçili düğümlere iliştiren komut (uygulama stratejisi). */
-  uygula?(belge: Belge, dugumler: readonly Dugum[], kaynakId: string): Komut | null;
+  uygula?(
+    belge: Belge,
+    dugumler: readonly Dugum[],
+    kaynakId: string,
+  ): Komut | null;
   /** Yeni bir kaynak oluşturan komut. */
   olustur?(belge: Belge): Komut | null;
   /** Bir kaynağı silen komut. */

@@ -1,5 +1,5 @@
 /**
- * Yapışma ve akıllı kılavuzlar (CLAUDE.md §11.1) — saf geometri.
+ * Yapışma ve akıllı kılavuzlar (AGENTS.md §11.1) — saf geometri.
  *
  * Bu modül DOM'a, belgeye ya da Command'a DOKUNMAZ; yalnızca ekran-uzayı
  * dikdörtgenleriyle çalışır. Taşınan seçimin kenar/merkezlerini, sabit
@@ -19,7 +19,7 @@ export interface Kutu {
 /** Çizilecek hizalama kılavuzu (ekran px). */
 export interface Kilavuz {
   /** 'dikey' = sabit x'te düşey çizgi; 'yatay' = sabit y'de yatay çizgi. */
-  yon: 'dikey' | 'yatay';
+  yon: "dikey" | "yatay";
   /** Çizginin konumu (dikey için x, yatay için y). */
   konum: number;
   /** Çizginin diğer eksendeki başı ve sonu (kapsadığı aralık). */
@@ -55,7 +55,10 @@ function enIyiEksen(
     for (const t of tNoktalar) {
       for (const m of hareketli) {
         const fark = t - m;
-        if (Math.abs(fark) <= esik && (en === null || Math.abs(fark) < Math.abs(en.duzeltme))) {
+        if (
+          Math.abs(fark) <= esik &&
+          (en === null || Math.abs(fark) < Math.abs(en.duzeltme))
+        ) {
           en = { duzeltme: fark, cizgi: t };
         }
       }
@@ -71,7 +74,11 @@ function enIyiEksen(
  * @param hedefler  Sabit hedef kutuları (diğer nesneler + tuval çerçevesi).
  * @param esik      Yapışma eşiği (ekran px).
  */
-export function yapismaHesapla(hareketli: Kutu, hedefler: Kutu[], esik: number): YapismaSonuc {
+export function yapismaHesapla(
+  hareketli: Kutu,
+  hedefler: Kutu[],
+  esik: number,
+): YapismaSonuc {
   const hedefX = hedefler.map(noktalarX);
   const hedefY = hedefler.map(noktalarY);
   const enX = enIyiEksen(noktalarX(hareketli), hedefX, esik);
@@ -100,7 +107,7 @@ export function yapismaHesapla(hareketli: Kutu, hedefler: Kutu[], esik: number):
         alt = Math.max(alt, h.alt);
       }
     }
-    kilavuzlar.push({ yon: 'dikey', konum: enX.cizgi, bas: ust, son: alt });
+    kilavuzlar.push({ yon: "dikey", konum: enX.cizgi, bas: ust, son: alt });
   }
 
   if (enY) {
@@ -112,14 +119,19 @@ export function yapismaHesapla(hareketli: Kutu, hedefler: Kutu[], esik: number):
         sag = Math.max(sag, h.sag);
       }
     }
-    kilavuzlar.push({ yon: 'yatay', konum: enY.cizgi, bas: sol, son: sag });
+    kilavuzlar.push({ yon: "yatay", konum: enY.cizgi, bas: sol, son: sag });
   }
 
   return { ax, ay, kilavuzlar };
 }
 
 /** DOMRect benzeri bir nesneyi ekran-uzayı {@link Kutu}'ya çevirir. */
-export function kutuYap(r: { left: number; top: number; right: number; bottom: number }): Kutu {
+export function kutuYap(r: {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}): Kutu {
   return { sol: r.left, ust: r.top, sag: r.right, alt: r.bottom };
 }
 

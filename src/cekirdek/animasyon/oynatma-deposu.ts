@@ -1,10 +1,10 @@
-import type { Playback } from './playback';
-import { SmilPlayback } from './smil-playback';
-import { WaapiPlayback } from './waapi-playback';
-import { BilesikPlayback } from './bilesik-playback';
+import type { Playback } from "./playback";
+import { SmilPlayback } from "./smil-playback";
+import { WaapiPlayback } from "./waapi-playback";
+import { BilesikPlayback } from "./bilesik-playback";
 
 const SMIL_SECICI =
-  'animate, animateTransform, animateMotion, animateColor, set, discard';
+  "animate, animateTransform, animateMotion, animateColor, set, discard";
 
 /** SVG'de SMIL animasyonu var mı? */
 function smilVarMi(svg: SVGSVGElement): boolean {
@@ -71,7 +71,11 @@ export class OynatmaDeposu {
     const smil = smilVarMi(svg);
     // İkisi birden varsa birlikte yönet (İlke 6) — getAnimations() SMIL'i
     // içermediğinden tek WaapiPlayback SMIL'i kontrol edemezdi.
-    if (waapi && smil) return new BilesikPlayback([new WaapiPlayback(svg), new SmilPlayback(svg)]);
+    if (waapi && smil)
+      return new BilesikPlayback([
+        new WaapiPlayback(svg),
+        new SmilPlayback(svg),
+      ]);
     if (waapi) return new WaapiPlayback(svg);
     if (smil) return new SmilPlayback(svg);
     return null;

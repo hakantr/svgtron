@@ -1,4 +1,4 @@
-import { menuKayitDefteri } from '../../../cekirdek/registry/menu-registry';
+import { menuKayitDefteri } from "../../../cekirdek/registry/menu-registry";
 
 /**
  * "Hakkında" servisi + menü kaydı (Yardım menüsü).
@@ -28,9 +28,9 @@ class HakkindaServisi {
 export const hakkindaServisi = new HakkindaServisi();
 
 menuKayitDefteri.kaydet({
-  id: 'yardim.hakkinda',
-  grup: 'yardim',
-  etiketAnahtari: 'menu.yardim.hakkinda',
+  id: "yardim.hakkinda",
+  grup: "yardim",
+  etiketAnahtari: "menu.yardim.hakkinda",
   sira: 10,
   calistir: () => hakkindaServisi.ac(),
 });

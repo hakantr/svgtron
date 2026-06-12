@@ -1,5 +1,5 @@
-import type { Belge } from './belge';
-import type { Dugum } from './model/dugum';
+import type { Belge } from "./belge";
+import type { Dugum } from "./model/dugum";
 
 /**
  * Grup (hiyerarşi) sorguları — saf, DOM'dan habersiz (İlke 1). Grup-duyarlı
@@ -10,7 +10,7 @@ import type { Dugum } from './model/dugum';
 export function enDistakiGrup(belge: Belge, dugum: Dugum): Dugum | null {
   let grup: Dugum | null = null;
   let p = belge.ebeveyn(dugum);
-  while (p && p.etiket === 'g') {
+  while (p && p.etiket === "g") {
     grup = p;
     p = belge.ebeveyn(p);
   }

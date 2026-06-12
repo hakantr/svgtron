@@ -1,9 +1,9 @@
-import { html, nothing, type TemplateResult } from 'lit';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import type { Belge } from '../../../cekirdek/belge/belge';
-import { gez, type Dugum } from '../../../cekirdek/belge/model/dugum';
-import { dugumSerile } from '../../../cekirdek/belge/model/disa-aktar';
-import type { Komut } from '../../../cekirdek/komutlar/komut';
+import { html, nothing, type TemplateResult } from "lit";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import type { Belge } from "../../../cekirdek/belge/belge";
+import { gez, type Dugum } from "../../../cekirdek/belge/model/dugum";
+import { dugumSerile } from "../../../cekirdek/belge/model/disa-aktar";
+import type { Komut } from "../../../cekirdek/komutlar/komut";
 
 /**
  * Kaynak GÖRÜNÜMÜ (renderer) — çekirdek `KaynakTuru` sözleşmesinin (veri/komut)
@@ -50,7 +50,7 @@ export function kaynakGorunumAl(turId: string): KaynakGorunum | undefined {
 
 /** Belgede SVG id'sine göre düğümü bulur (gradient/marker/filter… defs içinde). */
 export function kaynakDugumBul(belge: Belge, id: string): Dugum | null {
-  for (const d of gez(belge.kok)) if (d.oznitelikler.get('id') === id) return d;
+  for (const d of gez(belge.kok)) if (d.oznitelikler.get("id") === id) return d;
   return null;
 }
 

@@ -1,4 +1,4 @@
-import { Belge } from './belge';
+import { Belge } from "./belge";
 
 /** Belgenin geldiği kaynağın tanımı (dosya). */
 export interface BelgeKaynagi {

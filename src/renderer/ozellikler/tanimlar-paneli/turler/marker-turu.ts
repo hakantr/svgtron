@@ -1,19 +1,24 @@
-import { html, nothing, type TemplateResult } from 'lit';
-import { dugumOlustur, gez, benzersizId, type Dugum } from '../../../../cekirdek/belge/model/dugum';
-import type { Belge } from '../../../../cekirdek/belge/belge';
-import type { Komut } from '../../../../cekirdek/komutlar/komut';
+import { html, nothing, type TemplateResult } from "lit";
+import {
+  dugumOlustur,
+  gez,
+  benzersizId,
+  type Dugum,
+} from "../../../../cekirdek/belge/model/dugum";
+import type { Belge } from "../../../../cekirdek/belge/belge";
+import type { Komut } from "../../../../cekirdek/komutlar/komut";
 import {
   BilesikKomut,
   DugumCikarKomutu,
   DugumEkleKomutu,
-} from '../../../../cekirdek/komutlar/dugum-komutlari';
-import { OznitelikDegistirKomutu } from '../../../../cekirdek/komutlar/oznitelik-degistir-komutu';
-import { kaynakTuruKayitDefteri } from '../../../../cekirdek/registry/kaynak-turu-registry';
-import { stilUygulaKomutu } from '../../../boya/stil-uygula';
-import { kaynakGorunumKaydet, defsOnizleme } from '../kaynak-gorunum';
+} from "../../../../cekirdek/komutlar/dugum-komutlari";
+import { OznitelikDegistirKomutu } from "../../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { kaynakTuruKayitDefteri } from "../../../../cekirdek/registry/kaynak-turu-registry";
+import { stilUygulaKomutu } from "../../../boya/stil-uygula";
+import { kaynakGorunumKaydet, defsOnizleme } from "../kaynak-gorunum";
 
 /**
- * Marker (uç işaretleri) kaynak türü (CLAUDE.md Faz D, §8.1, §10.5).
+ * Marker (uç işaretleri) kaynak türü (AGENTS.md Faz D, §8.1, §10.5).
  *
  * "Yeni tür = yeni registry kaydı"nın kanıtı: kabuk/sağ panel değişmeden bir SVG
  * kavramı daha eklenir (İlke 5). Uygulama stratejisi filtreden FARKLIDIR —
@@ -23,25 +28,25 @@ import { kaynakGorunumKaydet, defsOnizleme } from '../kaynak-gorunum';
  */
 
 function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === 'defs') ?? null;
+  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
 }
 
 function markerDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok)) {
-    if (d.etiket === 'marker' && d.oznitelikler.get('id') === id) return d;
+    if (d.etiket === "marker" && d.oznitelikler.get("id") === id) return d;
   }
   return null;
 }
 
 kaynakTuruKayitDefteri.kaydet({
-  id: 'marker',
-  etiket: 'Uç işaretleri (marker)',
+  id: "marker",
+  etiket: "Uç işaretleri (marker)",
 
   listele(belge) {
     const ogeler: { id: string; etiket: string }[] = [];
     for (const d of gez(belge.kok)) {
-      const id = d.oznitelikler.get('id');
-      if (d.etiket === 'marker' && id) ogeler.push({ id, etiket: id });
+      const id = d.oznitelikler.get("id");
+      if (d.etiket === "marker" && id) ogeler.push({ id, etiket: id });
     }
     return ogeler;
   },
@@ -50,8 +55,10 @@ kaynakTuruKayitDefteri.kaydet({
   uygula(belge, dugumler, kaynakId): Komut | null {
     if (dugumler.length === 0) return null;
     return new BilesikKomut(
-      'marker uygula',
-      dugumler.map((d) => stilUygulaKomutu(belge, d, 'marker-end', `url(#${kaynakId})`)),
+      "marker uygula",
+      dugumler.map((d) =>
+        stilUygulaKomutu(belge, d, "marker-end", `url(#${kaynakId})`),
+      ),
     );
   },
 
@@ -59,27 +66,32 @@ kaynakTuruKayitDefteri.kaydet({
     const komutlar: Komut[] = [];
     let defs = defsBul(belge);
     if (!defs) {
-      defs = dugumOlustur('defs');
+      defs = dugumOlustur("defs");
       komutlar.push(new DugumEkleKomutu(belge, belge.kok, defs, 0));
     }
-    const id = benzersizId(belge.kok, 'svgtron-marker-');
+    const id = benzersizId(belge.kok, "svgtron-marker-");
     // Ok ucu; `orient=auto-start-reverse` (§10.5) yön takip eder; `context-stroke`
     // (§10.9) çizginin rengini alır (desteklenmezse koyu varsayılana düşer).
     const marker = dugumOlustur(
-      'marker',
+      "marker",
       {
         id,
-        viewBox: '0 0 10 10',
-        refX: '8',
-        refY: '5',
-        markerWidth: '6',
-        markerHeight: '6',
-        orient: 'auto-start-reverse',
+        viewBox: "0 0 10 10",
+        refX: "8",
+        refY: "5",
+        markerWidth: "6",
+        markerHeight: "6",
+        orient: "auto-start-reverse",
       },
-      [dugumOlustur('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill: 'context-stroke' })],
+      [
+        dugumOlustur("path", {
+          d: "M 0 0 L 10 5 L 0 10 z",
+          fill: "context-stroke",
+        }),
+      ],
     );
     komutlar.push(new DugumEkleKomutu(belge, defs, marker));
-    return new BilesikKomut('marker oluştur', komutlar);
+    return new BilesikKomut("marker oluştur", komutlar);
   },
 
   sil(belge, kaynakId): Komut | null {
@@ -92,11 +104,18 @@ kaynakTuruKayitDefteri.kaydet({
 
 /** input[type=color] yalnız #rrggbb kabul eder; context-stroke/-fill ya da boş ise picker varsayılanı. */
 function hexNorm(c: string): string {
-  return /^#[0-9a-fA-F]{6}$/.test(c.trim()) ? c.trim() : '#000000';
+  return /^#[0-9a-fA-F]{6}$/.test(c.trim()) ? c.trim() : "#000000";
 }
 
 /** orient için sunulan değerler (mevcut değer listede yoksa select yine de o değerle eşleşir). */
-const ORIENT_SECENEKLERI = ['auto', 'auto-start-reverse', '0', '90', '180', '270'];
+const ORIENT_SECENEKLERI = [
+  "auto",
+  "auto-start-reverse",
+  "0",
+  "90",
+  "180",
+  "270",
+];
 
 /**
  * Marker GÖRÜNÜMÜ (önizleme + düzenleyici) — §8.1 deseninin görsel yüzü (İlke 5).
@@ -106,7 +125,7 @@ const ORIENT_SECENEKLERI = ['auto', 'auto-start-reverse', '0', '90', '180', '270
  * Hepsi komutla (İlke 2 → geri-alınabilir); değişince Tuval + önizleme canlı güncellenir (İlke 3).
  */
 kaynakGorunumKaydet({
-  turId: 'marker',
+  turId: "marker",
   onizleme: (belge, id) =>
     defsOnizleme(
       belge,
@@ -118,34 +137,42 @@ kaynakGorunumKaydet({
     if (!marker) return nothing;
     const yaz = (dugum: Dugum, ad: string, deger: string): void =>
       komut(new OznitelikDegistirKomutu(belge, dugum, ad, deger));
-    const sayiAlan = (ad: string): TemplateResult => html`<div class="satir">
-      <label>${ad}</label>
-      <input
-        type="number"
-        .value=${marker.oznitelikler.get(ad) ?? ''}
-        @change=${(e: Event) => yaz(marker, ad, (e.target as HTMLInputElement).value)}
-      />
-    </div>`;
-    const orient = marker.oznitelikler.get('orient') ?? 'auto-start-reverse';
+    const sayiAlan = (ad: string): TemplateResult =>
+      html`<div class="satir">
+        <label>${ad}</label>
+        <input
+          type="number"
+          .value=${marker.oznitelikler.get(ad) ?? ""}
+          @change=${(e: Event) =>
+            yaz(marker, ad, (e.target as HTMLInputElement).value)}
+        />
+      </div>`;
+    const orient = marker.oznitelikler.get("orient") ?? "auto-start-reverse";
     const ilkSekil = marker.cocuklar[0] ?? null;
-    const fillHam = ilkSekil?.oznitelikler.get('fill') ?? '';
+    const fillHam = ilkSekil?.oznitelikler.get("fill") ?? "";
     return html`
       <div class="satir">
         <label>orient</label>
-        <select @change=${(e: Event) => yaz(marker, 'orient', (e.target as HTMLSelectElement).value)}>
+        <select
+          @change=${(e: Event) =>
+            yaz(marker, "orient", (e.target as HTMLSelectElement).value)}
+        >
           ${ORIENT_SECENEKLERI.map(
-            (s) => html`<option value=${s} ?selected=${s === orient}>${s}</option>`,
+            (s) =>
+              html`<option value=${s} ?selected=${s === orient}>${s}</option>`,
           )}
         </select>
       </div>
-      ${sayiAlan('markerWidth')} ${sayiAlan('markerHeight')} ${sayiAlan('refX')} ${sayiAlan('refY')}
+      ${sayiAlan("markerWidth")} ${sayiAlan("markerHeight")} ${sayiAlan("refX")}
+      ${sayiAlan("refY")}
       ${ilkSekil
         ? html`<div class="satir">
             <label>fill</label>
             <input
               type="color"
               .value=${hexNorm(fillHam)}
-              @change=${(e: Event) => yaz(ilkSekil, 'fill', (e.target as HTMLInputElement).value)}
+              @change=${(e: Event) =>
+                yaz(ilkSekil, "fill", (e.target as HTMLInputElement).value)}
             />
           </div>`
         : nothing}

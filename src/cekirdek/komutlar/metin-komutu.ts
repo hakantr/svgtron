@@ -1,13 +1,13 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "./komut";
 
 /**
  * Bir düğümün metin içeriğini değiştirir (örn. `<title>`/`<desc>` — Faz B).
  * Geri-alınabilir (İlke 2).
  */
 export class MetinKomutu implements Komut {
-  readonly etiket = 'metin değiştir';
+  readonly etiket = "metin değiştir";
   readonly #eski: string | undefined;
 
   constructor(
@@ -19,7 +19,7 @@ export class MetinKomutu implements Komut {
   }
 
   uygula(): void {
-    this.dugum.metin = this.yeni === '' ? undefined : this.yeni;
+    this.dugum.metin = this.yeni === "" ? undefined : this.yeni;
     this.belge.bildir();
   }
 

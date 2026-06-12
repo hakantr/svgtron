@@ -1,9 +1,9 @@
-import type { BelgeDeposu } from '../belge/belge-deposu';
-import type { SecimDeposu } from '../secim/secim-deposu';
-import type { KomutGecmisi } from '../komutlar/komut-gecmisi';
+import type { BelgeDeposu } from "../belge/belge-deposu";
+import type { SecimDeposu } from "../secim/secim-deposu";
+import type { KomutGecmisi } from "../komutlar/komut-gecmisi";
 
 /**
- * Menü kayıt defteri (CLAUDE.md İlke 5, §6).
+ * Menü kayıt defteri (AGENTS.md İlke 5, §6).
  *
  * Hamburger menüsündeki eylemler kabuğa GÖMÜLMEZ; özellikler buraya kaydolur.
  * Yeni eylem (Aç, Kaydet, Dışa Aktar...) = bu deftere bir öge eklemek.

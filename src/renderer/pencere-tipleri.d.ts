@@ -1,4 +1,4 @@
-import type { KopruApi } from '../ortak/api-sozlesmesi';
+import type { KopruApi } from "../ortak/api-sozlesmesi";
 
 /**
  * preload köprüsünün renderer'a açtığı `window.api` yüzeyini tiplere bildirir.

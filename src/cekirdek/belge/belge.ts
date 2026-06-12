@@ -1,11 +1,11 @@
-import { gez, type Dugum } from './model/dugum';
-import { iceAktar } from './model/ice-aktar';
-import { disaAktar, type DisaAktarimProfili } from './model/disa-aktar';
-import { konumOku } from './konum';
-import { TanimlarModeli } from './tanimlar/tanimlar-modeli';
-import { ReferansIndeksi } from './tanimlar/referans-indeksi';
+import { gez, type Dugum } from "./model/dugum";
+import { iceAktar } from "./model/ice-aktar";
+import { disaAktar, type DisaAktarimProfili } from "./model/disa-aktar";
+import { konumOku } from "./konum";
+import { TanimlarModeli } from "./tanimlar/tanimlar-modeli";
+import { ReferansIndeksi } from "./tanimlar/referans-indeksi";
 
-/** Bir nesnenin sabit (baseline) konumu (CLAUDE.md §9.8). */
+/** Bir nesnenin sabit (baseline) konumu (AGENTS.md §9.8). */
 export interface TemelKonum {
   readonly sx: number;
   readonly sy: number;
@@ -15,7 +15,7 @@ export interface TemelKonum {
 export type BelgeDinleyici = () => void;
 
 /**
- * SVG belge modeli — uygulamanın TEK doğruluk kaynağı (CLAUDE.md İlke 3).
+ * SVG belge modeli — uygulamanın TEK doğruluk kaynağı (AGENTS.md İlke 3).
  *
  * İçerik, canlı SVG DOM'u değil; sürümden bağımsız, normalize bir soyut düğüm
  * ağacıdır (İlke 8). Yalnızca web platform API'lerine dayanır; Electron'dan
@@ -72,7 +72,8 @@ export class Belge {
   ): void {
     this.kok.etiket = etiket;
     this.kok.oznitelikler.clear();
-    for (const [ad, deger] of oznitelikler) this.kok.oznitelikler.set(ad, deger);
+    for (const [ad, deger] of oznitelikler)
+      this.kok.oznitelikler.set(ad, deger);
     this.kok.cocuklar.length = 0;
     this.kok.cocuklar.push(...cocuklar);
 

@@ -1,4 +1,4 @@
-import type { Dugum } from '../belge/model/dugum';
+import type { Dugum } from "../belge/model/dugum";
 
 /**
  * Seçim deposu — o an seçili düğümleri tutan gözlemlenebilir kap (ÇOKLU seçim).

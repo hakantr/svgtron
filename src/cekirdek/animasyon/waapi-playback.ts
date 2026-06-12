@@ -1,7 +1,7 @@
-import type { Playback } from './playback';
+import type { Playback } from "./playback";
 
 /**
- * WAAPI tabanlı Playback (CLAUDE.md İlke 6, §10.8) — CSS `@keyframes` ve
+ * WAAPI tabanlı Playback (AGENTS.md İlke 6, §10.8) — CSS `@keyframes` ve
  * JS Web Animations API animasyonlarını yönetir.
  *
  * Render edilmiş `<svg>` alt ağacındaki tüm animasyonları

@@ -1,17 +1,30 @@
-import polygonClipping from 'polygon-clipping';
-import type { Belge } from '../../../cekirdek/belge/belge';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
-import { dugumOlustur } from '../../../cekirdek/belge/model/dugum';
-import type { Komut } from '../../../cekirdek/komutlar/komut';
-import type { SecimDeposu } from '../../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import { DugumCikarKomutu, DugumEkleKomutu, BilesikKomut } from '../../../cekirdek/komutlar/dugum-komutlari';
-import { yoluAyristir, yoluYaz, type Segment } from '../../../cekirdek/belge/model/yol';
-import { cizimErisimi } from '../../tuval/cizim-erisimi';
-import { nesle, cokPoligonuD, type Cift, type CokPoligon } from './bool-geometri';
+import polygonClipping from "polygon-clipping";
+import type { Belge } from "../../../cekirdek/belge/belge";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
+import type { Komut } from "../../../cekirdek/komutlar/komut";
+import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import {
+  DugumCikarKomutu,
+  DugumEkleKomutu,
+  BilesikKomut,
+} from "../../../cekirdek/komutlar/dugum-komutlari";
+import {
+  yoluAyristir,
+  yoluYaz,
+  type Segment,
+} from "../../../cekirdek/belge/model/yol";
+import { cizimErisimi } from "../../tuval/cizim-erisimi";
+import {
+  nesle,
+  cokPoligonuD,
+  type Cift,
+  type CokPoligon,
+} from "./bool-geometri";
 
 /**
- * Boole (yol) işlemleri (CLAUDE.md §11.2) — seçili kapalı şekilleri birleştir /
+ * Boole (yol) işlemleri (AGENTS.md §11.2) — seçili kapalı şekilleri birleştir /
  * çıkar / kesiştir / dışla. Şekiller kök kullanıcı uzayında poligona düzleştirilir
  * (eğriler örneklenir), polygon-clipping ile işlenir, sonuç tek bir `<path>` olur.
  * Operandlar silinip sonuç eklenir — tek BileşikKomut (İlke 2).
@@ -21,75 +34,94 @@ import { nesle, cokPoligonuD, type Cift, type CokPoligon } from './bool-geometri
  * bağımlılık gerektirirdi). Operandın `transform`'u koordinatlara pişirilir;
  * `stroke-width` yerel ölçekte kopyalanır.
  */
-export type BoolIslem = 'birlesim' | 'fark' | 'kesisim' | 'disla';
-export type BoolSonuc = 'tamam' | 'yetersiz' | 'bos';
+export type BoolIslem = "birlesim" | "fark" | "kesisim" | "disla";
+export type BoolSonuc = "tamam" | "yetersiz" | "bos";
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_NS = "http://www.w3.org/2000/svg";
 const GEOMETRI = new Set([
-  'd', 'points', 'x', 'y', 'cx', 'cy', 'r', 'rx', 'ry',
-  'width', 'height', 'x1', 'y1', 'x2', 'y2', 'transform', 'id',
+  "d",
+  "points",
+  "x",
+  "y",
+  "cx",
+  "cy",
+  "r",
+  "rx",
+  "ry",
+  "width",
+  "height",
+  "x1",
+  "y1",
+  "x2",
+  "y2",
+  "transform",
+  "id",
 ]);
 const ETIKET: Record<BoolIslem, string> = {
-  birlesim: 'birleştir',
-  fark: 'çıkar',
-  kesisim: 'kesiştir',
-  disla: 'dışla',
+  birlesim: "birleştir",
+  fark: "çıkar",
+  kesisim: "kesiştir",
+  disla: "dışla",
 };
 
 let orneklemeSvg: SVGSVGElement | null = null;
 function orneklemeYuzeyi(): SVGSVGElement {
   if (!orneklemeSvg) {
-    orneklemeSvg = document.createElementNS(SVG_NS, 'svg');
-    orneklemeSvg.setAttribute('width', '0');
-    orneklemeSvg.setAttribute('height', '0');
+    orneklemeSvg = document.createElementNS(SVG_NS, "svg");
+    orneklemeSvg.setAttribute("width", "0");
+    orneklemeSvg.setAttribute("height", "0");
     Object.assign(orneklemeSvg.style, {
-      position: 'absolute',
-      left: '-99999px',
-      top: '0',
-      visibility: 'hidden',
+      position: "absolute",
+      left: "-99999px",
+      top: "0",
+      visibility: "hidden",
     });
     document.body.appendChild(orneklemeSvg);
   }
   return orneklemeSvg;
 }
 
-const oz = (d: Dugum, ad: string): number => parseFloat(d.oznitelikler.get(ad) ?? '') || 0;
+const oz = (d: Dugum, ad: string): number =>
+  parseFloat(d.oznitelikler.get(ad) ?? "") || 0;
 
 /** Bir düğümü (türüne göre) yerel-koordinatlı bir `path` `d` dizesine çevirir (kapalı değilse null). */
 function elemandanD(d: Dugum): string | null {
   switch (d.etiket) {
-    case 'path':
-      return d.oznitelikler.get('d') ?? null;
-    case 'rect': {
-      const x = oz(d, 'x');
-      const y = oz(d, 'y');
-      const w = oz(d, 'width');
-      const h = oz(d, 'height');
+    case "path":
+      return d.oznitelikler.get("d") ?? null;
+    case "rect": {
+      const x = oz(d, "x");
+      const y = oz(d, "y");
+      const w = oz(d, "width");
+      const h = oz(d, "height");
       if (w <= 0 || h <= 0) return null;
       return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`;
     }
-    case 'circle': {
-      const cx = oz(d, 'cx');
-      const cy = oz(d, 'cy');
-      const r = oz(d, 'r');
+    case "circle": {
+      const cx = oz(d, "cx");
+      const cy = oz(d, "cy");
+      const r = oz(d, "r");
       if (r <= 0) return null;
       return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
     }
-    case 'ellipse': {
-      const cx = oz(d, 'cx');
-      const cy = oz(d, 'cy');
-      const rx = oz(d, 'rx');
-      const ry = oz(d, 'ry');
+    case "ellipse": {
+      const cx = oz(d, "cx");
+      const cy = oz(d, "cy");
+      const rx = oz(d, "rx");
+      const ry = oz(d, "ry");
       if (rx <= 0 || ry <= 0) return null;
       return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy} Z`;
     }
-    case 'polygon': {
-      const n = (d.oznitelikler.get('points') ?? '').match(/-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/g) ?? [];
+    case "polygon": {
+      const n =
+        (d.oznitelikler.get("points") ?? "").match(
+          /-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/g,
+        ) ?? [];
       if (n.length < 6) return null;
       const p = n.map(Number);
       let s = `M ${p[0]} ${p[1]}`;
       for (let i = 2; i + 1 < p.length; i += 2) s += ` L ${p[i]} ${p[i + 1]}`;
-      return s + ' Z';
+      return s + " Z";
     }
     default:
       return null; // polyline/line/g/text… kapalı alan değil
@@ -106,7 +138,7 @@ function altYollar(d: string): string[] {
   }
   const gruplar: Segment[][] = [];
   for (const s of segs) {
-    if (s.tip === 'M' || gruplar.length === 0) gruplar.push([s]);
+    if (s.tip === "M" || gruplar.length === 0) gruplar.push([s]);
     else gruplar[gruplar.length - 1]!.push(s);
   }
   return gruplar.map((g) => yoluYaz(g));
@@ -114,8 +146,8 @@ function altYollar(d: string): string[] {
 
 /** Bir alt-yolu tarayıcının yol ölçümüyle nokta dizisine örnekler (yerel koord.). */
 function ornekleYol(altYolD: string): Cift[] {
-  const yol = document.createElementNS(SVG_NS, 'path') as SVGPathElement;
-  yol.setAttribute('d', altYolD);
+  const yol = document.createElementNS(SVG_NS, "path") as SVGPathElement;
+  yol.setAttribute("d", altYolD);
   orneklemeYuzeyi().appendChild(yol);
   const pts: Cift[] = [];
   try {
@@ -171,13 +203,13 @@ export function dugumCokPoligonu(
 function islemiCalistir(islem: BoolIslem, geoms: CokPoligon[]): CokPoligon {
   const [ilk, ...kalan] = geoms as [CokPoligon, ...CokPoligon[]];
   switch (islem) {
-    case 'birlesim':
+    case "birlesim":
       return polygonClipping.union(ilk, ...kalan) as CokPoligon;
-    case 'fark':
+    case "fark":
       return polygonClipping.difference(ilk, ...kalan) as CokPoligon;
-    case 'kesisim':
+    case "kesisim":
       return polygonClipping.intersection(ilk, ...kalan) as CokPoligon;
-    case 'disla':
+    case "disla":
       return polygonClipping.xor(ilk, ...kalan) as CokPoligon;
   }
 }
@@ -211,7 +243,7 @@ export function booleUygula(
   );
   // Grup operand kabul edilmez (boole yol geometrisi üzerinde çalışır) — grup
   // seçiliyken işlem yapılmaz; menü/palet de bu yolla pasifleşir (kullanıcı isteği).
-  if (aday.some((d) => d.etiket === 'g')) return 'yetersiz';
+  if (aday.some((d) => d.etiket === "g")) return "yetersiz";
 
   const operandlar: Dugum[] = [];
   const geoms: CokPoligon[] = [];
@@ -227,15 +259,15 @@ export function booleUygula(
       geoms.push(cp);
     }
   }
-  if (operandlar.length < 2) return 'yetersiz';
+  if (operandlar.length < 2) return "yetersiz";
 
   const sonuc = islemiCalistir(islem, geoms);
-  if (!sonuc.length) return 'bos';
+  if (!sonuc.length) return "bos";
   const d = cokPoligonuD(sonuc);
-  if (!d) return 'bos';
+  if (!d) return "bos";
 
   sonucuYaz(belge, secim, gecmis, operandlar, d, ETIKET[islem]);
-  return 'tamam';
+  return "tamam";
 }
 
 /**
@@ -252,9 +284,10 @@ export function sonucuYaz(
   etiket: string,
 ): void {
   const attrs: Record<string, string> = {};
-  for (const [k, v] of operandlar[0]!.oznitelikler) if (!GEOMETRI.has(k)) attrs[k] = v;
+  for (const [k, v] of operandlar[0]!.oznitelikler)
+    if (!GEOMETRI.has(k)) attrs[k] = v;
   attrs.d = d;
-  const yeni = dugumOlustur('path', attrs);
+  const yeni = dugumOlustur("path", attrs);
   const komutlar: Komut[] = operandlar.map(
     (op) => new DugumCikarKomutu(belge, belge.ebeveyn(op) ?? belge.kok, op),
   );
@@ -280,7 +313,9 @@ export function atomikYuzler(geoms: CokPoligon[]): CokPoligon[] {
     for (let i = 0; i < N; i++) {
       if (mask & (1 << i)) {
         bolge =
-          bolge === null ? geoms[i]! : (polygonClipping.intersection(bolge, geoms[i]!) as CokPoligon);
+          bolge === null
+            ? geoms[i]!
+            : (polygonClipping.intersection(bolge, geoms[i]!) as CokPoligon);
         if (!bolge.length) {
           bos = true;
           break;
@@ -289,7 +324,8 @@ export function atomikYuzler(geoms: CokPoligon[]): CokPoligon[] {
     }
     if (bos || !bolge || !bolge.length) continue;
     for (let i = 0; i < N && bolge.length; i++) {
-      if (!(mask & (1 << i))) bolge = polygonClipping.difference(bolge, geoms[i]!) as CokPoligon;
+      if (!(mask & (1 << i)))
+        bolge = polygonClipping.difference(bolge, geoms[i]!) as CokPoligon;
     }
     if (bolge.length) yuzler.push(bolge);
   }
@@ -300,5 +336,7 @@ export function atomikYuzler(geoms: CokPoligon[]): CokPoligon[] {
 export function yuzleriBirlestir(yuzler: CokPoligon[]): CokPoligon {
   if (yuzler.length === 0) return [];
   const [ilk, ...kalan] = yuzler as [CokPoligon, ...CokPoligon[]];
-  return kalan.length ? (polygonClipping.union(ilk, ...kalan) as CokPoligon) : ilk;
+  return kalan.length
+    ? (polygonClipping.union(ilk, ...kalan) as CokPoligon)
+    : ilk;
 }

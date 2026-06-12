@@ -1,5 +1,5 @@
 /**
- * Tema kayıt defteri (CLAUDE.md İlke 5).
+ * Tema kayıt defteri (AGENTS.md İlke 5).
  *
  * Temalar da paneller/araçlar gibi "fiş tak-çalıştır" mantığıyla buraya kaydolur;
  * kabuk hangi temaların var olduğunu bilmez, yalnızca defteri okur. Yeni tema
@@ -18,31 +18,31 @@
  */
 export interface TemaDegiskenleri {
   /** Uygulama arka planı (tam ekranı kaplar). */
-  '--zemin': string;
+  "--zemin": string;
   /** Bar ve panel yüzeyi. */
-  '--yuzey': string;
+  "--yuzey": string;
   /** İkincil yüzey (grup başlıkları vb.). */
-  '--yuzey-2': string;
+  "--yuzey-2": string;
   /** Üzerine gelince (hover) yüzey. */
-  '--yuzey-hover': string;
+  "--yuzey-hover": string;
   /** Kenarlık / ayraç rengi. */
-  '--kenarlik': string;
+  "--kenarlik": string;
   /** Birincil metin. */
-  '--metin': string;
+  "--metin": string;
   /** Soluk/ikincil metin. */
-  '--metin-soluk': string;
+  "--metin-soluk": string;
   /** Vurgu (birincil düğme arka planı). */
-  '--vurgu': string;
+  "--vurgu": string;
   /** Vurgu üzerine gelince. */
-  '--vurgu-hover': string;
+  "--vurgu-hover": string;
   /** Vurgu üzerindeki metin. */
-  '--vurgu-metin': string;
+  "--vurgu-metin": string;
   /** Hata metni. */
-  '--hata': string;
+  "--hata": string;
   /** Gözlemleyici tuvali dama deseni — açık kare. */
-  '--tuval-1': string;
+  "--tuval-1": string;
   /** Gözlemleyici tuvali dama deseni — koyu kare. */
-  '--tuval-2': string;
+  "--tuval-2": string;
 }
 
 /** Bir tema kaydı. */
@@ -52,7 +52,7 @@ export interface Tema {
   /** Menüde gösterilecek ad. */
   readonly etiket: string;
   /** Açık mı koyu mu (ileride otomatik seçim için ipucu). */
-  readonly tur: 'koyu' | 'acik';
+  readonly tur: "koyu" | "acik";
   /** Token değerleri. */
   readonly degiskenler: TemaDegiskenleri;
 }

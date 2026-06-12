@@ -1,20 +1,20 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, property, state, query } from 'lit/decorators.js';
-import { ayristir, hex, metin, rgbToHsv, hsvToRgb, type HSVA } from './renk';
-import type { BoyaDegeri, GradyanDurak } from './boya-degeri';
-import { t } from '../diller/dil';
+import { LitElement, html, css } from "lit";
+import { customElement, property, state, query } from "lit/decorators.js";
+import { ayristir, hex, metin, rgbToHsv, hsvToRgb, type HSVA } from "./renk";
+import type { BoyaDegeri, GradyanDurak } from "./boya-degeri";
+import { t } from "../diller/dil";
 
-type Mod = 'yok' | 'duz' | 'dogrusal' | 'radyal';
+type Mod = "yok" | "duz" | "dogrusal" | "radyal";
 
 /** Bir boya değerinin CSS önizleme arka planı. */
 export function boyaOnizleme(b: BoyaDegeri): string {
-  if (b.tip === 'yok') return 'transparent';
-  if (b.tip === 'duz') return b.renk;
+  if (b.tip === "yok") return "transparent";
+  if (b.tip === "duz") return b.renk;
   const duraklar = [...b.duraklar]
     .sort((x, y) => x.offset - y.offset)
     .map((d) => `${d.renk} ${Math.round(d.offset * 100)}%`)
-    .join(', ');
-  return b.gradyanTuru === 'radyal'
+    .join(", ");
+  return b.gradyanTuru === "radyal"
     ? `radial-gradient(circle, ${duraklar})`
     : `linear-gradient(${90 - b.aci}deg, ${duraklar})`;
 }
@@ -24,7 +24,7 @@ export function boyaOnizleme(b: BoyaDegeri): string {
  * Düz renk ve her gradyan durağı için doygunluk-parlaklık karesi + ton + alfa +
  * hex. Değişince `degisti` olayı yayar (detail: {@link BoyaDegeri}).
  */
-@customElement('boya-secici')
+@customElement("boya-secici")
 export class BoyaSecici extends LitElement {
   static override styles = css`
     :host {
@@ -37,7 +37,11 @@ export class BoyaSecici extends LitElement {
         linear-gradient(45deg, transparent 75%, #bbb 75%),
         linear-gradient(-45deg, transparent 75%, #bbb 75%);
       background-size: 10px 10px;
-      background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+      background-position:
+        0 0,
+        0 5px,
+        5px -5px,
+        -5px 0;
     }
     .swatch {
       position: relative;
@@ -107,7 +111,7 @@ export class BoyaSecici extends LitElement {
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
-    input[type='range'] {
+    input[type="range"] {
       width: 100%;
       margin: 0;
       -webkit-appearance: none;
@@ -115,7 +119,7 @@ export class BoyaSecici extends LitElement {
       border-radius: 6px;
       cursor: pointer;
     }
-    input[type='range']::-webkit-slider-thumb {
+    input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 14px;
       height: 14px;
@@ -197,29 +201,38 @@ export class BoyaSecici extends LitElement {
   `;
 
   /** Gelen boya değeri. */
-  @property({ attribute: false }) deger: BoyaDegeri = { tip: 'duz', renk: '#000000' };
+  @property({ attribute: false }) deger: BoyaDegeri = {
+    tip: "duz",
+    renk: "#000000",
+  };
 
   @state() private acik = false;
   @state() private popX = 0;
   @state() private popY = 0;
 
   // Düzenleme durumu
-  @state() private mod: Mod = 'duz';
+  @state() private mod: Mod = "duz";
   @state() private hsva: HSVA = { h: 0, s: 0, v: 0, a: 1 };
   @state() private duraklar: GradyanDurak[] = [];
   @state() private aci = 90;
   @state() private seciliDurak = 0;
 
-  @query('.swatch') private swatch!: HTMLElement;
+  @query(".swatch") private swatch!: HTMLElement;
 
   #disKapat = (olay: Event): void => {
     const yol = olay.composedPath();
-    if (!yol.some((d) => d instanceof HTMLElement && (d.classList?.contains('pop') || d.classList?.contains('swatch')))) {
+    if (
+      !yol.some(
+        (d) =>
+          d instanceof HTMLElement &&
+          (d.classList?.contains("pop") || d.classList?.contains("swatch")),
+      )
+    ) {
       this.kapat();
     }
   };
   #klavye = (olay: KeyboardEvent): void => {
-    if (olay.key === 'Escape') this.kapat();
+    if (olay.key === "Escape") this.kapat();
   };
 
   override disconnectedCallback(): void {
@@ -230,30 +243,32 @@ export class BoyaSecici extends LitElement {
   private ac(): void {
     const b = this.deger;
     this.duraklar = [
-      { offset: 0, renk: 'rgb(0, 0, 0)' },
-      { offset: 1, renk: 'rgb(255, 255, 255)' },
+      { offset: 0, renk: "rgb(0, 0, 0)" },
+      { offset: 1, renk: "rgb(255, 255, 255)" },
     ];
     this.aci = 90;
     this.seciliDurak = 0;
-    if (b.tip === 'yok') {
-      this.mod = 'yok';
+    if (b.tip === "yok") {
+      this.mod = "yok";
       this.hsva = { h: 0, s: 1, v: 1, a: 1 };
-    } else if (b.tip === 'duz') {
-      this.mod = 'duz';
+    } else if (b.tip === "duz") {
+      this.mod = "duz";
       this.hsva = rgbToHsv(ayristir(b.renk) ?? { r: 0, g: 0, b: 0, a: 1 });
     } else {
-      this.mod = b.gradyanTuru === 'radyal' ? 'radyal' : 'dogrusal';
+      this.mod = b.gradyanTuru === "radyal" ? "radyal" : "dogrusal";
       this.duraklar = b.duraklar.map((d) => ({ ...d }));
       this.aci = b.aci;
-      this.hsva = rgbToHsv(ayristir(this.duraklar[0]!.renk) ?? { r: 0, g: 0, b: 0, a: 1 });
+      this.hsva = rgbToHsv(
+        ayristir(this.duraklar[0]!.renk) ?? { r: 0, g: 0, b: 0, a: 1 },
+      );
     }
 
     const r = this.swatch.getBoundingClientRect();
     this.popX = Math.min(r.left, window.innerWidth - 248);
     this.popY = Math.min(r.bottom + 6, window.innerHeight - 320);
     this.acik = true;
-    window.addEventListener('pointerdown', this.#disKapat, true);
-    window.addEventListener('keydown', this.#klavye, true);
+    window.addEventListener("pointerdown", this.#disKapat, true);
+    window.addEventListener("keydown", this.#klavye, true);
   }
 
   private kapat(): void {
@@ -262,32 +277,37 @@ export class BoyaSecici extends LitElement {
     this.#kapatDinleyici();
   }
   #kapatDinleyici(): void {
-    window.removeEventListener('pointerdown', this.#disKapat, true);
-    window.removeEventListener('keydown', this.#klavye, true);
+    window.removeEventListener("pointerdown", this.#disKapat, true);
+    window.removeEventListener("keydown", this.#klavye, true);
   }
 
   #deger(): BoyaDegeri {
-    if (this.mod === 'yok') return { tip: 'yok' };
-    if (this.mod === 'duz') return { tip: 'duz', renk: metin(hsvToRgb(this.hsva)) };
+    if (this.mod === "yok") return { tip: "yok" };
+    if (this.mod === "duz")
+      return { tip: "duz", renk: metin(hsvToRgb(this.hsva)) };
     return {
-      tip: 'gradyan',
-      gradyanTuru: this.mod === 'radyal' ? 'radyal' : 'dogrusal',
+      tip: "gradyan",
+      gradyanTuru: this.mod === "radyal" ? "radyal" : "dogrusal",
       aci: this.aci,
       duraklar: this.duraklar.map((d) => ({ ...d })),
     };
   }
   #yay(): void {
     this.dispatchEvent(
-      new CustomEvent<BoyaDegeri>('degisti', { detail: this.#deger(), bubbles: true, composed: true }),
+      new CustomEvent<BoyaDegeri>("degisti", {
+        detail: this.#deger(),
+        bubbles: true,
+        composed: true,
+      }),
     );
   }
 
   private modSec(mod: Mod): void {
     this.mod = mod;
-    if ((mod === 'dogrusal' || mod === 'radyal') && this.duraklar.length < 2) {
+    if ((mod === "dogrusal" || mod === "radyal") && this.duraklar.length < 2) {
       this.duraklar = [
         { offset: 0, renk: metin(hsvToRgb(this.hsva)) },
-        { offset: 1, renk: 'rgba(0, 0, 0, 0)' },
+        { offset: 1, renk: "rgba(0, 0, 0, 0)" },
       ];
       this.seciliDurak = 0;
     }
@@ -297,7 +317,7 @@ export class BoyaSecici extends LitElement {
   /** Etkin rengi (düz renk ya da seçili durak) günceller. */
   private renkGuncelle(yeni: Partial<HSVA>): void {
     this.hsva = { ...this.hsva, ...yeni };
-    if (this.mod === 'dogrusal' || this.mod === 'radyal') {
+    if (this.mod === "dogrusal" || this.mod === "radyal") {
       const yeniDuraklar = [...this.duraklar];
       yeniDuraklar[this.seciliDurak] = {
         ...yeniDuraklar[this.seciliDurak]!,
@@ -329,7 +349,9 @@ export class BoyaSecici extends LitElement {
 
   private durakSec(i: number): void {
     this.seciliDurak = i;
-    this.hsva = rgbToHsv(ayristir(this.duraklar[i]!.renk) ?? { r: 0, g: 0, b: 0, a: 1 });
+    this.hsva = rgbToHsv(
+      ayristir(this.duraklar[i]!.renk) ?? { r: 0, g: 0, b: 0, a: 1 },
+    );
   }
   private durakEkle(): void {
     const renk = metin(hsvToRgb(this.hsva));
@@ -337,7 +359,9 @@ export class BoyaSecici extends LitElement {
     // değere sahip başka bir durak varsa onu seçerdi (ilk eşleşme). Spread+sort
     // eleman referansını koruduğundan indexOf doğru nesneyi bulur.
     const yeni = { offset: 0.5, renk };
-    this.duraklar = [...this.duraklar, yeni].sort((a, b) => a.offset - b.offset);
+    this.duraklar = [...this.duraklar, yeni].sort(
+      (a, b) => a.offset - b.offset,
+    );
     this.seciliDurak = this.duraklar.indexOf(yeni);
     this.#yay();
   }
@@ -357,34 +381,46 @@ export class BoyaSecici extends LitElement {
 
   override render() {
     return html`
-      <button class="swatch dama" title=${t('boya.sec')} @click=${() => (this.acik ? this.kapat() : this.ac())}>
-        <span class="renk" style="background:${boyaOnizleme(this.deger)}"></span>
+      <button
+        class="swatch dama"
+        title=${t("boya.sec")}
+        @click=${() => (this.acik ? this.kapat() : this.ac())}
+      >
+        <span
+          class="renk"
+          style="background:${boyaOnizleme(this.deger)}"
+        ></span>
       </button>
-      ${this.acik ? this.#popover() : ''}
+      ${this.acik ? this.#popover() : ""}
     `;
   }
 
   #popover() {
-    const gradyanMi = this.mod === 'dogrusal' || this.mod === 'radyal';
+    const gradyanMi = this.mod === "dogrusal" || this.mod === "radyal";
     const rgb = hsvToRgb(this.hsva);
     const tonRenk = `hsl(${this.hsva.h}, 100%, 50%)`;
 
     return html`
       <div class="pop" style="left:${this.popX}px; top:${this.popY}px">
         <div class="modlar">
-          ${(['yok', 'duz', 'dogrusal', 'radyal'] as Mod[]).map(
+          ${(["yok", "duz", "dogrusal", "radyal"] as Mod[]).map(
             (m) => html`
-              <button class=${this.mod === m ? 'etkin' : ''} @click=${() => this.modSec(m)}>
+              <button
+                class=${this.mod === m ? "etkin" : ""}
+                @click=${() => this.modSec(m)}
+              >
                 ${t(`boya.mod.${m}`)}
               </button>
             `,
           )}
         </div>
 
-        ${this.mod === 'yok'
-          ? html`<div style="color:var(--metin-soluk); padding:0.3rem 0;">${t('boya.yokAciklama')}</div>`
+        ${this.mod === "yok"
+          ? html`<div style="color:var(--metin-soluk); padding:0.3rem 0;">
+              ${t("boya.yokAciklama")}
+            </div>`
           : html`
-              ${gradyanMi ? this.#gradyanAlani() : ''}
+              ${gradyanMi ? this.#gradyanAlani() : ""}
               ${this.#renkSecici(rgb, tonRenk)}
             `}
       </div>
@@ -399,32 +435,35 @@ export class BoyaSecici extends LitElement {
         ${this.duraklar.map(
           (d, i) => html`
             <span
-              class="durak dama ${i === this.seciliDurak ? 'secili' : ''}"
+              class="durak dama ${i === this.seciliDurak ? "secili" : ""}"
               style="background:${d.renk}"
               @click=${() => this.durakSec(i)}
             ></span>
           `,
         )}
-        <button class="kucuk" @click=${this.durakEkle}>+ ${t('boya.durak')}</button>
+        <button class="kucuk" @click=${this.durakEkle}>
+          + ${t("boya.durak")}
+        </button>
         ${this.duraklar.length > 2
           ? html`<button class="kucuk" @click=${this.durakSil}>−</button>`
-          : ''}
+          : ""}
       </div>
       <div class="satir">
-        <label>${t('boya.konum')}</label>
+        <label>${t("boya.konum")}</label>
         <input
           type="range"
           min="0"
           max="1"
           step="0.01"
           .value=${String(this.duraklar[this.seciliDurak]?.offset ?? 0)}
-          @input=${(e: Event) => this.offsetGuncelle(Number((e.target as HTMLInputElement).value))}
+          @input=${(e: Event) =>
+            this.offsetGuncelle(Number((e.target as HTMLInputElement).value))}
         />
       </div>
-      ${this.mod === 'dogrusal'
+      ${this.mod === "dogrusal"
         ? html`
             <div class="satir">
-              <label>${t('boya.aci')}</label>
+              <label>${t("boya.aci")}</label>
               <input
                 type="range"
                 min="0"
@@ -438,7 +477,7 @@ export class BoyaSecici extends LitElement {
               />
             </div>
           `
-        : ''}
+        : ""}
     `;
   }
 
@@ -452,7 +491,8 @@ export class BoyaSecici extends LitElement {
       >
         <div
           class="sv-imlec"
-          style="left:${this.hsva.s * 100}%; top:${(1 - this.hsva.v) * 100}%; background:${metin({ ...rgb, a: 1 })}"
+          style="left:${this.hsva.s * 100}%; top:${(1 - this.hsva.v) *
+          100}%; background:${metin({ ...rgb, a: 1 })}"
         ></div>
       </div>
       <input
@@ -462,7 +502,10 @@ export class BoyaSecici extends LitElement {
         max="360"
         step="1"
         .value=${String(this.hsva.h)}
-        @input=${(e: Event) => this.renkGuncelle({ h: Number((e.target as HTMLInputElement).value) })}
+        @input=${(e: Event) =>
+          this.renkGuncelle({
+            h: Number((e.target as HTMLInputElement).value),
+          })}
       />
       <div class="dama" style="border-radius:6px;">
         <input
@@ -470,14 +513,31 @@ export class BoyaSecici extends LitElement {
           min="0"
           max="1"
           step="0.01"
-          style="background: linear-gradient(to right, transparent, ${metin({ ...rgb, a: 1 })});"
+          style="background: linear-gradient(to right, transparent, ${metin({
+            ...rgb,
+            a: 1,
+          })});"
           .value=${String(this.hsva.a)}
-          @input=${(e: Event) => this.renkGuncelle({ a: Number((e.target as HTMLInputElement).value) })}
+          @input=${(e: Event) =>
+            this.renkGuncelle({
+              a: Number((e.target as HTMLInputElement).value),
+            })}
         />
       </div>
       <div class="satir">
-        <span class="onizleme dama"><span style="display:block;width:100%;height:100%;border-radius:4px;background:${metin(rgb)}"></span></span>
-        <input class="hex" type="text" .value=${hex(rgb)} @change=${this.hexDegis} />
+        <span class="onizleme dama"
+          ><span
+            style="display:block;width:100%;height:100%;border-radius:4px;background:${metin(
+              rgb,
+            )}"
+          ></span
+        ></span>
+        <input
+          class="hex"
+          type="text"
+          .value=${hex(rgb)}
+          @change=${this.hexDegis}
+        />
       </div>
     `;
   }
@@ -485,6 +545,6 @@ export class BoyaSecici extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'boya-secici': BoyaSecici;
+    "boya-secici": BoyaSecici;
   }
 }

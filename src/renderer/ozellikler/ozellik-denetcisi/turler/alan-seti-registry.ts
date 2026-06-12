@@ -1,10 +1,10 @@
-import type { TemplateResult } from 'lit';
-import type { Dugum } from '../../../../cekirdek/belge/model/dugum';
-import type { Belge } from '../../../../cekirdek/belge/belge';
-import type { Komut } from '../../../../cekirdek/komutlar/komut';
+import type { TemplateResult } from "lit";
+import type { Dugum } from "../../../../cekirdek/belge/model/dugum";
+import type { Belge } from "../../../../cekirdek/belge/belge";
+import type { Komut } from "../../../../cekirdek/komutlar/komut";
 
 /**
- * Alan seti kayıt defteri (CLAUDE.md §9.3 — seçime duyarlı denetçi).
+ * Alan seti kayıt defteri (AGENTS.md §9.3 — seçime duyarlı denetçi).
  *
  * Özellik Denetçisi bir nesne türü değil, bir DAVRANIŞtır: Tuval'de ne
  * seçildiyse, türüne uygun "alan setlerini" gösterir. Her alan seti registry'ye

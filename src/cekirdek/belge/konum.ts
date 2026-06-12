@@ -1,7 +1,7 @@
-import { type Dugum } from './model/dugum';
+import { type Dugum } from "./model/dugum";
 
 /**
- * Konum modeli yardımcıları (CLAUDE.md §9.8).
+ * Konum modeli yardımcıları (AGENTS.md §9.8).
  *
  * Her nesnenin "canlı" konumunu (x, y) kendi ebeveyninin koordinatlarında
  * okur. Bazı şekiller konumu farklı attribute çiftiyle taşır (circle/ellipse →
@@ -10,13 +10,13 @@ import { type Dugum } from './model/dugum';
 
 /** Şekil türü → konum attribute çifti (x-benzeri, y-benzeri). */
 const KONUM_ALANLARI: Record<string, readonly [string, string]> = {
-  rect: ['x', 'y'],
-  image: ['x', 'y'],
-  text: ['x', 'y'],
-  use: ['x', 'y'],
-  foreignObject: ['x', 'y'],
-  circle: ['cx', 'cy'],
-  ellipse: ['cx', 'cy'],
+  rect: ["x", "y"],
+  image: ["x", "y"],
+  text: ["x", "y"],
+  use: ["x", "y"],
+  foreignObject: ["x", "y"],
+  circle: ["cx", "cy"],
+  ellipse: ["cx", "cy"],
 };
 
 /**
@@ -26,13 +26,15 @@ const KONUM_ALANLARI: Record<string, readonly [string, string]> = {
  * (§9.8) yanlış kurmamalı (bkz. GELISTIRME-DURUMU §4.3).
  */
 function safSayi(deger: string | undefined): number | null {
-  if (deger === undefined || deger.trim() === '') return 0;
+  if (deger === undefined || deger.trim() === "") return 0;
   const n = Number(deger);
   return Number.isFinite(n) ? n : null;
 }
 
 /** Düğümün konum attribute çiftini döndürür (yoksa null). */
-export function konumAlanlari(etiket: string): readonly [string, string] | null {
+export function konumAlanlari(
+  etiket: string,
+): readonly [string, string] | null {
   return KONUM_ALANLARI[etiket] ?? null;
 }
 

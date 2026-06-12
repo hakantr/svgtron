@@ -1,7 +1,7 @@
-import type { Dugum } from '../../cekirdek/belge/model/dugum';
+import type { Dugum } from "../../cekirdek/belge/model/dugum";
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const XLINK_NS = 'http://www.w3.org/1999/xlink';
+const SVG_NS = "http://www.w3.org/2000/svg";
+const XLINK_NS = "http://www.w3.org/1999/xlink";
 
 /**
  * Yansıtıcı — soyut belge modelini canlı SVG DOM'una çevirir ve sonraki
@@ -41,8 +41,9 @@ export class Yansitici {
 
   #olustur(dugum: Dugum): Element {
     const el = document.createElementNS(SVG_NS, dugum.etiket);
-    el.setAttribute('data-kimlik', dugum.kimlik);
-    for (const [ad, deger] of dugum.oznitelikler) this.#oznitelikYaz(el, ad, deger);
+    el.setAttribute("data-kimlik", dugum.kimlik);
+    for (const [ad, deger] of dugum.oznitelikler)
+      this.#oznitelikYaz(el, ad, deger);
 
     if (dugum.metin !== undefined && dugum.cocuklar.length === 0) {
       el.textContent = dugum.metin;
@@ -59,7 +60,7 @@ export class Yansitici {
 
     // Öznitelikleri senkronla (data-kimlik hariç).
     for (const attr of Array.from(el.attributes)) {
-      if (attr.name === 'data-kimlik') continue;
+      if (attr.name === "data-kimlik") continue;
       if (!dugum.oznitelikler.has(attr.name)) el.removeAttribute(attr.name);
     }
     for (const [ad, deger] of dugum.oznitelikler) {
@@ -76,7 +77,7 @@ export class Yansitici {
   #uyumlaCocuklar(domEbeveyn: Element, modelCocuklar: Dugum[]): void {
     const mevcut = new Map<string, Element>();
     for (const c of Array.from(domEbeveyn.children)) {
-      const k = c.getAttribute('data-kimlik');
+      const k = c.getAttribute("data-kimlik");
       if (k) mevcut.set(k, c);
     }
 
@@ -102,14 +103,14 @@ export class Yansitici {
   }
 
   #unutAgac(el: Element): void {
-    const k = el.getAttribute('data-kimlik');
+    const k = el.getAttribute("data-kimlik");
     if (k) this.#elemanlar.delete(k);
     for (const c of Array.from(el.children)) this.#unutAgac(c);
   }
 
   #oznitelikYaz(el: Element, ad: string, deger: string): void {
-    if (ad.startsWith('xmlns')) return; // createElementNS yeterli
-    if (ad === 'xlink:href') el.setAttributeNS(XLINK_NS, ad, deger);
+    if (ad.startsWith("xmlns")) return; // createElementNS yeterli
+    if (ad === "xlink:href") el.setAttributeNS(XLINK_NS, ad, deger);
     else el.setAttribute(ad, deger);
   }
 }

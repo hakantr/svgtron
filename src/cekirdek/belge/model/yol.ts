@@ -1,5 +1,5 @@
 /**
- * SVG `path` `d` ayrıştırıcı/yazıcı (CLAUDE.md İlke 1 — Electron'dan habersiz, saf).
+ * SVG `path` `d` ayrıştırıcı/yazıcı (AGENTS.md İlke 1 — Electron'dan habersiz, saf).
  *
  * Düğüm aracı için `d` dizesini **mutlak, normalize** segmentlere çevirir:
  * - Bağıl komutlar mutlağa çevrilir.
@@ -16,12 +16,20 @@ export interface Nokta {
 }
 
 export type Segment =
-  | { tip: 'M'; p: Nokta }
-  | { tip: 'L'; p: Nokta }
-  | { tip: 'C'; c1: Nokta; c2: Nokta; p: Nokta }
-  | { tip: 'Q'; c: Nokta; p: Nokta }
-  | { tip: 'A'; rx: number; ry: number; donus: number; buyukYay: boolean; suzme: boolean; p: Nokta }
-  | { tip: 'Z' };
+  | { tip: "M"; p: Nokta }
+  | { tip: "L"; p: Nokta }
+  | { tip: "C"; c1: Nokta; c2: Nokta; p: Nokta }
+  | { tip: "Q"; c: Nokta; p: Nokta }
+  | {
+      tip: "A";
+      rx: number;
+      ry: number;
+      donus: number;
+      buyukYay: boolean;
+      suzme: boolean;
+      p: Nokta;
+    }
+  | { tip: "Z" };
 
 /** Sayı/komut/bayrak okuyan basit tarayıcı (SVG path dilbilgisi). */
 class Tarayici {
@@ -31,7 +39,15 @@ class Tarayici {
   private ayiricilariGec(): void {
     while (this.i < this.s.length) {
       const c = this.s[this.i]!;
-      if (c === ' ' || c === ',' || c === '\t' || c === '\n' || c === '\r' || c === '\f') this.i++;
+      if (
+        c === " " ||
+        c === "," ||
+        c === "\t" ||
+        c === "\n" ||
+        c === "\r" ||
+        c === "\f"
+      )
+        this.i++;
       else break;
     }
   }
@@ -58,7 +74,10 @@ class Tarayici {
     this.ayiricilariGec();
     const kalan = this.s.slice(this.i);
     const m = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/.exec(kalan);
-    if (!m) throw new Error(`Geçersiz path sayısı @${this.i}: "${kalan.slice(0, 12)}"`);
+    if (!m)
+      throw new Error(
+        `Geçersiz path sayısı @${this.i}: "${kalan.slice(0, 12)}"`,
+      );
     this.i += m[0].length;
     return parseFloat(m[0]);
   }
@@ -67,9 +86,10 @@ class Tarayici {
   bayrak(): boolean {
     this.ayiricilariGec();
     const c = this.s[this.i];
-    if (c !== '0' && c !== '1') throw new Error(`Geçersiz yay bayrağı @${this.i}: "${c}"`);
+    if (c !== "0" && c !== "1")
+      throw new Error(`Geçersiz yay bayrağı @${this.i}: "${c}"`);
     this.i++;
-    return c === '1';
+    return c === "1";
   }
 }
 
@@ -84,9 +104,9 @@ export function yoluAyristir(d: string): Segment[] {
   const tr = new Tarayici(d);
   let cur: Nokta = { x: 0, y: 0 };
   let basla: Nokta = { x: 0, y: 0 };
-  let sonKomut = '';
+  let sonKomut = "";
   let sonKontrol: Nokta | null = null;
-  let komut = '';
+  let komut = "";
 
   while (tr.daha()) {
     const yeni = tr.komut();
@@ -96,92 +116,95 @@ export function yoluAyristir(d: string): Segment[] {
       if (!komut) break;
       // Z/z argümansızdır: yeni komut harfi yokken başıboş bir token gelirse
       // hiçbir karakter tüketilmez → sonsuz döngü olur. Burada güvenle dur.
-      if (komut.toUpperCase() === 'Z') break;
+      if (komut.toUpperCase() === "Z") break;
       // örtük tekrar: M→L, m→l; diğerleri aynı komutu sürdürür.
-      if (komut === 'M') komut = 'L';
-      else if (komut === 'm') komut = 'l';
+      if (komut === "M") komut = "L";
+      else if (komut === "m") komut = "l";
     }
-    const bagil = komut >= 'a';
+    const bagil = komut >= "a";
     const buyuk = komut.toUpperCase();
-    const P = (x: number, y: number): Nokta => (bagil ? { x: cur.x + x, y: cur.y + y } : { x, y });
+    const P = (x: number, y: number): Nokta =>
+      bagil ? { x: cur.x + x, y: cur.y + y } : { x, y };
 
     switch (buyuk) {
-      case 'M': {
+      case "M": {
         const p = P(tr.sayi(), tr.sayi());
-        segs.push({ tip: 'M', p });
+        segs.push({ tip: "M", p });
         cur = p;
         basla = p;
         sonKontrol = null;
-        sonKomut = 'M';
+        sonKomut = "M";
         break;
       }
-      case 'L': {
+      case "L": {
         const p = P(tr.sayi(), tr.sayi());
-        segs.push({ tip: 'L', p });
+        segs.push({ tip: "L", p });
         cur = p;
         sonKontrol = null;
-        sonKomut = 'L';
+        sonKomut = "L";
         break;
       }
-      case 'H': {
+      case "H": {
         const x = tr.sayi();
         const p: Nokta = { x: bagil ? cur.x + x : x, y: cur.y };
-        segs.push({ tip: 'L', p });
+        segs.push({ tip: "L", p });
         cur = p;
         sonKontrol = null;
-        sonKomut = 'L';
+        sonKomut = "L";
         break;
       }
-      case 'V': {
+      case "V": {
         const y = tr.sayi();
         const p: Nokta = { x: cur.x, y: bagil ? cur.y + y : y };
-        segs.push({ tip: 'L', p });
+        segs.push({ tip: "L", p });
         cur = p;
         sonKontrol = null;
-        sonKomut = 'L';
+        sonKomut = "L";
         break;
       }
-      case 'C': {
+      case "C": {
         const c1 = P(tr.sayi(), tr.sayi());
         const c2 = P(tr.sayi(), tr.sayi());
         const p = P(tr.sayi(), tr.sayi());
-        segs.push({ tip: 'C', c1, c2, p });
+        segs.push({ tip: "C", c1, c2, p });
         cur = p;
         sonKontrol = c2;
-        sonKomut = 'C';
+        sonKomut = "C";
         break;
       }
-      case 'S': {
+      case "S": {
         const c2 = P(tr.sayi(), tr.sayi());
         const p = P(tr.sayi(), tr.sayi());
         // S yalnızca önceki komut kübik (C/S) ise yansıtır; aksi halde c1 = cur.
-        const c1: Nokta = sonKomut === 'C' && sonKontrol ? yansit(sonKontrol, cur) : cur;
-        segs.push({ tip: 'C', c1, c2, p });
+        const c1: Nokta =
+          sonKomut === "C" && sonKontrol ? yansit(sonKontrol, cur) : cur;
+        segs.push({ tip: "C", c1, c2, p });
         cur = p;
         sonKontrol = c2;
-        sonKomut = 'C';
+        sonKomut = "C";
         break;
       }
-      case 'Q': {
+      case "Q": {
         const c = P(tr.sayi(), tr.sayi());
         const p = P(tr.sayi(), tr.sayi());
-        segs.push({ tip: 'Q', c, p });
+        segs.push({ tip: "Q", c, p });
         cur = p;
         sonKontrol = c;
-        sonKomut = 'Q';
+        sonKomut = "Q";
         break;
       }
-      case 'T': {
+      case "T": {
         const p = P(tr.sayi(), tr.sayi());
         // T yalnızca önceki komut kuadratik (Q/T) ise yansıtır; aksi halde c = cur.
-        const c: Nokta = sonKomut === 'Q' && sonKontrol ? yansit(sonKontrol, cur) : cur;
-        segs.push({ tip: 'Q', c, p });
+        const c: Nokta =
+          sonKomut === "Q" && sonKontrol ? yansit(sonKontrol, cur) : cur;
+        segs.push({ tip: "Q", c, p });
         cur = p;
         sonKontrol = c;
-        sonKomut = 'Q';
+        sonKomut = "Q";
         break;
       }
-      case 'A': {
+      case "A": {
         const rx = tr.sayi();
         const ry = tr.sayi();
         const donus = tr.sayi();
@@ -190,17 +213,17 @@ export function yoluAyristir(d: string): Segment[] {
         const x = tr.sayi();
         const y = tr.sayi();
         const p: Nokta = bagil ? { x: cur.x + x, y: cur.y + y } : { x, y };
-        segs.push({ tip: 'A', rx, ry, donus, buyukYay, suzme, p });
+        segs.push({ tip: "A", rx, ry, donus, buyukYay, suzme, p });
         cur = p;
         sonKontrol = null;
-        sonKomut = 'A';
+        sonKomut = "A";
         break;
       }
-      case 'Z': {
-        segs.push({ tip: 'Z' });
+      case "Z": {
+        segs.push({ tip: "Z" });
         cur = basla;
         sonKontrol = null;
-        sonKomut = 'Z';
+        sonKomut = "Z";
         break;
       }
       default:
@@ -221,27 +244,29 @@ export function yoluYaz(segs: readonly Segment[]): string {
   const parcalar: string[] = [];
   for (const s of segs) {
     switch (s.tip) {
-      case 'M':
+      case "M":
         parcalar.push(`M ${v(s.p.x)} ${v(s.p.y)}`);
         break;
-      case 'L':
+      case "L":
         parcalar.push(`L ${v(s.p.x)} ${v(s.p.y)}`);
         break;
-      case 'C':
-        parcalar.push(`C ${v(s.c1.x)} ${v(s.c1.y)} ${v(s.c2.x)} ${v(s.c2.y)} ${v(s.p.x)} ${v(s.p.y)}`);
+      case "C":
+        parcalar.push(
+          `C ${v(s.c1.x)} ${v(s.c1.y)} ${v(s.c2.x)} ${v(s.c2.y)} ${v(s.p.x)} ${v(s.p.y)}`,
+        );
         break;
-      case 'Q':
+      case "Q":
         parcalar.push(`Q ${v(s.c.x)} ${v(s.c.y)} ${v(s.p.x)} ${v(s.p.y)}`);
         break;
-      case 'A':
+      case "A":
         parcalar.push(
           `A ${v(s.rx)} ${v(s.ry)} ${v(s.donus)} ${s.buyukYay ? 1 : 0} ${s.suzme ? 1 : 0} ${v(s.p.x)} ${v(s.p.y)}`,
         );
         break;
-      case 'Z':
-        parcalar.push('Z');
+      case "Z":
+        parcalar.push("Z");
         break;
     }
   }
-  return parcalar.join(' ');
+  return parcalar.join(" ");
 }

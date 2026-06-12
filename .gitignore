@@ -43,5 +43,5 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Claude Code talimat dosyası (depoya dahil edilmez)
+# Agents Code talimat dosyası (depoya dahil edilmez)
 .claude/

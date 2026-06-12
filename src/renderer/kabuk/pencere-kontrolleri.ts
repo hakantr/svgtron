@@ -1,6 +1,6 @@
-import { LitElement, html, css, svg } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
-import { dilYonetici, t } from '../diller/dil';
+import { LitElement, html, css, svg } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { dilYonetici, t } from "../diller/dil";
 
 /**
  * Özel pencere kontrol tuşları (çerçevesiz pencere).
@@ -9,7 +9,7 @@ import { dilYonetici, t } from '../diller/dil';
  * kaldığı için kabuk bu bileşeni macOS'ta yerleştirmez. Tuşlar köprü üzerinden
  * (İlke 4) ana sürece komut iletir; pencere nesnesine doğrudan erişmez.
  */
-@customElement('pencere-kontrolleri')
+@customElement("pencere-kontrolleri")
 export class PencereKontrolleri extends LitElement {
   static override styles = css`
     :host {
@@ -52,7 +52,9 @@ export class PencereKontrolleri extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     this.#dilCoz = dilYonetici.dinle(() => this.requestUpdate());
-    this.#durumCoz = window.api.pencereDurumunaAbone((k) => (this.kaplandi = k));
+    this.#durumCoz = window.api.pencereDurumunaAbone(
+      (k) => (this.kaplandi = k),
+    );
     void window.api.pencereKaplandiMi().then((k) => (this.kaplandi = k));
   }
 
@@ -65,14 +67,14 @@ export class PencereKontrolleri extends LitElement {
   override render() {
     return html`
       <button
-        title=${t('pencere.simgelestir')}
+        title=${t("pencere.simgelestir")}
         @click=${() => window.api.pencereSimgelestir()}
       >
         ${svg`<svg viewBox="0 0 10 10"><path d="M0 5 h10" stroke="currentColor" stroke-width="1" /></svg>`}
       </button>
 
       <button
-        title=${this.kaplandi ? t('pencere.geriAl') : t('pencere.kapla')}
+        title=${this.kaplandi ? t("pencere.geriAl") : t("pencere.kapla")}
         @click=${() => window.api.pencereBuyutGeriAl()}
       >
         ${this.kaplandi
@@ -87,7 +89,7 @@ export class PencereKontrolleri extends LitElement {
 
       <button
         class="kapat"
-        title=${t('pencere.kapat')}
+        title=${t("pencere.kapat")}
         @click=${() => window.api.pencereKapat()}
       >
         ${svg`<svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1"><path d="M0 0 L10 10 M10 0 L0 10" /></svg>`}
@@ -98,6 +100,6 @@ export class PencereKontrolleri extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pencere-kontrolleri': PencereKontrolleri;
+    "pencere-kontrolleri": PencereKontrolleri;
   }
 }

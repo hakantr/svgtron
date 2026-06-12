@@ -1,11 +1,11 @@
-import { LitElement, html, css, svg } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { dilYonetici, t } from '../../diller/dil';
+import { LitElement, html, css, svg } from "lit";
+import { customElement } from "lit/decorators.js";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import { dilYonetici, t } from "../../diller/dil";
 
 /**
- * Geçmiş paneli (CLAUDE.md §11.3) — birleşik geçmişin görsel zaman çizelgesi.
+ * Geçmiş paneli (AGENTS.md §11.3) — birleşik geçmişin görsel zaman çizelgesi.
  * Her satır ya bir DÜZENLEME adımı (belge Command'ı, İlke 2) ya da bir SEÇİM adımı
  * (§9.6 d) olabilir; seçim adımları soluk/italik gösterilerek ayrılır. Tıklamak o
  * duruma gider (geri/ileri al). Geri-alınmış adımlar ayrıca soluk gösterilir.
@@ -13,7 +13,7 @@ import { dilYonetici, t } from '../../diller/dil';
  * Görünüm durumudur (İlke 9): panel belgeyi değiştirmez, yalnız geçmişte gezer;
  * gerçek değişiklik yine Command/seçim katmanında olur.
  */
-@customElement('gecmis-paneli')
+@customElement("gecmis-paneli")
 export class GecmisPaneli extends LitElement {
   static override styles = css`
     :host {
@@ -102,20 +102,23 @@ export class GecmisPaneli extends LitElement {
     const girisler = this.gecmis.girisler();
     const konum = this.gecmis.konum;
     return html`
-      <div class="baslik">${t('gecmis.baslik')}</div>
+      <div class="baslik">${t("gecmis.baslik")}</div>
       ${girisler.length === 0
-        ? html`<div class="bos">${t('gecmis.bos')}</div>`
+        ? html`<div class="bos">${t("gecmis.bos")}</div>`
         : html`
             <ul class="liste">
-              <li class=${konum === 0 ? 'aktif' : ''} @click=${() => this.git(0)}>
-                <span class="nokta"></span>${t('gecmis.baslangic')}
+              <li
+                class=${konum === 0 ? "aktif" : ""}
+                @click=${() => this.git(0)}
+              >
+                <span class="nokta"></span>${t("gecmis.baslangic")}
               </li>
               ${girisler.map(
                 (g, i) => html`
                   <li
-                    class="${g.uygulandi ? '' : 'ileri'} ${konum === i + 1 ? 'aktif' : ''} ${g.tur === 'secim'
-                      ? 'secim'
-                      : ''}"
+                    class="${g.uygulandi ? "" : "ileri"} ${konum === i + 1
+                      ? "aktif"
+                      : ""} ${g.tur === "secim" ? "secim" : ""}"
                     @click=${() => this.git(i + 1)}
                   >
                     <span class="nokta"></span>${g.etiket}
@@ -130,14 +133,14 @@ export class GecmisPaneli extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'gecmis-paneli': GecmisPaneli;
+    "gecmis-paneli": GecmisPaneli;
   }
 }
 
 panelKayitDefteri.kaydet({
-  id: 'gecmis',
-  baslik: 'Geçmiş',
-  bolge: 'sag',
+  id: "gecmis",
+  baslik: "Geçmiş",
+  bolge: "sag",
   ikon: svg`<svg viewBox="0 0 18 18" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 9a5.6 5.6 0 1 1 1.7 4"/><path d="M2.8 12.9 3.2 9.3 6.8 9.7"/><path d="M9 5.6V9l2.3 1.4"/></svg>`,
   olustur: ({ gecmis }) => {
     const panel = new GecmisPaneli();

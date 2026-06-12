@@ -11,21 +11,21 @@
  * Varsayılan dil Türkçe'dir; bir anahtar seçili dilde yoksa Türkçe'ye, o da
  * yoksa anahtarın kendisine düşülür (eksik çeviri görünür kalır).
  *
- * `tr.dil` TEK DOĞRULUK KAYNAĞIDIR (CLAUDE.md §3, TK-24). Tr harici bir dil
+ * `tr.dil` TEK DOĞRULUK KAYNAĞIDIR (AGENTS.md §3, TK-24). Tr harici bir dil
  * seçilince (TK-28), o dilde EKSİK olan anahtarlar `<kod>.dil` kaynağına `= ?`
  * olarak eklenir (geliştirme; main `dil-servisi` üzerinden) → çevrilmemiş anahtar
  * dosyada görünür. Çevrilmemiş işareti olan `?` değeri, çalışma anında "yok"
  * sayılır (Türkçe'ye düşülür) — UI bozulmaz, marker yalnız dosya içindir.
  */
-const VARSAYILAN_DIL = 'tr';
-const DEPOLAMA_ANAHTARI = 'svgtron.dil';
+const VARSAYILAN_DIL = "tr";
+const DEPOLAMA_ANAHTARI = "svgtron.dil";
 /** Çevrilmemiş anahtar işareti (dosyada gözükür; çalışma anında "yok" sayılır). */
-const CEVRILMEDI = '?';
+const CEVRILMEDI = "?";
 
 // Tüm .dil dosyalarını ham metin olarak içe al (derleme anında).
-const hamDosyalar = import.meta.glob('./*.dil', {
-  query: '?raw',
-  import: 'default',
+const hamDosyalar = import.meta.glob("./*.dil", {
+  query: "?raw",
+  import: "default",
   eager: true,
 }) as Record<string, string>;
 
@@ -34,8 +34,8 @@ function ayristir(metin: string): Map<string, string> {
   const harita = new Map<string, string>();
   for (const ham of metin.split(/\r?\n/)) {
     const satir = ham.trim();
-    if (!satir || satir.startsWith('#')) continue;
-    const esit = satir.indexOf('=');
+    if (!satir || satir.startsWith("#")) continue;
+    const esit = satir.indexOf("=");
     if (esit === -1) continue;
     const anahtar = satir.slice(0, esit).trim();
     if (anahtar) harita.set(anahtar, satir.slice(esit + 1).trim());
@@ -46,7 +46,7 @@ function ayristir(metin: string): Map<string, string> {
 // Katalog: dilKodu → (anahtar → değer)
 const katalog = new Map<string, Map<string, string>>();
 for (const [yol, icerik] of Object.entries(hamDosyalar)) {
-  const kod = yol.replace(/^.*\//, '').replace(/\.dil$/, '');
+  const kod = yol.replace(/^.*\//, "").replace(/\.dil$/, "");
   katalog.set(kod, ayristir(icerik));
 }
 
@@ -81,7 +81,9 @@ class DilYonetici {
     const trAnahtarlar = katalog.get(VARSAYILAN_DIL);
     const dilAnahtarlar = katalog.get(kod);
     if (!trAnahtarlar) return;
-    const eksik = [...trAnahtarlar.keys()].filter((a) => !dilAnahtarlar?.has(a));
+    const eksik = [...trAnahtarlar.keys()].filter(
+      (a) => !dilAnahtarlar?.has(a),
+    );
     if (eksik.length === 0) return;
     try {
       void window.api?.dilDosyasiSenkron?.(kod, eksik);
@@ -99,7 +101,7 @@ class DilYonetici {
   dilleriAl(): { kod: string; ad: string }[] {
     return [...katalog.entries()].map(([kod, harita]) => ({
       kod,
-      ad: harita.get('dil.ad') ?? kod,
+      ad: harita.get("dil.ad") ?? kod,
     }));
   }
 
@@ -114,7 +116,10 @@ class DilYonetici {
   }
 
   /** Anahtarı çevirir; `{ad}` türü yer tutucuları değişkenlerle doldurur. */
-  cevir(anahtar: string, degiskenler?: Record<string, string | number>): string {
+  cevir(
+    anahtar: string,
+    degiskenler?: Record<string, string | number>,
+  ): string {
     // Seçili dildeki değer; çevrilmemiş işareti (`?`) "yok" sayılır → Türkçe'ye düşülür.
     const secili = katalog.get(this.#kod)?.get(anahtar);
     const deger =

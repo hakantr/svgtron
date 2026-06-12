@@ -1,14 +1,17 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, state, query } from 'lit/decorators.js';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { menuKayitDefteri, type MenuBaglami } from '../../../cekirdek/registry/menu-registry';
-import type { BelgeDeposu } from '../../../cekirdek/belge/belge-deposu';
-import type { SecimDeposu } from '../../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import { aracKayitDefteri, aracDeposu } from '../../araclar/arac';
-import { dilYonetici, t } from '../../diller/dil';
-import { bildirimServisi } from '../../kabuk/bildirim-servisi';
-import { komutPaletiDeposu } from './komut-paleti-deposu';
+import { LitElement, html, css } from "lit";
+import { customElement, state, query } from "lit/decorators.js";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import {
+  menuKayitDefteri,
+  type MenuBaglami,
+} from "../../../cekirdek/registry/menu-registry";
+import type { BelgeDeposu } from "../../../cekirdek/belge/belge-deposu";
+import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import { aracKayitDefteri, aracDeposu } from "../../araclar/arac";
+import { dilYonetici, t } from "../../diller/dil";
+import { bildirimServisi } from "../../kabuk/bildirim-servisi";
+import { komutPaletiDeposu } from "./komut-paleti-deposu";
 
 /** Palette'te aranıp çalıştırılabilen tek bir eylem. */
 interface PaletEylem {
@@ -18,10 +21,10 @@ interface PaletEylem {
   calistir(): void | Promise<void>;
 }
 
-const trKucuk = (s: string): string => s.toLocaleLowerCase('tr');
+const trKucuk = (s: string): string => s.toLocaleLowerCase("tr");
 
 /**
- * Komut Paleti (CLAUDE.md §11.3) — Ctrl/Cmd+K ile açılır; tüm kayıtlı araçları ve
+ * Komut Paleti (AGENTS.md §11.3) — Ctrl/Cmd+K ile açılır; tüm kayıtlı araçları ve
  * menü eylemlerini arayıp çalıştırır. **Görünüm durumudur** (undo'ya girmez); bir
  * eylemi tetiklediğinde o eylem kendi Command'ını üretir (İlke 9).
  *
@@ -32,7 +35,7 @@ const trKucuk = (s: string): string => s.toLocaleLowerCase('tr');
  * Panel registry'sine kaydolur ama tam-ekran `position: fixed` bindirme olarak
  * çizilir → kabuk/bölge düzeni değişmez (İlke 5).
  */
-@customElement('komut-paleti')
+@customElement("komut-paleti")
 export class KomutPaleti extends LitElement {
   static override styles = css`
     :host {
@@ -112,9 +115,9 @@ export class KomutPaleti extends LitElement {
   gecmis!: KomutGecmisi;
 
   @state() private acik = false;
-  @state() private sorgu = '';
+  @state() private sorgu = "";
   @state() private indis = 0;
-  @query('.giris') private giris?: HTMLInputElement;
+  @query(".giris") private giris?: HTMLInputElement;
 
   #dilCoz?: () => void;
 
@@ -124,7 +127,7 @@ export class KomutPaleti extends LitElement {
       depo: this.depo,
       secim: this.secim,
       gecmis: this.gecmis,
-      hataBildir: (m) => bildirimServisi.bildir(m, 'hata'),
+      hataBildir: (m) => bildirimServisi.bildir(m, "hata"),
     };
   }
 
@@ -134,13 +137,13 @@ export class KomutPaleti extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    window.addEventListener('keydown', this.#kisayol, true);
+    window.addEventListener("keydown", this.#kisayol, true);
     this.#dilCoz = dilYonetici.dinle(() => this.requestUpdate());
     // Aç/kapat tek kaynaktan: titlebar arama kutusu da Ctrl+K de bu depoyu yazar.
     this.#depoCoz = komutPaletiDeposu.dinle(() => this.#senkron());
   }
   override disconnectedCallback(): void {
-    window.removeEventListener('keydown', this.#kisayol, true);
+    window.removeEventListener("keydown", this.#kisayol, true);
     this.#dilCoz?.();
     this.#depoCoz?.();
     super.disconnectedCallback();
@@ -148,7 +151,7 @@ export class KomutPaleti extends LitElement {
 
   /** Ctrl/Cmd+K: aç/kapat (global, yakalama fazında) — depo üzerinden. */
   readonly #kisayol = (olay: KeyboardEvent): void => {
-    if ((olay.ctrlKey || olay.metaKey) && trKucuk(olay.key) === 'k') {
+    if ((olay.ctrlKey || olay.metaKey) && trKucuk(olay.key) === "k") {
       olay.preventDefault();
       komutPaletiDeposu.degistir();
     }
@@ -159,7 +162,7 @@ export class KomutPaleti extends LitElement {
     const araclar: PaletEylem[] = aracKayitDefteri.hepsi().map((a) => ({
       id: `arac:${a.id}`,
       etiket: t(a.etiketAnahtari),
-      ipucu: t('komutpalet.arac'),
+      ipucu: t("komutpalet.arac"),
       calistir: () => aracDeposu.ayarla(a.id),
     }));
     const menuler: PaletEylem[] = menuKayitDefteri.gruplar().flatMap((g) =>
@@ -177,7 +180,9 @@ export class KomutPaleti extends LitElement {
     const q = trKucuk(this.sorgu.trim());
     const hepsi = this.eylemler();
     if (!q) return hepsi;
-    return hepsi.filter((e) => trKucuk(e.etiket).includes(q) || trKucuk(e.ipucu).includes(q));
+    return hepsi.filter(
+      (e) => trKucuk(e.etiket).includes(q) || trKucuk(e.ipucu).includes(q),
+    );
   }
 
   /** Depo durumunu uygular: aç→odağı kaydet+girişe odaklan; kapat→odağı geri ver. */
@@ -187,13 +192,13 @@ export class KomutPaleti extends LitElement {
     if (yeni) {
       this.#oncekiOdak = (document.activeElement as HTMLElement) ?? null;
       this.acik = true;
-      this.sorgu = '';
+      this.sorgu = "";
       this.indis = 0;
-      this.toggleAttribute('acik', true);
+      this.toggleAttribute("acik", true);
       void this.updateComplete.then(() => this.giris?.focus());
     } else {
       this.acik = false;
-      this.toggleAttribute('acik', false);
+      this.toggleAttribute("acik", false);
       const odak = this.#oncekiOdak;
       this.#oncekiOdak = null;
       odak?.focus?.();
@@ -214,19 +219,19 @@ export class KomutPaleti extends LitElement {
   private girisKlavye(olay: KeyboardEvent): void {
     const liste = this.suzulmus();
     switch (olay.key) {
-      case 'Escape':
+      case "Escape":
         olay.preventDefault();
         this.kapat();
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         olay.preventDefault();
         this.indis = Math.min(this.indis + 1, liste.length - 1);
         break;
-      case 'ArrowUp':
+      case "ArrowUp":
         olay.preventDefault();
         this.indis = Math.max(this.indis - 1, 0);
         break;
-      case 'Enter':
+      case "Enter":
         olay.preventDefault();
         void this.sec(liste[this.indis]);
         break;
@@ -247,19 +252,19 @@ export class KomutPaleti extends LitElement {
         <input
           class="giris"
           type="text"
-          placeholder=${t('komutpalet.ara')}
+          placeholder=${t("komutpalet.ara")}
           .value=${this.sorgu}
           @input=${this.girisDegisti}
           @keydown=${this.girisKlavye}
         />
         ${liste.length === 0
-          ? html`<div class="bos">${t('komutpalet.bos')}</div>`
+          ? html`<div class="bos">${t("komutpalet.bos")}</div>`
           : html`
               <ul class="liste">
                 ${liste.map(
                   (e, i) => html`
                     <li
-                      class="oge ${i === this.indis ? 'sec' : ''}"
+                      class="oge ${i === this.indis ? "sec" : ""}"
                       @pointerenter=${() => (this.indis = i)}
                       @click=${() => this.sec(e)}
                     >
@@ -277,14 +282,14 @@ export class KomutPaleti extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'komut-paleti': KomutPaleti;
+    "komut-paleti": KomutPaleti;
   }
 }
 
 panelKayitDefteri.kaydet({
-  id: 'komut-paleti',
-  baslik: 'Komut Paleti',
-  bolge: 'merkez',
+  id: "komut-paleti",
+  baslik: "Komut Paleti",
+  bolge: "merkez",
   olustur: ({ depo, secim, gecmis }) => {
     const p = new KomutPaleti();
     p.depo = depo;

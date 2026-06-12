@@ -1,9 +1,9 @@
-import { LitElement, html, css, svg } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import type { OynatmaDeposu } from '../../../cekirdek/animasyon/oynatma-deposu';
-import type { Playback } from '../../../cekirdek/animasyon/playback';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { dilYonetici, t } from '../../diller/dil';
+import { LitElement, html, css, svg } from "lit";
+import { customElement } from "lit/decorators.js";
+import type { OynatmaDeposu } from "../../../cekirdek/animasyon/oynatma-deposu";
+import type { Playback } from "../../../cekirdek/animasyon/playback";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import { dilYonetici, t } from "../../diller/dil";
 
 /**
  * Zaman çizelgesi paneli (MVP §5.3).
@@ -12,7 +12,7 @@ import { dilYonetici, t } from '../../diller/dil';
  * olduğunu bilmez. Oynat/duraklat/başa-sar düğmeleri + konum kaydırıcısı sunar.
  * Etkin oynatma ya da onun durumu değişince yeniden çizilir (İlke 3).
  */
-@customElement('zaman-cizelgesi-panel')
+@customElement("zaman-cizelgesi-panel")
 export class ZamanCizelgesiPanel extends LitElement {
   static override styles = css`
     :host {
@@ -51,12 +51,12 @@ export class ZamanCizelgesiPanel extends LitElement {
       height: 12px;
       fill: currentColor;
     }
-    input[type='range'] {
+    input[type="range"] {
       flex: 1;
       min-width: 0;
       accent-color: var(--vurgu, #4a90e2);
     }
-    input[type='range']:disabled {
+    input[type="range"]:disabled {
       opacity: 0.4;
     }
     .sure {
@@ -121,7 +121,7 @@ export class ZamanCizelgesiPanel extends LitElement {
     return html`
       <div class="bar">
         <button
-          title=${oynuyor ? t('zaman.durakla') : t('zaman.oynat')}
+          title=${oynuyor ? t("zaman.durakla") : t("zaman.oynat")}
           ?disabled=${!oynatilabilir}
           @click=${() => (oynuyor ? pb!.durakla() : pb!.oynat())}
         >
@@ -131,7 +131,7 @@ export class ZamanCizelgesiPanel extends LitElement {
         </button>
 
         <button
-          title=${t('zaman.basaSar')}
+          title=${t("zaman.basaSar")}
           ?disabled=${!oynatilabilir}
           @click=${() => pb!.basaSar()}
         >
@@ -153,7 +153,7 @@ export class ZamanCizelgesiPanel extends LitElement {
           ? html`<span class="sure"
               >${this.bicimle(konum)} / ${this.bicimle(pb.sure)}</span
             >`
-          : html`<span class="bos">${t('zaman.animasyonYok')}</span>`}
+          : html`<span class="bos">${t("zaman.animasyonYok")}</span>`}
       </div>
     `;
   }
@@ -161,15 +161,15 @@ export class ZamanCizelgesiPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'zaman-cizelgesi-panel': ZamanCizelgesiPanel;
+    "zaman-cizelgesi-panel": ZamanCizelgesiPanel;
   }
 }
 
 // Registry'ye kaydol (İlke 5) — alt bölgede.
 panelKayitDefteri.kaydet({
-  id: 'zaman-cizelgesi',
-  baslik: 'Zaman Çizelgesi',
-  bolge: 'alt',
+  id: "zaman-cizelgesi",
+  baslik: "Zaman Çizelgesi",
+  bolge: "alt",
   olustur: ({ oynatma }) => {
     const panel = new ZamanCizelgesiPanel();
     panel.oynatma = oynatma;

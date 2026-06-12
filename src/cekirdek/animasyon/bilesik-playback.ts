@@ -1,7 +1,7 @@
-import type { Playback } from './playback';
+import type { Playback } from "./playback";
 
 /**
- * Bileşik Playback (CLAUDE.md İlke 6, §10.8).
+ * Bileşik Playback (AGENTS.md İlke 6, §10.8).
  *
  * Bir belge AYNI ANDA hem CSS/WAAPI hem de SMIL animasyonu içerdiğinde ikisini
  * tek bir {@link Playback} arayüzü arkasında BİRLİKTE yönetir. `getAnimations()`
@@ -18,7 +18,8 @@ export class BilesikPlayback implements Playback {
   constructor(parcalar: Playback[]) {
     this.#parcalar = parcalar;
     // Alt-Playback'lerin durum/zaman bildirimlerini dışarıya birleştir.
-    for (const p of parcalar) this.#cozumler.push(p.dinle(() => this.#bildir()));
+    for (const p of parcalar)
+      this.#cozumler.push(p.dinle(() => this.#bildir()));
   }
 
   /** En uzun alt-süre. */

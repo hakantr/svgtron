@@ -1,5 +1,5 @@
 /**
- * Boole işlemleri için saf poligon geometrisi (CLAUDE.md §11.2).
+ * Boole işlemleri için saf poligon geometrisi (AGENTS.md §11.2).
  *
  * polygon-clipping kütüphanesinin biçimiyle uyumludur:
  *   Çift = [x, y] · Halka = Çift[] · Poligon = [dışHalka, ...delikler] ·
@@ -25,7 +25,8 @@ export function noktaIcinde(p: Cift, h: Halka): boolean {
     const yi = h[i]![1];
     const xj = h[j]![0];
     const yj = h[j]![1];
-    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) ic = !ic;
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi)
+      ic = !ic;
   }
   return ic;
 }
@@ -64,7 +65,10 @@ export function nesle(halkalar: Halka[]): CokPoligon {
   if (n === 0) return [];
   const nokta = halkalar.map(temsilNoktasi);
   const derinlik = halkalar.map((_, i) =>
-    halkalar.reduce((d, o, j) => (j !== i && noktaIcinde(nokta[i]!, o) ? d + 1 : d), 0),
+    halkalar.reduce(
+      (d, o, j) => (j !== i && noktaIcinde(nokta[i]!, o) ? d + 1 : d),
+      0,
+    ),
   );
 
   const polys: Poligon[] = [];
@@ -80,7 +84,12 @@ export function nesle(halkalar: Halka[]): CokPoligon {
       let enIyi = -1;
       let enDerin = -1;
       halkalar.forEach((o, j) => {
-        if (j !== i && derinlik[j]! % 2 === 0 && derinlik[j]! > enDerin && noktaIcinde(nokta[i]!, o)) {
+        if (
+          j !== i &&
+          derinlik[j]! % 2 === 0 &&
+          derinlik[j]! > enDerin &&
+          noktaIcinde(nokta[i]!, o)
+        ) {
           enIyi = j;
           enDerin = derinlik[j]!;
         }
@@ -127,9 +136,10 @@ export function cokPoligonuD(cp: CokPoligon): string {
       }
       if (halka.length < 3) continue;
       parcalar.push(`M ${v(halka[0]![0])} ${v(halka[0]![1])}`);
-      for (let k = 1; k < halka.length; k++) parcalar.push(`L ${v(halka[k]![0])} ${v(halka[k]![1])}`);
-      parcalar.push('Z');
+      for (let k = 1; k < halka.length; k++)
+        parcalar.push(`L ${v(halka[k]![0])} ${v(halka[k]![1])}`);
+      parcalar.push("Z");
     }
   }
-  return parcalar.join(' ');
+  return parcalar.join(" ");
 }

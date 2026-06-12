@@ -1,12 +1,12 @@
-import { html, nothing, type TemplateResult } from 'lit';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
+import { html, nothing, type TemplateResult } from "lit";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import {
   metinKacis,
   metinElemaniMi,
   oznitelikDizesi,
   editorYorumDizesi,
   uretilemez,
-} from '../../../cekirdek/belge/model/disa-aktar';
+} from "../../../cekirdek/belge/model/disa-aktar";
 
 /**
  * Kod GÖRÜNÜMÜ üreticisi (§11.4) — belge modelini, dışa aktarıcıyla AYNI biçimde
@@ -28,7 +28,8 @@ import {
 /** Satır-içi (tek satır) bir düğümü ham metin olarak seri hâle getirir. */
 function satirIciMetin(d: Dugum): string {
   const oz = oznitelikDizesi(d);
-  if (d.cocuklar.length === 0 && d.metin === undefined) return `<${d.etiket}${oz}/>`;
+  if (d.cocuklar.length === 0 && d.metin === undefined)
+    return `<${d.etiket}${oz}/>`;
   let s = `<${d.etiket}${oz}>`;
   if (d.metin !== undefined) s += metinKacis(d.metin);
   for (const c of d.cocuklar) {
@@ -39,9 +40,12 @@ function satirIciMetin(d: Dugum): string {
 }
 
 /** Bir düğümü (ve alt ağacını) tıklanabilir span ağacına çevirir. */
-function dugumGoster(d: Dugum, derinlik: number): TemplateResult | typeof nothing {
+function dugumGoster(
+  d: Dugum,
+  derinlik: number,
+): TemplateResult | typeof nothing {
   if (uretilemez(d.etiket)) return nothing; // §10.10: üretilmeyen yapı görünümde de yok
-  const girinti = '  '.repeat(derinlik);
+  const girinti = "  ".repeat(derinlik);
   const yorum = editorYorumDizesi(d);
 
   const metinYaprak = d.metin !== undefined && d.cocuklar.length === 0;
@@ -49,20 +53,27 @@ function dugumGoster(d: Dugum, derinlik: number): TemplateResult | typeof nothin
   const satirIci = bosMu || metinYaprak || metinElemaniMi(d.etiket);
 
   // İlke 10 yorumu (kilit/artboard) elemanın ÜSTÜNDE; düğüme aittir → span içinde.
-  const yorumParca = yorum ? html`<span class="yorum">${girinti}${yorum}\n</span>` : '';
+  const yorumParca = yorum
+    ? html`<span class="yorum">${girinti}${yorum} </span>`
+    : "";
 
   if (satirIci) {
-    return html`<span class="el" data-kimlik=${d.kimlik}>${yorumParca}${girinti}${satirIciMetin(d)}</span>\n`;
+    return html`<span class="el" data-kimlik=${d.kimlik}
+      >${yorumParca}${girinti}${satirIciMetin(d)}</span
+    > `;
   }
 
   const acilis = `<${d.etiket}${oznitelikDizesi(d)}>`;
   const kapanis = `</${d.etiket}>`;
   // Karışık içerik (metin + element çocuk, metin-elemanı olmayan) nadir; yine de
   // metni DÜŞÜRME (dışa aktarıcıyla tutarlı; sessiz kayıp olmasın).
-  const govdeMetin = d.metin !== undefined ? metinKacis(d.metin) : '';
-  return html`<span class="el" data-kimlik=${d.kimlik}>${yorumParca}${girinti}${acilis}\n${govdeMetin}${d.cocuklar.map(
-    (c) => dugumGoster(c, derinlik + 1),
-  )}${girinti}${kapanis}</span>\n`;
+  const govdeMetin = d.metin !== undefined ? metinKacis(d.metin) : "";
+  return html`<span class="el" data-kimlik=${d.kimlik}
+    >${yorumParca}${girinti}${acilis}
+    ${govdeMetin}${d.cocuklar.map((c) =>
+      dugumGoster(c, derinlik + 1),
+    )}${girinti}${kapanis}</span
+  > `;
 }
 
 /** Kök düğümü, tıklanabilir/vurgulanabilir kod görünümüne çevirir. */

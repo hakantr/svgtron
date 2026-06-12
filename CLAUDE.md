@@ -1,4 +1,4 @@
-# SVG Editör & Animasyon Gözlemleyici — Başlangıç Prompt'u (Claude Code)
+# SVG Editör & Animasyon Gözlemleyici — Başlangıç Prompt'u
 
 > Bu dosyayı Ajan ile yeni bir proje dizininde başlatırken ilk
 > talimat olarak ver. Amaç: **minimal ama çalışan** bir iskelet kurmak; fakat o
@@ -10,7 +10,7 @@
 >    teknik dersler/tuzaklar ve **bekleyen iş** (kaldığımız yer). *Devir dosyası.*
 > 2. **`TASARIM-KARARLARI.md`** — anlaşılan davranış/UI kararları (TK-1..TK-12).
 >
-> Bu CLAUDE.md **değişmez kuralları** (mimari ilkeler, sınıflandırma, desteklenen
+> Bu AGENTS.md **değişmez kuralları** (mimari ilkeler, sınıflandırma, desteklenen
 > özellikler) tanımlar; yukarıdaki iki dosya ise "şu an nerede kaldık ve nasıl
 > çalışıyoruz" bilgisini taşır. Üçü birlikte okunmalı.
 
@@ -762,3 +762,4 @@ Her dalga öncekini bozmadan gelir; her özellik bir registry kaydıdır. Bir ö
 başlamadan önce 8.4'teki soruyu sor: "Bu, mevcut bir ilkeyi mi kullanıyor, yoksa
 kabuğu/paneli/sözleşmeyi mi değiştirmem gerekiyor?" İkincisiyse dur ve danış —
 düzeltilecek yer özellik değil, zemindir.
+

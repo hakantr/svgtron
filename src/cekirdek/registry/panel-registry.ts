@@ -1,11 +1,11 @@
-import type { TemplateResult } from 'lit';
-import type { BelgeDeposu } from '../belge/belge-deposu';
-import type { SecimDeposu } from '../secim/secim-deposu';
-import type { KomutGecmisi } from '../komutlar/komut-gecmisi';
-import type { OynatmaDeposu } from '../animasyon/oynatma-deposu';
+import type { TemplateResult } from "lit";
+import type { BelgeDeposu } from "../belge/belge-deposu";
+import type { SecimDeposu } from "../secim/secim-deposu";
+import type { KomutGecmisi } from "../komutlar/komut-gecmisi";
+import type { OynatmaDeposu } from "../animasyon/oynatma-deposu";
 
 /**
- * Panel kayıt defteri (CLAUDE.md İlke 5).
+ * Panel kayıt defteri (AGENTS.md İlke 5).
  *
  * Kabuk (shell) hangi panellerin var olduğunu bilmez; panelleri buradan okuyup
  * bölgelere yerleştirir. Yeni panel eklemek = bu deftere kaydolmak; kabuk kodu
@@ -13,10 +13,10 @@ import type { OynatmaDeposu } from '../animasyon/oynatma-deposu';
  */
 
 /**
- * Panelin yerleşeceği bölge (CLAUDE.md §9.1):
+ * Panelin yerleşeceği bölge (AGENTS.md §9.1):
  * sol=Araçlar · merkez=Tuval · sag=Denetçi+Tanımlar · alt=Zaman Çizelgesi.
  */
-export type PanelBolgesi = 'sol' | 'merkez' | 'sag' | 'alt';
+export type PanelBolgesi = "sol" | "merkez" | "sag" | "alt";
 
 /** Panel oluşturulurken verilen bağlam (uygulama servisleri). */
 export interface PanelBaglami {

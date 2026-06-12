@@ -1,7 +1,7 @@
-import { LitElement, html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import { sekmeYoneticisi } from './sekme-yoneticisi';
-import { dilYonetici, t } from '../diller/dil';
+import { LitElement, html, css } from "lit";
+import { customElement } from "lit/decorators.js";
+import { sekmeYoneticisi } from "./sekme-yoneticisi";
+import { dilYonetici, t } from "../diller/dil";
 
 /**
  * Sekme çubuğu (çoklu belge) — Tuval'in üstünde açık belgeleri listeler. Aktif
@@ -11,7 +11,7 @@ import { dilYonetici, t } from '../diller/dil';
  * Görünüm durumudur (İlke 9). Kapatma kaydetme sorusu gerektirebildiğinden kabuğa
  * `sekme-kapat` olayıyla devredilir; "+" ise `sekme-yeni` olayı yollar.
  */
-@customElement('sekme-cubugu')
+@customElement("sekme-cubugu")
 export class SekmeCubugu extends LitElement {
   static override styles = css`
     :host {
@@ -118,7 +118,11 @@ export class SekmeCubugu extends LitElement {
   #kapat(indis: number, olay: Event): void {
     olay.stopPropagation();
     this.dispatchEvent(
-      new CustomEvent('sekme-kapat', { detail: indis, bubbles: true, composed: true }),
+      new CustomEvent("sekme-kapat", {
+        detail: indis,
+        bubbles: true,
+        composed: true,
+      }),
     );
   }
 
@@ -126,16 +130,22 @@ export class SekmeCubugu extends LitElement {
     const aktif = sekmeYoneticisi.aktifIndis;
     return html`
       ${sekmeYoneticisi.sekmeler.map((s, i) => {
-        const ad = s.belge.kaynak?.ad ?? t('sekme.adsiz');
+        const ad = s.belge.kaynak?.ad ?? t("sekme.adsiz");
         return html`
           <div
-            class="sekme ${i === aktif ? 'aktif' : ''}"
+            class="sekme ${i === aktif ? "aktif" : ""}"
             title=${s.belge.kaynak?.yol ?? ad}
             @click=${() => sekmeYoneticisi.aktifSec(i)}
           >
-            ${s.belge.degisti ? html`<span class="nokta" title=${t('sekme.degisti')}></span>` : ''}
+            ${s.belge.degisti
+              ? html`<span class="nokta" title=${t("sekme.degisti")}></span>`
+              : ""}
             <span class="ad">${ad}</span>
-            <button class="kapat" title=${t('sekme.kapat')} @click=${(e: Event) => this.#kapat(i, e)}>
+            <button
+              class="kapat"
+              title=${t("sekme.kapat")}
+              @click=${(e: Event) => this.#kapat(i, e)}
+            >
               ×
             </button>
           </div>
@@ -143,9 +153,11 @@ export class SekmeCubugu extends LitElement {
       })}
       <button
         class="yeni"
-        title=${t('sekme.yeni')}
+        title=${t("sekme.yeni")}
         @click=${() =>
-          this.dispatchEvent(new CustomEvent('sekme-yeni', { bubbles: true, composed: true }))}
+          this.dispatchEvent(
+            new CustomEvent("sekme-yeni", { bubbles: true, composed: true }),
+          )}
       >
         +
       </button>
@@ -155,6 +167,6 @@ export class SekmeCubugu extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'sekme-cubugu': SekmeCubugu;
+    "sekme-cubugu": SekmeCubugu;
   }
 }

@@ -1,7 +1,7 @@
-import { gez, type Dugum } from './dugum';
+import { gez, type Dugum } from "./dugum";
 
 /**
- * Dışa aktarıcı (CLAUDE.md İlke 8 — üretirken tutucu, profile göre).
+ * Dışa aktarıcı (AGENTS.md İlke 8 — üretirken tutucu, profile göre).
  *
  * Modeli tek sabit SVG sürümüne değil, seçilen bir PROFİLE göre yazar:
  *  - `blink`            → en modern/kısa (uygulama-içi varsayılan)
@@ -12,43 +12,46 @@ import { gez, type Dugum } from './dugum';
  * (§10.10). Profil farkları özellik geldikçe zenginleşecek; şimdilik iskelet
  * yerinde ve düğümler sadık biçimde seri hâle getirilir.
  */
-export type DisaAktarimProfili = 'blink' | 'genis-uyumluluk';
+export type DisaAktarimProfili = "blink" | "genis-uyumluluk";
 
 /** Asla üretilmeyecek etiketler (okurken kabul edilir, yazarken atılır). */
 const KARA_LISTE = new Set([
-  'mesh',
-  'meshGradient',
-  'meshrow',
-  'meshpatch',
-  'hatch',
-  'hatchpath',
-  'solidColor',
-  'font',
-  'glyph',
-  'missing-glyph',
-  'hkern',
-  'vkern',
-  'tref',
-  'animateColor',
+  "mesh",
+  "meshGradient",
+  "meshrow",
+  "meshpatch",
+  "hatch",
+  "hatchpath",
+  "solidColor",
+  "font",
+  "glyph",
+  "missing-glyph",
+  "hkern",
+  "vkern",
+  "tref",
+  "animateColor",
 ]);
 
 export function xmlKacis(deger: string): string {
   return deger
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export function metinKacis(deger: string): string {
-  return deger.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return deger
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 /**
  * Boşluğu ANLAMLI olan elemanlar: alt ağaçları satır-içi (biçimsiz) yazılır,
  * aksi halde eklenen girinti/yeni satır render edilen metni bozardı.
  */
-const METIN_ELEMANLARI = new Set(['text', 'tspan', 'textPath']);
+const METIN_ELEMANLARI = new Set(["text", "tspan", "textPath"]);
 
 /** Boşluğu anlamlı (satır-içi yazılan) bir metin elemanı mı? (kod görünümü için.) */
 export function metinElemaniMi(etiket: string): boolean {
@@ -58,7 +61,7 @@ export function metinElemaniMi(etiket: string): boolean {
 export function oznitelikDizesi(dugum: Dugum): string {
   return [...dugum.oznitelikler.entries()]
     .map(([ad, deger]) => ` ${ad}="${xmlKacis(deger)}"`)
-    .join('');
+    .join("");
 }
 
 /**
@@ -69,17 +72,21 @@ export function oznitelikDizesi(dugum: Dugum): string {
  */
 export function editorYorumDizesi(dugum: Dugum): string | null {
   const bayraklar: string[] = [];
-  if (dugum.kilitli) bayraklar.push('lock=true');
-  if (dugum.artboard) bayraklar.push('artboard=true');
+  if (dugum.kilitli) bayraklar.push("lock=true");
+  if (dugum.artboard) bayraklar.push("artboard=true");
   if (bayraklar.length === 0) return null;
-  return `<!-- @svgtron ${bayraklar.join(' ')} -->`;
+  return `<!-- @svgtron ${bayraklar.join(" ")} -->`;
 }
 
 /**
  * Bir düğümü ve alt ağacını BİÇİMSİZ (tek satır, hiç boşluk eklemeden) yazar —
  * metin elemanlarının ve `<style>` içeriğinin anlamlı boşluğu korunsun diye.
  */
-function dugumYazDuz(dugum: Dugum, parcalar: string[], editorYorumu: boolean): void {
+function dugumYazDuz(
+  dugum: Dugum,
+  parcalar: string[],
+  editorYorumu: boolean,
+): void {
   if (KARA_LISTE.has(dugum.etiket)) return; // üretme (§10.10)
   if (editorYorumu) {
     const yorum = editorYorumDizesi(dugum);
@@ -93,7 +100,8 @@ function dugumYazDuz(dugum: Dugum, parcalar: string[], editorYorumu: boolean): v
   }
   parcalar.push(`<${dugum.etiket}${oz}>`);
   if (dugum.metin !== undefined) parcalar.push(metinKacis(dugum.metin));
-  for (const cocuk of dugum.cocuklar) dugumYazDuz(cocuk, parcalar, editorYorumu);
+  for (const cocuk of dugum.cocuklar)
+    dugumYazDuz(cocuk, parcalar, editorYorumu);
   parcalar.push(`</${dugum.etiket}>`);
 }
 
@@ -110,7 +118,7 @@ function dugumYazBicimli(
   editorYorumu: boolean,
 ): void {
   if (KARA_LISTE.has(dugum.etiket)) return; // üretme (§10.10)
-  const girinti = '  '.repeat(derinlik);
+  const girinti = "  ".repeat(derinlik);
 
   // İlke 10: kilit/artboard gibi kontrol durumu, nesnenin ÜSTÜNE yorumla yazılır.
   if (editorYorumu) {
@@ -125,15 +133,17 @@ function dugumYazBicimli(
   if (satirIci) {
     const ic: string[] = [];
     dugumYazDuz(dugum, ic, false); // kilit yorumu yukarıda yazıldı
-    parcalar.push(girinti + ic.join('') + '\n');
+    parcalar.push(girinti + ic.join("") + "\n");
     return;
   }
 
   parcalar.push(`${girinti}<${dugum.etiket}${oznitelikDizesi(dugum)}>\n`);
   // Karışık içerik (metin + element çocuk) nadir ama metni DÜŞÜRME (dugumYazDuz ile
   // tutarlı; sessiz kayıp olmasın).
-  if (dugum.metin !== undefined) parcalar.push(`${'  '.repeat(derinlik + 1)}${metinKacis(dugum.metin)}\n`);
-  for (const cocuk of dugum.cocuklar) dugumYazBicimli(cocuk, parcalar, derinlik + 1, editorYorumu);
+  if (dugum.metin !== undefined)
+    parcalar.push(`${"  ".repeat(derinlik + 1)}${metinKacis(dugum.metin)}\n`);
+  for (const cocuk of dugum.cocuklar)
+    dugumYazBicimli(cocuk, parcalar, derinlik + 1, editorYorumu);
   parcalar.push(`${girinti}</${dugum.etiket}>\n`);
 }
 
@@ -145,7 +155,7 @@ function dugumYazBicimli(
 export function dugumSerile(dugum: Dugum): string {
   const parcalar: string[] = [];
   dugumYazDuz(dugum, parcalar, false);
-  return parcalar.join('');
+  return parcalar.join("");
 }
 
 /**
@@ -155,15 +165,15 @@ export function dugumSerile(dugum: Dugum): string {
  */
 export function disaAktar(
   kok: Dugum,
-  profil: DisaAktarimProfili = 'blink',
+  profil: DisaAktarimProfili = "blink",
   bicimli = true,
 ): string {
   const parcalar: string[] = [];
   // Uygulama profili editör yorumlarını yazar; "geniş uyumluluk" temiz bırakır.
-  const editorYorumu = profil === 'blink';
+  const editorYorumu = profil === "blink";
   if (bicimli) dugumYazBicimli(kok, parcalar, 0, editorYorumu);
   else dugumYazDuz(kok, parcalar, editorYorumu);
-  return parcalar.join('');
+  return parcalar.join("");
 }
 
 /** Kara listedeki, üretilmeyecek bir etiket mi? (uyarı/raporlama için) */

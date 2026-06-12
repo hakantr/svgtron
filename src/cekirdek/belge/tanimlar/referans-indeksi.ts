@@ -1,7 +1,7 @@
-import { gez, type Dugum } from '../model/dugum';
+import { gez, type Dugum } from "../model/dugum";
 
 /**
- * Referans indeksi (CLAUDE.md İlke 7'nin pratiği).
+ * Referans indeksi (AGENTS.md İlke 7'nin pratiği).
  *
  * "Hangi şekil hangi kaynağı kullanıyor?" sorusunu O(1) yanıtlar. Kaynaklar iki
  * yolla atıf alır: `url(#id)` (filter, gradient, marker, clip-path, mask...) ve
@@ -12,22 +12,22 @@ import { gez, type Dugum } from '../model/dugum';
  * kurulur; mutasyon akışı geldiğinde yeniden kurulur.
  */
 const URL_ATTRIBUTLERI = [
-  'fill',
-  'stroke',
-  'filter',
-  'clip-path',
-  'mask',
-  'marker',
-  'marker-start',
-  'marker-mid',
-  'marker-end',
+  "fill",
+  "stroke",
+  "filter",
+  "clip-path",
+  "mask",
+  "marker",
+  "marker-start",
+  "marker-mid",
+  "marker-end",
 ] as const;
 
 // Global (bir değerde birden çok url() — paint fallback/çoklu marker — olabilir).
 const URL_DESENI = /url\(\s*["']?#([^"')\s]+)["']?\s*\)/g;
 // Çıplak `#id` atıfı (use/symbol/mpath/textPath/feImage href/xlink:href).
 const CIPLAK_ID = /^\s*#([^\s]+)\s*$/;
-const HREF_ATTRIBUTLERI = ['href', 'xlink:href'] as const;
+const HREF_ATTRIBUTLERI = ["href", "xlink:href"] as const;
 
 export class ReferansIndeksi {
   readonly #idKullananlar = new Map<string, Set<Dugum>>();
@@ -36,10 +36,11 @@ export class ReferansIndeksi {
   constructor(kok: Dugum) {
     for (const dugum of gez(kok)) {
       // Doğrudan url(#id) taşıyan öznitelikler (fill/stroke/filter/...).
-      for (const attr of URL_ATTRIBUTLERI) this.#urlAtiflari(dugum.oznitelikler.get(attr), dugum);
+      for (const attr of URL_ATTRIBUTLERI)
+        this.#urlAtiflari(dugum.oznitelikler.get(attr), dugum);
       // Inline `style` içindeki url(#id) — panel uygulama stratejileri buraya
       // yazar (`style="filter:url(#id)"` vb.); bunlar dogrudan attr'da görünmez.
-      this.#urlAtiflari(dugum.oznitelikler.get('style'), dugum);
+      this.#urlAtiflari(dugum.oznitelikler.get("style"), dugum);
       // href / xlink:href: çıplak `#id` ya da url(#id) biçimi.
       for (const ad of HREF_ATTRIBUTLERI) {
         const deger = dugum.oznitelikler.get(ad);
@@ -48,7 +49,7 @@ export class ReferansIndeksi {
         if (m?.[1]) this.#ekle(this.#idKullananlar, m[1], dugum);
         else this.#urlAtiflari(deger, dugum);
       }
-      const sinif = dugum.oznitelikler.get('class');
+      const sinif = dugum.oznitelikler.get("class");
       if (sinif) {
         for (const ad of sinif.trim().split(/\s+/)) {
           if (ad) this.#ekle(this.#sinifKullananlar, ad, dugum);

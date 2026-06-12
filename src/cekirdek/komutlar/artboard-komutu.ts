@@ -1,6 +1,6 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "./komut";
 
 /**
  * Bir düğümü ARTBOARD (tam-boy zemin/sayfa) olarak işaretler/kaldırır (TK-23).
@@ -8,7 +8,7 @@ import type { Komut } from './komut';
  * kalıcılığı İlke 10 yorumuyla (dışa aktarımda `@svgtron artboard=true`).
  */
 export class ArtboardKomutu implements Komut {
-  readonly etiket = 'artboard';
+  readonly etiket = "artboard";
   readonly #eskiArtboard: boolean;
   readonly #eskiKilit: boolean;
 

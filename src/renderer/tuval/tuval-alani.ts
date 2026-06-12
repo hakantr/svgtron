@@ -1,34 +1,39 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, query } from 'lit/decorators.js';
-import type { BelgeDeposu } from '../../cekirdek/belge/belge-deposu';
-import type { Belge } from '../../cekirdek/belge/belge';
-import type { Dugum } from '../../cekirdek/belge/model/dugum';
-import type { SecimDeposu } from '../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../cekirdek/komutlar/komut-gecmisi';
-import type { OynatmaDeposu } from '../../cekirdek/animasyon/oynatma-deposu';
-import { panelKayitDefteri } from '../../cekirdek/registry/panel-registry';
-import { dilYonetici, t } from '../diller/dil';
-import { Yansitici } from './yansitici';
-import { cizimErisimi } from './cizim-erisimi';
-import { aracDeposu, SURUKLEME_ESIGI, type AracBaglami, type TuvalNoktasi } from '../araclar/arac';
-import { OznitelikDegistirKomutu } from '../../cekirdek/komutlar/oznitelik-degistir-komutu';
-import { BilesikKomut } from '../../cekirdek/komutlar/dugum-komutlari';
-import { say } from './donusum';
-import type { Kilavuz } from './yapisma';
-import { bildirimServisi } from '../kabuk/bildirim-servisi';
+import { LitElement, html, css } from "lit";
+import { customElement, query } from "lit/decorators.js";
+import type { BelgeDeposu } from "../../cekirdek/belge/belge-deposu";
+import type { Belge } from "../../cekirdek/belge/belge";
+import type { Dugum } from "../../cekirdek/belge/model/dugum";
+import type { SecimDeposu } from "../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../cekirdek/komutlar/komut-gecmisi";
+import type { OynatmaDeposu } from "../../cekirdek/animasyon/oynatma-deposu";
+import { panelKayitDefteri } from "../../cekirdek/registry/panel-registry";
+import { dilYonetici, t } from "../diller/dil";
+import { Yansitici } from "./yansitici";
+import { cizimErisimi } from "./cizim-erisimi";
+import {
+  aracDeposu,
+  SURUKLEME_ESIGI,
+  type AracBaglami,
+  type TuvalNoktasi,
+} from "../araclar/arac";
+import { OznitelikDegistirKomutu } from "../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { BilesikKomut } from "../../cekirdek/komutlar/dugum-komutlari";
+import { say } from "./donusum";
+import type { Kilavuz } from "./yapisma";
+import { bildirimServisi } from "../kabuk/bildirim-servisi";
 
 /** Grup seçim çerçevesi içerik kenarından bu kadar px DIŞARIDA durur (TK-21). */
 const GRUP_BOSLUK = 2;
 
 /**
- * Tuval — ana çalışma alanı (CLAUDE.md §9: render + canlı animasyon + seçim).
+ * Tuval — ana çalışma alanı (AGENTS.md §9: render + canlı animasyon + seçim).
  *
  * Soyut belge modelini {@link Yansitici} ile DOM'a yansıtır; düzenlemede DOM'u
  * uyumlar (yeniden kurmaz) → animasyon bozulmaz. Tıklama, DOM elemanını
  * `data-kimlik` üzerinden model düğümüne çevirip seçim deposuna yazar (İlke 3).
  * Seçili düğüm, belgeyi kirletmeyen ayrı bir çerçeveyle vurgulanır.
  */
-@customElement('tuval-alani')
+@customElement("tuval-alani")
 export class TuvalAlani extends LitElement {
   static override styles = css`
     :host {
@@ -41,12 +46,11 @@ export class TuvalAlani extends LitElement {
       position: absolute;
       inset: 0;
       overflow: hidden;
-      background:
-        repeating-conic-gradient(
-            var(--tuval-1) 0% 25%,
-            var(--tuval-2) 0% 50%
-          )
-          50% / 24px 24px;
+      background: repeating-conic-gradient(
+          var(--tuval-1) 0% 25%,
+          var(--tuval-2) 0% 50%
+        )
+        50% / 24px 24px;
     }
     .icerik {
       width: 100%;
@@ -151,23 +155,23 @@ export class TuvalAlani extends LitElement {
       border-radius: 50%;
       background: var(--vurgu, #4a90e2);
     }
-    .tutamac[data-tip='nw'],
-    .tutamac[data-tip='se'] {
+    .tutamac[data-tip="nw"],
+    .tutamac[data-tip="se"] {
       cursor: nwse-resize;
     }
-    .tutamac[data-tip='ne'],
-    .tutamac[data-tip='sw'] {
+    .tutamac[data-tip="ne"],
+    .tutamac[data-tip="sw"] {
       cursor: nesw-resize;
     }
-    .tutamac[data-tip='n'],
-    .tutamac[data-tip='s'] {
+    .tutamac[data-tip="n"],
+    .tutamac[data-tip="s"] {
       cursor: ns-resize;
     }
-    .tutamac[data-tip='e'],
-    .tutamac[data-tip='w'] {
+    .tutamac[data-tip="e"],
+    .tutamac[data-tip="w"] {
       cursor: ew-resize;
     }
-    .tutamac[data-tip='rot'] {
+    .tutamac[data-tip="rot"] {
       cursor: grab;
     }
     /* Çizgi uç (yeniden konumlandırma) tutamaçları — boyut yerine uç taşıma. */
@@ -197,15 +201,15 @@ export class TuvalAlani extends LitElement {
   gecmis!: KomutGecmisi;
   oynatma!: OynatmaDeposu;
 
-  @query('.kaydir') private kaydir!: HTMLDivElement;
-  @query('.icerik') private icerik!: HTMLDivElement;
-  @query('.secim-katman') private katman!: HTMLDivElement;
-  @query('.kement') private kement!: HTMLDivElement;
-  @query('.sayfa-cerceve') private sayfaCerceve!: HTMLDivElement;
-  @query('.kilavuzlar') private kilavuzlar!: HTMLDivElement;
-  @query('.arac-katman') private aracKat!: HTMLDivElement;
-  @query('.tutamaclar') private tutamaclar!: HTMLDivElement;
-  @query('.uc-tutamaclar') private ucTutamaclar!: HTMLDivElement;
+  @query(".kaydir") private kaydir!: HTMLDivElement;
+  @query(".icerik") private icerik!: HTMLDivElement;
+  @query(".secim-katman") private katman!: HTMLDivElement;
+  @query(".kement") private kement!: HTMLDivElement;
+  @query(".sayfa-cerceve") private sayfaCerceve!: HTMLDivElement;
+  @query(".kilavuzlar") private kilavuzlar!: HTMLDivElement;
+  @query(".arac-katman") private aracKat!: HTMLDivElement;
+  @query(".tutamaclar") private tutamaclar!: HTMLDivElement;
+  @query(".uc-tutamaclar") private ucTutamaclar!: HTMLDivElement;
 
   /** Seçili düğüm kimliği → çerçeve divi. */
   readonly #cerceveler = new Map<string, HTMLDivElement>();
@@ -215,11 +219,16 @@ export class TuvalAlani extends LitElement {
   #tutamacBas: { x: number; y: number } | null = null;
   // `donmus`: nesnenin kendi transform'unda rotasyon/eğme var mı? Varsa boyutlandırma
   // üniforma zorlanır (non-uniform ölçek rotate ile birleşince shear üretirdi).
-  #tutamacAsil: { transform: string; ctm: DOMMatrix; bbox: DOMRect; donmus: boolean } | null = null;
+  #tutamacAsil: {
+    transform: string;
+    ctm: DOMMatrix;
+    bbox: DOMRect;
+    donmus: boolean;
+  } | null = null;
 
   // Çizgi uç tutamacı durumu ('1' = (x1,y1), '2' = (x2,y2)).
   #ucDurum: {
-    uc: '1' | '2';
+    uc: "1" | "2";
     dugum: Dugum;
     ctm: DOMMatrix;
     bas: { x: number; y: number };
@@ -233,9 +242,12 @@ export class TuvalAlani extends LitElement {
    * çıkan belgeninki saklanır, girene geri yüklenir → sekme değişiminde zoom/pan
    * KORUNUR (yalnız ilk görülen/yeni belgede sıfırlanır). (TK-30 inceleme düzeltmesi.)
    */
-  readonly #gorunumler = new WeakMap<Belge, { olcek: number; panX: number; panY: number }>();
+  readonly #gorunumler = new WeakMap<
+    Belge,
+    { olcek: number; panX: number; panY: number }
+  >();
   /** Son animasyon kümesi imzası (WAAPI sayısı + SMIL eleman sayısı). */
-  #sonAnimImza = '';
+  #sonAnimImza = "";
 
   #depoCoz?: () => void;
   #secimCoz?: () => void;
@@ -271,9 +283,9 @@ export class TuvalAlani extends LitElement {
       }
       this.requestUpdate();
     });
-    window.addEventListener('resize', this.#konumla);
-    window.addEventListener('keydown', this.#zoomKlavye);
-    window.addEventListener('keydown', this.#aracTus);
+    window.addEventListener("resize", this.#konumla);
+    window.addEventListener("keydown", this.#zoomKlavye);
+    window.addEventListener("keydown", this.#aracTus);
     // Denetçi, efektif (hesaplanmış) stilleri okuyabilsin diye render erişimi yayınla.
     cizimErisimi.kaynakAyarla((kimlik) => this.#yansitici.elemanGetir(kimlik));
   }
@@ -283,23 +295,23 @@ export class TuvalAlani extends LitElement {
     this.#secimCoz?.();
     this.#dilCoz?.();
     this.#aracCoz?.();
-    window.removeEventListener('resize', this.#konumla);
-    window.removeEventListener('keydown', this.#zoomKlavye);
-    window.removeEventListener('keydown', this.#aracTus);
-    window.removeEventListener('pointermove', this.#tutamacHareket);
-    window.removeEventListener('pointerup', this.#tutamacBirak);
-    window.removeEventListener('pointermove', this.#ucHareket);
-    window.removeEventListener('pointerup', this.#ucBirak);
-    this.kaydir?.removeEventListener('wheel', this.#tekerlek);
-    this.kaydir?.removeEventListener('pointermove', this.#hover);
+    window.removeEventListener("resize", this.#konumla);
+    window.removeEventListener("keydown", this.#zoomKlavye);
+    window.removeEventListener("keydown", this.#aracTus);
+    window.removeEventListener("pointermove", this.#tutamacHareket);
+    window.removeEventListener("pointerup", this.#tutamacBirak);
+    window.removeEventListener("pointermove", this.#ucHareket);
+    window.removeEventListener("pointerup", this.#ucBirak);
+    this.kaydir?.removeEventListener("wheel", this.#tekerlek);
+    this.kaydir?.removeEventListener("pointermove", this.#hover);
     this.#izlemeyiDurdur();
     cizimErisimi.kaynakAyarla(null);
     super.disconnectedCallback();
   }
 
   override firstUpdated(): void {
-    this.kaydir.addEventListener('wheel', this.#tekerlek, { passive: false });
-    this.kaydir.addEventListener('pointermove', this.#hover);
+    this.kaydir.addEventListener("wheel", this.#tekerlek, { passive: false });
+    this.kaydir.addEventListener("pointermove", this.#hover);
     this.belgeyiGuncelle();
   }
 
@@ -331,9 +343,9 @@ export class TuvalAlani extends LitElement {
     this.icerik.replaceChildren();
 
     if (!belge) {
-      const bos = document.createElement('div');
-      bos.className = 'bos';
-      bos.textContent = t('tuval.bosBelge');
+      const bos = document.createElement("div");
+      bos.className = "bos";
+      bos.textContent = t("tuval.bosBelge");
       this.icerik.append(bos);
       this.oynatma.svgAyarla(null);
       this.#konumla();
@@ -365,7 +377,7 @@ export class TuvalAlani extends LitElement {
       /* getAnimations yoksa 0 */
     }
     const smil = kok.querySelectorAll(
-      'animate, animateTransform, animateMotion, animateColor, set, discard',
+      "animate, animateTransform, animateMotion, animateColor, set, discard",
     ).length;
     return `${waapi}:${smil}`;
   }
@@ -434,13 +446,13 @@ export class TuvalAlani extends LitElement {
 
   readonly #zoomKlavye = (olay: KeyboardEvent): void => {
     if (!(olay.ctrlKey || olay.metaKey)) return;
-    if (olay.key === '0') {
+    if (olay.key === "0") {
       olay.preventDefault();
       this.#gorunumSifirla();
-    } else if (olay.key === '=' || olay.key === '+') {
+    } else if (olay.key === "=" || olay.key === "+") {
       olay.preventDefault();
       this.#yakinlastir(1.2);
-    } else if (olay.key === '-') {
+    } else if (olay.key === "-") {
       olay.preventDefault();
       this.#yakinlastir(1 / 1.2);
     }
@@ -451,7 +463,9 @@ export class TuvalAlani extends LitElement {
     const svg = this.#yansitici.kok;
     const ctm = svg?.getScreenCTM();
     if (!svg || !ctm) return { x: 0, y: 0 };
-    const p = new DOMPoint(olay.clientX, olay.clientY).matrixTransform(ctm.inverse());
+    const p = new DOMPoint(olay.clientX, olay.clientY).matrixTransform(
+      ctm.inverse(),
+    );
     return { x: p.x, y: p.y };
   }
 
@@ -460,8 +474,8 @@ export class TuvalAlani extends LitElement {
     const belge = this.depo.belge;
     const hedef = olay.target;
     if (!belge || !(hedef instanceof Element)) return null;
-    const isabet = hedef.closest('[data-kimlik]');
-    const kimlik = isabet?.getAttribute('data-kimlik');
+    const isabet = hedef.closest("[data-kimlik]");
+    const kimlik = isabet?.getAttribute("data-kimlik");
     if (!kimlik || isabet === this.#yansitici.kok) return null;
     const dugum = belge.dugumBul(kimlik) ?? null;
     // Kilitli düğüm Tuval'den seçilemez (§9.7) → Katmanlar panelinden.
@@ -475,21 +489,24 @@ export class TuvalAlani extends LitElement {
     if (olay.button === 1) {
       olay.preventDefault();
       this.#ortaPan = { x: olay.clientX, y: olay.clientY };
-      window.addEventListener('pointermove', this.#hareket);
-      window.addEventListener('pointerup', this.#birak);
+      window.addEventListener("pointermove", this.#hareket);
+      window.addEventListener("pointerup", this.#birak);
       return;
     }
     if (olay.button !== 0) return;
     this.#basNokta = { x: olay.clientX, y: olay.clientY };
     this.#suruklendi = false;
     aracDeposu.aktif?.bas?.(olay, this.#aracBaglami());
-    window.addEventListener('pointermove', this.#hareket);
-    window.addEventListener('pointerup', this.#birak);
+    window.addEventListener("pointermove", this.#hareket);
+    window.addEventListener("pointerup", this.#birak);
   };
 
   readonly #hareket = (olay: PointerEvent): void => {
     if (this.#ortaPan) {
-      this.#kaydir(olay.clientX - this.#ortaPan.x, olay.clientY - this.#ortaPan.y);
+      this.#kaydir(
+        olay.clientX - this.#ortaPan.x,
+        olay.clientY - this.#ortaPan.y,
+      );
       this.#ortaPan = { x: olay.clientX, y: olay.clientY };
       return;
     }
@@ -512,7 +529,9 @@ export class TuvalAlani extends LitElement {
     const hedef = olay.composedPath()[0];
     if (
       hedef instanceof HTMLElement &&
-      (hedef.tagName === 'INPUT' || hedef.tagName === 'TEXTAREA' || hedef.isContentEditable)
+      (hedef.tagName === "INPUT" ||
+        hedef.tagName === "TEXTAREA" ||
+        hedef.isContentEditable)
     ) {
       return;
     }
@@ -521,8 +540,8 @@ export class TuvalAlani extends LitElement {
 
   readonly #birak = (olay: PointerEvent): void => {
     const dinleyiciKaldir = (): void => {
-      window.removeEventListener('pointermove', this.#hareket);
-      window.removeEventListener('pointerup', this.#birak);
+      window.removeEventListener("pointermove", this.#hareket);
+      window.removeEventListener("pointerup", this.#birak);
     };
     if (this.#ortaPan) {
       this.#ortaPan = null;
@@ -575,16 +594,16 @@ export class TuvalAlani extends LitElement {
     const dugum = this.#artboardDugumu();
     const el = dugum ? this.#yansitici.elemanGetir(dugum.kimlik) : null;
     if (!dugum || !(el instanceof SVGGraphicsElement) || !el.isConnected) {
-      this.sayfaCerceve.style.display = 'none';
+      this.sayfaCerceve.style.display = "none";
       return;
     }
     const r = el.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) {
-      this.sayfaCerceve.style.display = 'none';
+      this.sayfaCerceve.style.display = "none";
       return;
     }
     const h = this.getBoundingClientRect();
-    this.sayfaCerceve.style.display = 'block';
+    this.sayfaCerceve.style.display = "block";
     this.sayfaCerceve.style.left = `${r.left - h.left}px`;
     this.sayfaCerceve.style.top = `${r.top - h.top}px`;
     this.sayfaCerceve.style.width = `${r.width}px`;
@@ -599,9 +618,9 @@ export class TuvalAlani extends LitElement {
     // Nesne taşınırken (gövde sürüklemesi) seçim çerçevesi/tutamaçları gizle;
     // fare bırakılınca (sürükleme biter) tekrar görünür olur (§ kullanıcı isteği).
     if (this.#basNokta && this.#suruklendi) {
-      for (const c of this.#cerceveler.values()) c.style.display = 'none';
-      if (this.tutamaclar) this.tutamaclar.style.display = 'none';
-      if (this.ucTutamaclar) this.ucTutamaclar.style.display = 'none';
+      for (const c of this.#cerceveler.values()) c.style.display = "none";
+      if (this.tutamaclar) this.tutamaclar.style.display = "none";
+      if (this.ucTutamaclar) this.ucTutamaclar.style.display = "none";
       aracDeposu.aktif?.konumla?.(this.#aracBaglami()); // araç bindirmesi sürebilir
       return;
     }
@@ -618,15 +637,15 @@ export class TuvalAlani extends LitElement {
 
       let cerceve = this.#cerceveler.get(dugum.kimlik);
       if (!cerceve) {
-        cerceve = document.createElement('div');
-        cerceve.className = 'cerceve';
+        cerceve = document.createElement("div");
+        cerceve.className = "cerceve";
         this.katman.appendChild(cerceve);
         this.#cerceveler.set(dugum.kimlik, cerceve);
       }
-      const pad = dugum.etiket === 'g' ? GRUP_BOSLUK : 0;
-      cerceve.classList.toggle('ref', cokMu && dugum === ref);
-      cerceve.classList.toggle('grup', dugum.etiket === 'g');
-      cerceve.style.display = ''; // taşıma sonrası tekrar görünür
+      const pad = dugum.etiket === "g" ? GRUP_BOSLUK : 0;
+      cerceve.classList.toggle("ref", cokMu && dugum === ref);
+      cerceve.classList.toggle("grup", dugum.etiket === "g");
+      cerceve.style.display = ""; // taşıma sonrası tekrar görünür
       cerceve.style.left = `${r.left - h.left - pad}px`;
       cerceve.style.top = `${r.top - h.top - pad}px`;
       cerceve.style.width = `${r.width + 2 * pad}px`;
@@ -646,26 +665,26 @@ export class TuvalAlani extends LitElement {
     const aracGizler = aracDeposu.aktif?.tutamacGizle === true;
     const duzTek = tek && !tek.kilitli && !aracGizler ? tek : null;
     const tekEl = duzTek ? this.#yansitici.elemanGetir(duzTek.kimlik) : null;
-    const cizgiMi = duzTek?.etiket === 'line';
+    const cizgiMi = duzTek?.etiket === "line";
     if (cizgiMi && tekEl instanceof SVGGraphicsElement && tekEl.isConnected) {
       this.#ucTutamaclariKonumla(duzTek!, tekEl, h);
-      this.ucTutamaclar.style.display = 'block';
-      this.tutamaclar.style.display = 'none';
+      this.ucTutamaclar.style.display = "block";
+      this.tutamaclar.style.display = "none";
     } else {
-      this.ucTutamaclar.style.display = 'none';
+      this.ucTutamaclar.style.display = "none";
       if (this.tutamaclar) {
         if (tekEl instanceof SVGGraphicsElement && tekEl.isConnected) {
           const r = tekEl.getBoundingClientRect();
-          const pad = duzTek!.etiket === 'g' ? GRUP_BOSLUK : 0;
+          const pad = duzTek!.etiket === "g" ? GRUP_BOSLUK : 0;
           this.#tutamaclariKonumla(
             r.left - h.left - pad,
             r.top - h.top - pad,
             r.width + 2 * pad,
             r.height + 2 * pad,
           );
-          this.tutamaclar.style.display = 'block';
+          this.tutamaclar.style.display = "block";
         } else {
-          this.tutamaclar.style.display = 'none';
+          this.tutamaclar.style.display = "none";
         }
       }
     }
@@ -686,8 +705,10 @@ export class TuvalAlani extends LitElement {
       w: [x, y + h / 2],
       rot: [x + w / 2, y - 22],
     };
-    for (const el of this.renderRoot.querySelectorAll<HTMLElement>('.tutamac')) {
-      const p = noktalar[el.dataset.tip ?? ''];
+    for (const el of this.renderRoot.querySelectorAll<HTMLElement>(
+      ".tutamac",
+    )) {
+      const p = noktalar[el.dataset.tip ?? ""];
       if (!p) continue;
       el.style.left = `${p[0]}px`;
       el.style.top = `${p[1]}px`;
@@ -695,16 +716,23 @@ export class TuvalAlani extends LitElement {
   }
 
   /** Çizginin iki ucunu (x1,y1 / x2,y2) ekran konumuna yerleştirir. */
-  #ucTutamaclariKonumla(dugum: Dugum, el: SVGGraphicsElement, h: DOMRect): void {
+  #ucTutamaclariKonumla(
+    dugum: Dugum,
+    el: SVGGraphicsElement,
+    h: DOMRect,
+  ): void {
     const ctm = el.getScreenCTM();
     if (!ctm) return;
-    const oku = (a: string): number => parseFloat(dugum.oznitelikler.get(a) ?? '0') || 0;
+    const oku = (a: string): number =>
+      parseFloat(dugum.oznitelikler.get(a) ?? "0") || 0;
     const noktalar: Record<string, [number, number]> = {
-      '1': [oku('x1'), oku('y1')],
-      '2': [oku('x2'), oku('y2')],
+      "1": [oku("x1"), oku("y1")],
+      "2": [oku("x2"), oku("y2")],
     };
-    for (const ucEl of this.renderRoot.querySelectorAll<HTMLElement>('.uc-tutamac')) {
-      const p = noktalar[ucEl.dataset.uc ?? ''];
+    for (const ucEl of this.renderRoot.querySelectorAll<HTMLElement>(
+      ".uc-tutamac",
+    )) {
+      const p = noktalar[ucEl.dataset.uc ?? ""];
       if (!p) continue;
       const sp = new DOMPoint(p[0], p[1]).matrixTransform(ctm);
       ucEl.style.left = `${sp.x - h.left}px`;
@@ -719,25 +747,33 @@ export class TuvalAlani extends LitElement {
     const inv = d.ctm.inverse();
     const sdx = olay.clientX - d.bas.x;
     const sdy = olay.clientY - d.bas.y;
-    return { x: d.ilk.x + (inv.a * sdx + inv.c * sdy), y: d.ilk.y + (inv.b * sdx + inv.d * sdy) };
+    return {
+      x: d.ilk.x + (inv.a * sdx + inv.c * sdy),
+      y: d.ilk.y + (inv.b * sdx + inv.d * sdy),
+    };
   }
 
-  #ucBasla(uc: '1' | '2', olay: PointerEvent): void {
+  #ucBasla(uc: "1" | "2", olay: PointerEvent): void {
     olay.preventDefault();
     olay.stopPropagation();
     const tek = this.secim.secili;
     const el = tek ? this.#yansitici.elemanGetir(tek.kimlik) : null;
-    if (!tek || tek.etiket !== 'line' || !(el instanceof SVGGraphicsElement)) return;
-    const oku = (a: string): number => parseFloat(tek.oznitelikler.get(a) ?? '0') || 0;
+    if (!tek || tek.etiket !== "line" || !(el instanceof SVGGraphicsElement))
+      return;
+    const oku = (a: string): number =>
+      parseFloat(tek.oznitelikler.get(a) ?? "0") || 0;
     this.#ucDurum = {
       uc,
       dugum: tek,
       ctm: el.getScreenCTM() ?? new DOMMatrix(),
       bas: { x: olay.clientX, y: olay.clientY },
-      ilk: { x: oku(uc === '1' ? 'x1' : 'x2'), y: oku(uc === '1' ? 'y1' : 'y2') },
+      ilk: {
+        x: oku(uc === "1" ? "x1" : "x2"),
+        y: oku(uc === "1" ? "y1" : "y2"),
+      },
     };
-    window.addEventListener('pointermove', this.#ucHareket);
-    window.addEventListener('pointerup', this.#ucBirak);
+    window.addEventListener("pointermove", this.#ucHareket);
+    window.addEventListener("pointerup", this.#ucBirak);
   }
 
   readonly #ucHareket = (olay: PointerEvent): void => {
@@ -746,8 +782,8 @@ export class TuvalAlani extends LitElement {
     if (!d || !p) return;
     const el = this.#yansitici.elemanGetir(d.dugum.kimlik);
     if (el) {
-      el.setAttribute(d.uc === '1' ? 'x1' : 'x2', String(say(p.x))); // canlı önizleme
-      el.setAttribute(d.uc === '1' ? 'y1' : 'y2', String(say(p.y)));
+      el.setAttribute(d.uc === "1" ? "x1" : "x2", String(say(p.x))); // canlı önizleme
+      el.setAttribute(d.uc === "1" ? "y1" : "y2", String(say(p.y)));
     }
     this.#konumla();
   };
@@ -756,14 +792,14 @@ export class TuvalAlani extends LitElement {
     const d = this.#ucDurum;
     const p = this.#ucKonum(olay);
     this.#ucDurum = null;
-    window.removeEventListener('pointermove', this.#ucHareket);
-    window.removeEventListener('pointerup', this.#ucBirak);
+    window.removeEventListener("pointermove", this.#ucHareket);
+    window.removeEventListener("pointerup", this.#ucBirak);
     const belge = this.depo.belge;
     if (!d || !p || !belge) return;
-    const ax = d.uc === '1' ? 'x1' : 'x2';
-    const ay = d.uc === '1' ? 'y1' : 'y2';
+    const ax = d.uc === "1" ? "x1" : "x2";
+    const ay = d.uc === "1" ? "y1" : "y2";
     this.gecmis.calistir(
-      new BilesikKomut('uç taşı', [
+      new BilesikKomut("uç taşı", [
         new OznitelikDegistirKomutu(belge, d.dugum, ax, String(say(p.x))),
         new OznitelikDegistirKomutu(belge, d.dugum, ay, String(say(p.y))),
       ]),
@@ -783,20 +819,20 @@ export class TuvalAlani extends LitElement {
     this.#tutamac = tip;
     this.#tutamacBas = { x: olay.clientX, y: olay.clientY };
     this.#tutamacAsil = {
-      transform: tek.oznitelikler.get('transform') ?? '',
+      transform: tek.oznitelikler.get("transform") ?? "",
       ctm: ebeveyn?.getScreenCTM?.() ?? new DOMMatrix(),
       bbox: el.getBoundingClientRect(),
       donmus,
     };
-    window.addEventListener('pointermove', this.#tutamacHareket);
-    window.addEventListener('pointerup', this.#tutamacBirak);
+    window.addEventListener("pointermove", this.#tutamacHareket);
+    window.addEventListener("pointerup", this.#tutamacBirak);
   }
 
   readonly #tutamacHareket = (olay: PointerEvent): void => {
     const yeni = this.#tutamacTransform(olay);
     const tek = this.secim.secili;
     const el = tek ? this.#yansitici.elemanGetir(tek.kimlik) : null;
-    if (yeni !== null && el) el.setAttribute('transform', yeni); // canlı önizleme
+    if (yeni !== null && el) el.setAttribute("transform", yeni); // canlı önizleme
     this.#konumla();
   };
 
@@ -805,13 +841,15 @@ export class TuvalAlani extends LitElement {
     const tek = this.secim.secili;
     const belge = this.depo.belge;
     if (yeni !== null && tek && belge) {
-      this.gecmis.calistir(new OznitelikDegistirKomutu(belge, tek, 'transform', yeni));
+      this.gecmis.calistir(
+        new OznitelikDegistirKomutu(belge, tek, "transform", yeni),
+      );
     }
     this.#tutamac = null;
     this.#tutamacBas = null;
     this.#tutamacAsil = null;
-    window.removeEventListener('pointermove', this.#tutamacHareket);
-    window.removeEventListener('pointerup', this.#tutamacBirak);
+    window.removeEventListener("pointermove", this.#tutamacHareket);
+    window.removeEventListener("pointerup", this.#tutamacBirak);
   };
 
   /** Tutamaç hareketinden yeni transform dizesini hesaplar (boyut/döndürme). */
@@ -822,7 +860,7 @@ export class TuvalAlani extends LitElement {
     if (!tip || !bas || !asil) return null;
     const b = asil.bbox;
 
-    if (tip === 'rot') {
+    if (tip === "rot") {
       const cx = b.left + b.width / 2;
       const cy = b.top + b.height / 2;
       const a0 = Math.atan2(bas.y - cy, bas.x - cx);
@@ -833,25 +871,28 @@ export class TuvalAlani extends LitElement {
       return `rotate(${say(derece)}, ${say(c.x)}, ${say(c.y)}) ${asil.transform}`.trim();
     }
 
-    const sol = tip.includes('w');
-    const sag = tip.includes('e');
-    const ust = tip.includes('n');
-    const alt = tip.includes('s');
+    const sol = tip.includes("w");
+    const sag = tip.includes("e");
+    const ust = tip.includes("n");
+    const alt = tip.includes("s");
     const pivotX = sag ? b.left : sol ? b.right : b.left + b.width / 2;
     const pivotY = alt ? b.top : ust ? b.bottom : b.top + b.height / 2;
     const yatay = sol || sag;
     const dikey = ust || alt;
     let sx = 1;
     let sy = 1;
-    if (yatay) sx = (olay.clientX - pivotX) / ((sag ? b.right : b.left) - pivotX);
-    if (dikey) sy = (olay.clientY - pivotY) / ((alt ? b.bottom : b.top) - pivotY);
+    if (yatay)
+      sx = (olay.clientX - pivotX) / ((sag ? b.right : b.left) - pivotX);
+    if (dikey)
+      sy = (olay.clientY - pivotY) / ((alt ? b.bottom : b.top) - pivotY);
     // Shift VEYA döndürülmüş/eğik nesne → ÜNİFORM ölçek. Eksen-hizalı ekran
     // bbox'tan türetilen non-uniform ölçek, nesnenin transform'undaki rotate ile
     // birleşince shear (çarpıklık) üretir; tek ölçek faktörü (S(s,s)) bunu önler
     // çünkü izotropik ölçek rotasyonla değişmelidir. (Tam yerel-eksen OBB resize
     // ileri iş; bu mitigasyon skew bug'ını giderir — bkz. GELISTIRME-DURUMU §6.)
     if (olay.shiftKey || asil.donmus) {
-      const s = Math.max(yatay ? Math.abs(sx) : 0, dikey ? Math.abs(sy) : 0) || 1;
+      const s =
+        Math.max(yatay ? Math.abs(sx) : 0, dikey ? Math.abs(sy) : 0) || 1;
       sx = yatay ? Math.sign(sx || 1) * s : s;
       sy = dikey ? Math.sign(sy || 1) * s : s;
     }
@@ -862,14 +903,16 @@ export class TuvalAlani extends LitElement {
   }
 
   /** Kement dikdörtgenini (ekran koord.) çizer; null gizler. */
-  #kementCiz(dortgen: { x: number; y: number; w: number; h: number } | null): void {
+  #kementCiz(
+    dortgen: { x: number; y: number; w: number; h: number } | null,
+  ): void {
     if (!this.kement) return;
     if (!dortgen) {
-      this.kement.style.display = 'none';
+      this.kement.style.display = "none";
       return;
     }
     const h = this.getBoundingClientRect();
-    this.kement.style.display = 'block';
+    this.kement.style.display = "block";
     this.kement.style.left = `${dortgen.x - h.left}px`;
     this.kement.style.top = `${dortgen.y - h.top}px`;
     this.kement.style.width = `${dortgen.w}px`;
@@ -882,9 +925,9 @@ export class TuvalAlani extends LitElement {
     const h = this.getBoundingClientRect();
     this.kilavuzlar.replaceChildren();
     for (const k of kilavuzlar) {
-      const c = document.createElement('div');
+      const c = document.createElement("div");
       c.className = `kilavuz ${k.yon}`;
-      if (k.yon === 'dikey') {
+      if (k.yon === "dikey") {
         c.style.left = `${k.konum - h.left}px`;
         c.style.top = `${k.bas - h.top}px`;
         c.style.height = `${k.son - k.bas}px`;
@@ -901,7 +944,7 @@ export class TuvalAlani extends LitElement {
     return html`
       <div
         class="kaydir"
-        style="cursor:${aracDeposu.aktif?.imlec ?? 'default'}"
+        style="cursor:${aracDeposu.aktif?.imlec ?? "default"}"
         @pointerdown=${this.#bas}
       >
         <div class="icerik"></div>
@@ -912,26 +955,28 @@ export class TuvalAlani extends LitElement {
         <div class="arac-katman"></div>
         <div class="kement"></div>
         <div class="tutamaclar">
-          ${['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(
-            (tip) => html`<div
-              class="tutamac"
-              data-tip=${tip}
-              @pointerdown=${(e: PointerEvent) => this.#tutamacBasla(tip, e)}
-            ></div>`,
+          ${["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(
+            (tip) =>
+              html`<div
+                class="tutamac"
+                data-tip=${tip}
+                @pointerdown=${(e: PointerEvent) => this.#tutamacBasla(tip, e)}
+              ></div>`,
           )}
           <div
             class="tutamac dondur"
             data-tip="rot"
-            @pointerdown=${(e: PointerEvent) => this.#tutamacBasla('rot', e)}
+            @pointerdown=${(e: PointerEvent) => this.#tutamacBasla("rot", e)}
           ></div>
         </div>
         <div class="uc-tutamaclar">
-          ${(['1', '2'] as const).map(
-            (uc) => html`<div
-              class="uc-tutamac"
-              data-uc=${uc}
-              @pointerdown=${(e: PointerEvent) => this.#ucBasla(uc, e)}
-            ></div>`,
+          ${(["1", "2"] as const).map(
+            (uc) =>
+              html`<div
+                class="uc-tutamac"
+                data-uc=${uc}
+                @pointerdown=${(e: PointerEvent) => this.#ucBasla(uc, e)}
+              ></div>`,
           )}
         </div>
       </div>
@@ -941,15 +986,15 @@ export class TuvalAlani extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'tuval-alani': TuvalAlani;
+    "tuval-alani": TuvalAlani;
   }
 }
 
 // Registry'ye kaydol (İlke 5) — merkez bölge (ana çalışma alanı).
 panelKayitDefteri.kaydet({
-  id: 'tuval',
-  baslik: 'Tuval',
-  bolge: 'merkez',
+  id: "tuval",
+  baslik: "Tuval",
+  bolge: "merkez",
   olustur: ({ depo, secim, gecmis, oynatma }) => {
     const panel = new TuvalAlani();
     panel.depo = depo;

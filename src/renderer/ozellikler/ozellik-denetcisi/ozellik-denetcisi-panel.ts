@@ -1,31 +1,31 @@
-import { LitElement, html, css, svg } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import type { BelgeDeposu } from '../../../cekirdek/belge/belge-deposu';
-import type { SecimDeposu } from '../../../cekirdek/secim/secim-deposu';
-import type { KomutGecmisi } from '../../../cekirdek/komutlar/komut-gecmisi';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
-import { OznitelikDegistirKomutu } from '../../../cekirdek/komutlar/oznitelik-degistir-komutu';
-import { panelKayitDefteri } from '../../../cekirdek/registry/panel-registry';
-import { dilYonetici, t } from '../../diller/dil';
-import { stilYazimModu, type StilModu } from '../../boya/stil-yazim-modu';
-import { alanSetiKayitDefteri } from './turler/alan-seti-registry';
+import { LitElement, html, css, svg } from "lit";
+import { customElement } from "lit/decorators.js";
+import type { BelgeDeposu } from "../../../cekirdek/belge/belge-deposu";
+import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import { dilYonetici, t } from "../../diller/dil";
+import { stilYazimModu, type StilModu } from "../../boya/stil-yazim-modu";
+import { alanSetiKayitDefteri } from "./turler/alan-seti-registry";
 // Alan setleri import edilince kendilerini registry'ye kaydeder (İlke 5).
-import './turler/gorunum-alan-seti';
-import './turler/geometri-alan-seti';
-import './turler/metadata-alan-seti';
-import './turler/marker-alan-seti';
-import './turler/tanim-alan-seti';
-import './turler/tuval-ayarlari-alan-seti';
+import "./turler/gorunum-alan-seti";
+import "./turler/geometri-alan-seti";
+import "./turler/metadata-alan-seti";
+import "./turler/marker-alan-seti";
+import "./turler/tanim-alan-seti";
+import "./turler/tuval-ayarlari-alan-seti";
 
 /**
- * Özellik Denetçisi paneli (CLAUDE.md §5.4, §9.3) — seçime DUYARLI.
+ * Özellik Denetçisi paneli (AGENTS.md §5.4, §9.3) — seçime DUYARLI.
  *
  * Seçili düğümün türüne uygun alan setlerini (registry'den) gösterir; yeni nesne
  * türü = yeni alan seti kaydı (kabuk/panel değişmez). Her değişiklik DAİMA
  * Command ile (İlke 2) geçmişe yazılır → undo/redo; Tuval canlı güncellenir
  * (İlke 3).
  */
-@customElement('ozellik-denetcisi-panel')
+@customElement("ozellik-denetcisi-panel")
 export class OzellikDenetcisiPanel extends LitElement {
   static override styles = css`
     :host {
@@ -147,7 +147,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       color: var(--metin-soluk);
       cursor: pointer;
     }
-    .kilit[aria-pressed='true'] {
+    .kilit[aria-pressed="true"] {
       color: var(--vurgu-metin);
       background: var(--vurgu);
       border-color: transparent;
@@ -166,8 +166,8 @@ export class OzellikDenetcisiPanel extends LitElement {
       opacity: 0.55;
       cursor: default;
     }
-    input[type='text'],
-    input[type='number'] {
+    input[type="text"],
+    input[type="number"] {
       flex: 1;
       min-width: 0;
       width: 100%;
@@ -180,7 +180,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       border-radius: 5px;
       padding: 0.22rem 0.4rem;
     }
-    input[type='color'] {
+    input[type="color"] {
       width: 28px;
       height: 26px;
       padding: 0;
@@ -235,7 +235,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       color: var(--metin-soluk);
       line-height: 1.4;
     }
-    input[type='range'] {
+    input[type="range"] {
       flex: 1;
       min-width: 0;
       accent-color: var(--vurgu, #4a90e2);
@@ -278,29 +278,34 @@ export class OzellikDenetcisiPanel extends LitElement {
   /** Bir özniteliği komutla yazar (değişmediyse komut üretmez). */
   private yaz(dugum: Dugum, ad: string, deger: string): void {
     const belge = this.depo.belge;
-    if (!belge || (dugum.oznitelikler.get(ad) ?? '') === deger) return;
+    if (!belge || (dugum.oznitelikler.get(ad) ?? "") === deger) return;
     this.gecmis.calistir(new OznitelikDegistirKomutu(belge, dugum, ad, deger));
   }
 
   override render() {
     const dugum = this.secim.secili;
     return html`
-      <div class="baslik">${t('denetci.baslik')}</div>
-      <div class="stil-modu" title=${t('denetci.stilModu.ipucu')}>
-        <label>${t('denetci.stilModu')}</label>
+      <div class="baslik">${t("denetci.baslik")}</div>
+      <div class="stil-modu" title=${t("denetci.stilModu.ipucu")}>
+        <label>${t("denetci.stilModu")}</label>
         <select
           .value=${stilYazimModu.mod}
           @change=${(e: Event) =>
-            stilYazimModu.ayarla((e.target as HTMLSelectElement).value as StilModu)}
+            stilYazimModu.ayarla(
+              (e.target as HTMLSelectElement).value as StilModu,
+            )}
         >
-          <option value="otomatik" ?selected=${stilYazimModu.mod === 'otomatik'}>
-            ${t('denetci.stilModu.otomatik')}
+          <option
+            value="otomatik"
+            ?selected=${stilYazimModu.mod === "otomatik"}
+          >
+            ${t("denetci.stilModu.otomatik")}
           </option>
-          <option value="inline" ?selected=${stilYazimModu.mod === 'inline'}>
-            ${t('denetci.stilModu.inline')}
+          <option value="inline" ?selected=${stilYazimModu.mod === "inline"}>
+            ${t("denetci.stilModu.inline")}
           </option>
-          <option value="css" ?selected=${stilYazimModu.mod === 'css'}>
-            ${t('denetci.stilModu.css')}
+          <option value="css" ?selected=${stilYazimModu.mod === "css"}>
+            ${t("denetci.stilModu.css")}
           </option>
         </select>
       </div>
@@ -315,19 +320,20 @@ export class OzellikDenetcisiPanel extends LitElement {
    */
   #tuvalGorunumu() {
     const belge = this.depo.belge;
-    if (!belge) return html`<div class="bos">${t('denetci.bosSecim')}</div>`;
+    if (!belge) return html`<div class="bos">${t("denetci.bosSecim")}</div>`;
     const kok = belge.kok;
     const baglam = {
       dugum: kok,
       belge,
       yaz: (ad: string, deger: string) => this.yaz(kok, ad, deger),
-      komut: (k: Parameters<typeof this.gecmis.calistir>[0]) => this.gecmis.calistir(k),
+      komut: (k: Parameters<typeof this.gecmis.calistir>[0]) =>
+        this.gecmis.calistir(k),
       tazele: () => this.requestUpdate(),
     };
     const setler = alanSetiKayitDefteri.uygunlar(kok);
     return html`
       <div class="eleman">
-        <span class="etiket">${t('denetci.belge')}:</span>
+        <span class="etiket">${t("denetci.belge")}:</span>
         <code>&lt;svg&gt;</code>
       </div>
       ${setler.map(
@@ -344,24 +350,25 @@ export class OzellikDenetcisiPanel extends LitElement {
   private dugumGorunumu(dugum: Dugum) {
     const belge = this.depo.belge;
     if (!belge) return html``;
-    const id = dugum.oznitelikler.get('id');
+    const id = dugum.oznitelikler.get("id");
     const baglam = {
       dugum,
       belge,
       yaz: (ad: string, deger: string) => this.yaz(dugum, ad, deger),
-      komut: (k: Parameters<typeof this.gecmis.calistir>[0]) => this.gecmis.calistir(k),
+      komut: (k: Parameters<typeof this.gecmis.calistir>[0]) =>
+        this.gecmis.calistir(k),
       tazele: () => this.requestUpdate(),
     };
     const setler = alanSetiKayitDefteri.uygunlar(dugum);
 
     return html`
       <div class="eleman">
-        <span class="etiket">${t('denetci.eleman')}:</span>
+        <span class="etiket">${t("denetci.eleman")}:</span>
         <code>&lt;${dugum.etiket}&gt;</code>
-        ${id ? html`<code>#${id}</code>` : ''}
+        ${id ? html`<code>#${id}</code>` : ""}
       </div>
       ${setler.length === 0
-        ? html`<div class="bos">${t('denetci.alanYok')}</div>`
+        ? html`<div class="bos">${t("denetci.alanYok")}</div>`
         : setler.map(
             (set) => html`
               <div class="grup">
@@ -376,15 +383,15 @@ export class OzellikDenetcisiPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'ozellik-denetcisi-panel': OzellikDenetcisiPanel;
+    "ozellik-denetcisi-panel": OzellikDenetcisiPanel;
   }
 }
 
 // Registry'ye kaydol (İlke 5). Sağ-üst.
 panelKayitDefteri.kaydet({
-  id: 'ozellik-denetcisi',
-  baslik: 'Özellik Denetçisi',
-  bolge: 'sag',
+  id: "ozellik-denetcisi",
+  baslik: "Özellik Denetçisi",
+  bolge: "sag",
   ikon: svg`<svg viewBox="0 0 18 18" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 5h6M14.5 5H15M3 9h2M9.5 9H15M3 13h8M15 13h0.01"/><circle cx="11" cy="5" r="1.7"/><circle cx="7.5" cy="9" r="1.7"/><circle cx="13" cy="13" r="1.7"/></svg>`,
   olustur: ({ depo, secim, gecmis }) => {
     const panel = new OzellikDenetcisiPanel();

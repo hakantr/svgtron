@@ -1,13 +1,13 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "./komut";
 
 /**
  * Nesne kilidini açar/kapatır (§9.7) — editör bayrağı; geri-alınabilir.
  * Kalıcılığı İlke 10'a göre dışa aktarımda SVG yorumuyla sağlanır.
  */
 export class KilitKomutu implements Komut {
-  readonly etiket = 'kilit';
+  readonly etiket = "kilit";
   readonly #eski: boolean;
 
   constructor(

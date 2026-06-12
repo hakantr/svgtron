@@ -1,5 +1,5 @@
 /**
- * Soyut belge düğümü (CLAUDE.md İlke 8).
+ * Soyut belge düğümü (AGENTS.md İlke 8).
  *
  * Belge modeli, canlı SVG DOM'u DEĞİLDİR; sürümden bağımsız, normalize bir
  * temsildir. `Dugum`, herhangi bir SVG elemanını jenerik ama yapısal olarak
@@ -28,7 +28,7 @@ export interface Dugum {
    */
   metin?: string;
   /**
-   * Editör bayrağı (CLAUDE.md §9.7): kilitli düğüm Tuval'den seçilemez/taşınamaz.
+   * Editör bayrağı (AGENTS.md §9.7): kilitli düğüm Tuval'den seçilemez/taşınamaz.
    * Modelin parçası ama SVG çıktısına ÖZNİTELİK olarak yazılmaz; kalıcılığı
    * İlke 10 yorumlarıyla sağlanır. Dışa aktarıcı bunu yok sayar.
    */
@@ -58,7 +58,13 @@ export function dugumOlustur(
     oznitelikler instanceof Map
       ? new Map(oznitelikler)
       : new Map(Object.entries(oznitelikler ?? {}));
-  return { kimlik: yeniKimlik(), etiket, oznitelikler: harita, cocuklar, metin };
+  return {
+    kimlik: yeniKimlik(),
+    etiket,
+    oznitelikler: harita,
+    cocuklar,
+    metin,
+  };
 }
 
 /** Düğümü ve tüm alt ağacını derinlik-öncelikli gezer. */
@@ -76,7 +82,7 @@ export function oznitelik(dugum: Dugum, ad: string): string | null {
 export function tumIdler(kok: Dugum): Set<string> {
   const kume = new Set<string>();
   for (const d of gez(kok)) {
-    const id = d.oznitelikler.get('id');
+    const id = d.oznitelikler.get("id");
     if (id) kume.add(id);
   }
   return kume;
@@ -86,7 +92,7 @@ export function tumIdler(kok: Dugum): Set<string> {
 export function tumSiniflar(kok: Dugum): Set<string> {
   const kume = new Set<string>();
   for (const d of gez(kok)) {
-    const sinif = d.oznitelikler.get('class');
+    const sinif = d.oznitelikler.get("class");
     if (sinif) for (const ad of sinif.trim().split(/\s+/)) if (ad) kume.add(ad);
   }
   return kume;

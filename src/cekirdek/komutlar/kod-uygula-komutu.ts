@@ -1,7 +1,7 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import { iceAktar } from '../belge/model/ice-aktar';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import { iceAktar } from "../belge/model/ice-aktar";
+import type { Komut } from "./komut";
 
 /**
  * "SVG Kodu" panelindeki "Uygula" işlemini GERİ-ALINABİLİR yapan komut (İlke 2).
@@ -12,7 +12,7 @@ import type { Komut } from './komut';
  * → ctrl+z koddaki değişikliği geri alır ve önceki komutlar geçmişte geçerli kalır.
  */
 export class KodUygulaKomutu implements Komut {
-  readonly etiket = 'kod uygula';
+  readonly etiket = "kod uygula";
   readonly #belge: Belge;
   readonly #yeniEtiket: string;
   readonly #yeniOzn: Map<string, string>;
@@ -38,10 +38,18 @@ export class KodUygulaKomutu implements Komut {
   }
 
   uygula(): void {
-    this.#belge.icerikDegistir(this.#yeniEtiket, this.#yeniOzn, this.#yeniCocuklar);
+    this.#belge.icerikDegistir(
+      this.#yeniEtiket,
+      this.#yeniOzn,
+      this.#yeniCocuklar,
+    );
   }
 
   geriAl(): void {
-    this.#belge.icerikDegistir(this.#eskiEtiket, this.#eskiOzn, this.#eskiCocuklar);
+    this.#belge.icerikDegistir(
+      this.#eskiEtiket,
+      this.#eskiOzn,
+      this.#eskiCocuklar,
+    );
   }
 }

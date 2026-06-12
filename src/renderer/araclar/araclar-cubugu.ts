@@ -1,8 +1,8 @@
-import { LitElement, html, css, svg } from 'lit';
-import { customElement, state, query } from 'lit/decorators.js';
-import { panelKayitDefteri } from '../../cekirdek/registry/panel-registry';
-import { aracKayitDefteri, aracDeposu } from './arac';
-import { dilYonetici, t } from '../diller/dil';
+import { LitElement, html, css, svg } from "lit";
+import { customElement, state, query } from "lit/decorators.js";
+import { panelKayitDefteri } from "../../cekirdek/registry/panel-registry";
+import { aracKayitDefteri, aracDeposu } from "./arac";
+import { dilYonetici, t } from "../diller/dil";
 
 /** Ok tıklamasında kaydırma miktarı (px ≈ birkaç araç). */
 const KAYDIRMA_ADIMI = 150;
@@ -18,7 +18,7 @@ const OK_ASAGI = svg`<svg viewBox="0 0 16 16" width="12" height="12" fill="none"
  * KAYDIRILABİLİR olur. Taşma yönünde alt/üst **kaydırma oku** belirir (tıkla → kaydır);
  * fare tekerleği de listeyi kaydırır (native `overflow`). Scrollbar gizlenir (oklar var).
  */
-@customElement('araclar-cubugu')
+@customElement("araclar-cubugu")
 export class AraclarCubugu extends LitElement {
   static override styles = css`
     :host {
@@ -112,7 +112,7 @@ export class AraclarCubugu extends LitElement {
   /** Üst/alt yönde kaydırma okları görünür mü (o yönde taşma var mı)? */
   @state() private ustOk = false;
   @state() private altOk = false;
-  @query('.liste') private liste?: HTMLElement;
+  @query(".liste") private liste?: HTMLElement;
 
   #aracCoz?: () => void;
   #dilCoz?: () => void;
@@ -155,7 +155,7 @@ export class AraclarCubugu extends LitElement {
 
   /** Listeyi yön'e doğru bir adım kaydırır (yumuşak). */
   #kaydir(yon: 1 | -1): void {
-    this.liste?.scrollBy({ top: yon * KAYDIRMA_ADIMI, behavior: 'smooth' });
+    this.liste?.scrollBy({ top: yon * KAYDIRMA_ADIMI, behavior: "smooth" });
   }
 
   override render() {
@@ -163,31 +163,33 @@ export class AraclarCubugu extends LitElement {
       <button
         class="ok ust"
         ?hidden=${!this.ustOk}
-        title=${t('araclar.yukariKaydir')}
-        aria-label=${t('araclar.yukariKaydir')}
+        title=${t("araclar.yukariKaydir")}
+        aria-label=${t("araclar.yukariKaydir")}
         @click=${() => this.#kaydir(-1)}
       >
         ${OK_YUKARI}
       </button>
       <div class="liste" @scroll=${() => this.#okDurum()}>
-        ${aracKayitDefteri.hepsi().map(
-          (arac) => html`
-            <button
-              class="arac ${aracDeposu.aktifId === arac.id ? 'etkin' : ''}"
-              title=${t(arac.etiketAnahtari)}
-              aria-label=${t(arac.etiketAnahtari)}
-              @click=${() => aracDeposu.ayarla(arac.id)}
-            >
-              ${arac.ikon}
-            </button>
-          `,
-        )}
+        ${aracKayitDefteri
+          .hepsi()
+          .map(
+            (arac) => html`
+              <button
+                class="arac ${aracDeposu.aktifId === arac.id ? "etkin" : ""}"
+                title=${t(arac.etiketAnahtari)}
+                aria-label=${t(arac.etiketAnahtari)}
+                @click=${() => aracDeposu.ayarla(arac.id)}
+              >
+                ${arac.ikon}
+              </button>
+            `,
+          )}
       </div>
       <button
         class="ok alt"
         ?hidden=${!this.altOk}
-        title=${t('araclar.asagiKaydir')}
-        aria-label=${t('araclar.asagiKaydir')}
+        title=${t("araclar.asagiKaydir")}
+        aria-label=${t("araclar.asagiKaydir")}
         @click=${() => this.#kaydir(1)}
       >
         ${OK_ASAGI}
@@ -198,14 +200,14 @@ export class AraclarCubugu extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'araclar-cubugu': AraclarCubugu;
+    "araclar-cubugu": AraclarCubugu;
   }
 }
 
 // Registry'ye kaydol (İlke 5) — sol bölge (Araçlar).
 panelKayitDefteri.kaydet({
-  id: 'araclar',
-  baslik: 'Araçlar',
-  bolge: 'sol',
+  id: "araclar",
+  baslik: "Araçlar",
+  bolge: "sol",
   olustur: () => new AraclarCubugu(),
 });

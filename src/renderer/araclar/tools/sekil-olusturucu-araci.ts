@@ -1,7 +1,7 @@
-import { svg } from 'lit';
-import { aracKayitDefteri, type Arac, type AracBaglami } from '../arac';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
-import { cizimErisimi } from '../../tuval/cizim-erisimi';
+import { svg } from "lit";
+import { aracKayitDefteri, type Arac, type AracBaglami } from "../arac";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { cizimErisimi } from "../../tuval/cizim-erisimi";
 import {
   dugumCokPoligonu,
   atomikYuzler,
@@ -9,11 +9,15 @@ import {
   sonucuYaz,
   belgeSirasi,
   MAKS_ATOMIK_OPERAND,
-} from '../../ozellikler/yol-islemleri/bool';
-import { cokPoligonuD, type CokPoligon, type Cift } from '../../ozellikler/yol-islemleri/bool-geometri';
+} from "../../ozellikler/yol-islemleri/bool";
+import {
+  cokPoligonuD,
+  type CokPoligon,
+  type Cift,
+} from "../../ozellikler/yol-islemleri/bool-geometri";
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const ACCENT = 'var(--vurgu, #4a90e2)';
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ACCENT = "var(--vurgu, #4a90e2)";
 
 interface Yuz {
   cp: CokPoligon; // kök kullanıcı uzayında atomik yüz
@@ -31,14 +35,14 @@ let hoverIdx = -1;
 
 function katmaniKur(baglam: AracBaglami): void {
   const kap = baglam.aracKatmani();
-  kat = document.createElementNS(SVG_NS, 'svg');
+  kat = document.createElementNS(SVG_NS, "svg");
   Object.assign(kat.style, {
-    position: 'absolute',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    overflow: 'visible',
-    pointerEvents: 'none',
+    position: "absolute",
+    inset: "0",
+    width: "100%",
+    height: "100%",
+    overflow: "visible",
+    pointerEvents: "none",
   });
   kap.appendChild(kat);
 }
@@ -53,11 +57,17 @@ function temizle(): void {
 function stilUygula(y: Yuz, i: number): void {
   const hover = i === hoverIdx;
   y.el.style.fill = ACCENT;
-  y.el.style.fillOpacity = y.tut ? (hover ? '0.42' : '0.28') : hover ? '0.14' : '0.05';
+  y.el.style.fillOpacity = y.tut
+    ? hover
+      ? "0.42"
+      : "0.28"
+    : hover
+      ? "0.14"
+      : "0.05";
   y.el.style.stroke = ACCENT;
-  y.el.setAttribute('stroke-width', hover ? '2' : '1');
-  y.el.style.strokeOpacity = y.tut ? '0.9' : '0.55';
-  y.el.setAttribute('stroke-dasharray', y.tut ? '' : '4 3');
+  y.el.setAttribute("stroke-width", hover ? "2" : "1");
+  y.el.style.strokeOpacity = y.tut ? "0.9" : "0.55";
+  y.el.setAttribute("stroke-dasharray", y.tut ? "" : "4 3");
 }
 
 /** Seçili (≥2 geçerli) şekilden atomik yüzleri kurar; <2 ise temizler. */
@@ -101,20 +111,20 @@ function yenidenKur(): void {
 
   const atomik = atomikYuzler(geoms);
   yuzler = atomik.map((cp) => {
-    const el = document.createElementNS(SVG_NS, 'path') as SVGPathElement;
-    el.style.pointerEvents = 'auto';
-    el.style.cursor = 'pointer';
-    el.style.strokeLinejoin = 'round';
+    const el = document.createElementNS(SVG_NS, "path") as SVGPathElement;
+    el.style.pointerEvents = "auto";
+    el.style.cursor = "pointer";
+    el.style.strokeLinejoin = "round";
     const yuz: Yuz = { cp, tut: true, el };
-    el.addEventListener('pointerenter', () => {
+    el.addEventListener("pointerenter", () => {
       hoverIdx = yuzler.indexOf(yuz);
       yuzler.forEach(stilUygula);
     });
-    el.addEventListener('pointerleave', () => {
+    el.addEventListener("pointerleave", () => {
       if (hoverIdx === yuzler.indexOf(yuz)) hoverIdx = -1;
       yuzler.forEach(stilUygula);
     });
-    el.addEventListener('pointerdown', (o) => {
+    el.addEventListener("pointerdown", (o) => {
       o.preventDefault();
       o.stopPropagation();
       yuz.tut = !yuz.tut; // dâhil/çıkar
@@ -143,7 +153,7 @@ function yerlestir(): void {
       ),
     );
   yuzler.forEach((y, i) => {
-    y.el.setAttribute('d', cokPoligonuD(yerel(y.cp)));
+    y.el.setAttribute("d", cokPoligonuD(yerel(y.cp)));
     stilUygula(y, i);
   });
 }
@@ -156,7 +166,14 @@ function uygula(): void {
   if (tutulan.length === 0) return;
   const d = cokPoligonuD(yuzleriBirlestir(tutulan));
   if (!d) return;
-  sonucuYaz(belge, baglamRef.secim, baglamRef.gecmis, operandlar, d, 'şekil oluştur');
+  sonucuYaz(
+    belge,
+    baglamRef.secim,
+    baglamRef.gecmis,
+    operandlar,
+    d,
+    "şekil oluştur",
+  );
   // Commit sonrası seçim tek path olur → secim.dinle → yenidenKur → yüzler temizlenir.
 }
 
@@ -167,9 +184,9 @@ function uygula(): void {
  * tek `<path>` yapar (operandları değiştirir, tek Command); Esc tümünü geri dâhil eder.
  */
 const sekilOlusturucu: Arac = {
-  id: 'sekil-olusturucu',
-  etiketAnahtari: 'arac.sekilOlusturucu',
-  imlec: 'pointer',
+  id: "sekil-olusturucu",
+  etiketAnahtari: "arac.sekilOlusturucu",
+  imlec: "pointer",
   sira: 2,
   tutamacGizle: true,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -190,10 +207,10 @@ const sekilOlusturucu: Arac = {
   },
 
   tus(olay) {
-    if (olay.key === 'Enter') {
+    if (olay.key === "Enter") {
       olay.preventDefault();
       uygula();
-    } else if (olay.key === 'Escape') {
+    } else if (olay.key === "Escape") {
       olay.preventDefault();
       yuzler.forEach((y) => (y.tut = true));
       yuzler.forEach(stilUygula);

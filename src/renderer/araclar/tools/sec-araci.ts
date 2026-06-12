@@ -1,14 +1,25 @@
-import { svg } from 'lit';
-import { aracKayitDefteri, SURUKLEME_ESIGI, type Arac, type AracBaglami } from '../arac';
-import type { Dugum } from '../../../cekirdek/belge/model/dugum';
-import { enDistakiGrup, atasiMi } from '../../../cekirdek/belge/grup';
-import { OznitelikDegistirKomutu } from '../../../cekirdek/komutlar/oznitelik-degistir-komutu';
-import { BilesikKomut } from '../../../cekirdek/komutlar/dugum-komutlari';
-import { transformTasi, ekranDeltaKullanici } from '../../tuval/donusum';
-import { yapismaHesapla, kutuYap, birlestir, type Kutu, type Kilavuz } from '../../tuval/yapisma';
+import { svg } from "lit";
+import {
+  aracKayitDefteri,
+  SURUKLEME_ESIGI,
+  type Arac,
+  type AracBaglami,
+} from "../arac";
+import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { enDistakiGrup, atasiMi } from "../../../cekirdek/belge/grup";
+import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { transformTasi, ekranDeltaKullanici } from "../../tuval/donusum";
+import {
+  yapismaHesapla,
+  kutuYap,
+  birlestir,
+  type Kutu,
+  type Kilavuz,
+} from "../../tuval/yapisma";
 
 /** Kapsayıcı/tanım etiketleri — kement nesne olarak ele almaz. */
-const NESNE_DISI = new Set(['defs', 'style', 'title', 'desc', 'metadata']);
+const NESNE_DISI = new Set(["defs", "style", "title", "desc", "metadata"]);
 const YAPISMA_ESIGI = 6; // px (ekran) — Alt basılıyken yapışma kapanır (§11.1)
 
 // Kement (alan seçimi) durumu — tekil araç.
@@ -36,13 +47,34 @@ function nesneler(b: AracBaglami): Dugum[] {
 }
 
 function dortgen(a: { x: number; y: number }, c: { x: number; y: number }) {
-  return { x: Math.min(a.x, c.x), y: Math.min(a.y, c.y), w: Math.abs(a.x - c.x), h: Math.abs(a.y - c.y) };
+  return {
+    x: Math.min(a.x, c.x),
+    y: Math.min(a.y, c.y),
+    w: Math.abs(a.x - c.x),
+    h: Math.abs(a.y - c.y),
+  };
 }
-function icindeMi(r: DOMRect, k: { x: number; y: number; w: number; h: number }): boolean {
-  return r.left >= k.x && r.top >= k.y && r.right <= k.x + k.w && r.bottom <= k.y + k.h;
+function icindeMi(
+  r: DOMRect,
+  k: { x: number; y: number; w: number; h: number },
+): boolean {
+  return (
+    r.left >= k.x &&
+    r.top >= k.y &&
+    r.right <= k.x + k.w &&
+    r.bottom <= k.y + k.h
+  );
 }
-function kesisir(r: DOMRect, k: { x: number; y: number; w: number; h: number }): boolean {
-  return !(r.right < k.x || r.left > k.x + k.w || r.bottom < k.y || r.top > k.y + k.h);
+function kesisir(
+  r: DOMRect,
+  k: { x: number; y: number; w: number; h: number },
+): boolean {
+  return !(
+    r.right < k.x ||
+    r.left > k.x + k.w ||
+    r.bottom < k.y ||
+    r.top > k.y + k.h
+  );
 }
 
 /** Seçili düğümlerin taşıma başlangıç durumunu (transform + ebeveyn CTM) yakalar. */
@@ -58,7 +90,7 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
       const k = kutuYap(el.getBoundingClientRect());
       birlesim = birlesim ? birlestir(birlesim, k) : k;
     }
-    return { dugum, transform: dugum.oznitelikler.get('transform') ?? '', ctm };
+    return { dugum, transform: dugum.oznitelikler.get("transform") ?? "", ctm };
   });
   baslangicKutu = birlesim;
   // Yapışma hedefleri: seçili OLMAYAN üst-düzey nesneler + tuval (kök) çerçevesi.
@@ -68,7 +100,8 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
     .filter((el): el is SVGGraphicsElement => el instanceof SVGGraphicsElement)
     .map((el) => kutuYap(el.getBoundingClientRect()))
     .filter((k) => k.sag - k.sol > 0 || k.alt - k.ust > 0);
-  if (baglam.kok) hedefKutular.push(kutuYap(baglam.kok.getBoundingClientRect()));
+  if (baglam.kok)
+    hedefKutular.push(kutuYap(baglam.kok.getBoundingClientRect()));
 }
 
 /** Ham ekran ötelemesini yapışmayla düzeltir (Alt → kapalı). Kılavuzları da döndürür. */
@@ -94,9 +127,9 @@ function yapismaUygula(
  * KEMENT (§9.7). Kilitli nesneler seçilemez/taşınamaz.
  */
 const secAraci: Arac = {
-  id: 'sec',
-  etiketAnahtari: 'arac.sec',
-  imlec: 'default',
+  id: "sec",
+  etiketAnahtari: "arac.sec",
+  imlec: "default",
   sira: 0,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
     <path d="M3 2 L13 7.5 L8.4 8.4 L11 13 L9 13.8 L6.6 9 L3.2 11.6 Z" />
@@ -133,7 +166,8 @@ const secAraci: Arac = {
     // Grup-duyarlı hedef: gruba aitse ve bağlam o grup İÇİNDE değilse EN DIŞTAKİ
     // grup; grup içindeyken (bir çocuk seçiliyken) tıklanan nesnenin kendisi.
     let hedef: Dugum = leaf;
-    if (belge && grupDis) hedef = ref && atasiMi(belge, grupDis, ref) ? leaf : grupDis;
+    if (belge && grupDis)
+      hedef = ref && atasiMi(belge, grupDis, ref) ? leaf : grupDis;
     basHedef = hedef; // tıklama çözümü için sakla
     if (olay.shiftKey) return; // Shift: tikla toggle yapacak, taşıma yok
     if (!baglam.secim.icindeMi(hedef)) baglam.secim.sec(hedef);
@@ -152,18 +186,24 @@ const secAraci: Arac = {
         const el = baglam.eleman(a.dugum.kimlik);
         if (!el) continue;
         const d = ekranDeltaKullanici(a.ctm, dx, dy);
-        el.setAttribute('transform', transformTasi(a.transform, d.x, d.y)); // canlı önizleme
+        el.setAttribute("transform", transformTasi(a.transform, d.x, d.y)); // canlı önizleme
       }
       baglam.kilavuzCiz(kilavuzlar); // akıllı kılavuzlar (görünüm durumu)
       return;
     }
     if (kementBas) {
       // Mikro-titreme kement başlatıp seçimi temizlemesin: eşiği aşınca aktif et.
-      if (!kementAktif && Math.hypot(olay.clientX - kementBas.x, olay.clientY - kementBas.y) <= SURUKLEME_ESIGI) {
+      if (
+        !kementAktif &&
+        Math.hypot(olay.clientX - kementBas.x, olay.clientY - kementBas.y) <=
+          SURUKLEME_ESIGI
+      ) {
         return;
       }
       kementAktif = true;
-      baglam.kementCiz(dortgen(kementBas, { x: olay.clientX, y: olay.clientY }));
+      baglam.kementCiz(
+        dortgen(kementBas, { x: olay.clientX, y: olay.clientY }),
+      );
     }
   },
 
@@ -178,9 +218,14 @@ const secAraci: Arac = {
         if (belge) {
           const komutlar = asillar.map((a) => {
             const d = ekranDeltaKullanici(a.ctm, dx, dy);
-            return new OznitelikDegistirKomutu(belge, a.dugum, 'transform', transformTasi(a.transform, d.x, d.y));
+            return new OznitelikDegistirKomutu(
+              belge,
+              a.dugum,
+              "transform",
+              transformTasi(a.transform, d.x, d.y),
+            );
           });
-          baglam.gecmis.calistir(new BilesikKomut('taşı', komutlar));
+          baglam.gecmis.calistir(new BilesikKomut("taşı", komutlar));
         }
       }
       baglam.kilavuzCiz([]); // kılavuzları temizle
@@ -202,7 +247,8 @@ const secAraci: Arac = {
         const r = el.getBoundingClientRect();
         return tamIcinde ? icindeMi(r, k) : kesisir(r, k);
       });
-      if (olay.shiftKey && olay.altKey) for (const a of adaylar) baglam.secim.ekle(a);
+      if (olay.shiftKey && olay.altKey)
+        for (const a of adaylar) baglam.secim.ekle(a);
       else if (olay.shiftKey) for (const a of adaylar) baglam.secim.degistir(a);
       else baglam.secim.cokluSec(adaylar);
     }
@@ -236,10 +282,10 @@ const secAraci: Arac = {
     const adim = olay.shiftKey ? 10 : 1;
     let dx = 0;
     let dy = 0;
-    if (olay.key === 'ArrowLeft') dx = -adim;
-    else if (olay.key === 'ArrowRight') dx = adim;
-    else if (olay.key === 'ArrowUp') dy = -adim;
-    else if (olay.key === 'ArrowDown') dy = adim;
+    if (olay.key === "ArrowLeft") dx = -adim;
+    else if (olay.key === "ArrowRight") dx = adim;
+    else if (olay.key === "ArrowUp") dy = -adim;
+    else if (olay.key === "ArrowDown") dy = adim;
     else return;
     const belge = baglam.depo.belge;
     // Kilitli düğümler klavyeyle de taşınamaz (§9.7) — Katmanlar'dan seçilse bile.
@@ -251,11 +297,11 @@ const secAraci: Arac = {
         new OznitelikDegistirKomutu(
           belge,
           d,
-          'transform',
-          transformTasi(d.oznitelikler.get('transform') ?? '', dx, dy),
+          "transform",
+          transformTasi(d.oznitelikler.get("transform") ?? "", dx, dy),
         ),
     );
-    baglam.gecmis.calistir(new BilesikKomut('taşı', komutlar));
+    baglam.gecmis.calistir(new BilesikKomut("taşı", komutlar));
   },
 
   pasiflesti(baglam) {

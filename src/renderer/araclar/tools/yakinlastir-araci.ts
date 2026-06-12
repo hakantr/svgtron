@@ -1,5 +1,5 @@
-import { svg } from 'lit';
-import { aracKayitDefteri, type Arac } from '../arac';
+import { svg } from "lit";
+import { aracKayitDefteri, type Arac } from "../arac";
 
 /**
  * Yakınlaştırma aracı (§9.2, Görünüm) — tıklayınca yakınlaştırır; Alt ile
@@ -7,9 +7,9 @@ import { aracKayitDefteri, type Arac } from '../arac';
  * yakınlaştırır.
  */
 const yakinlastirAraci: Arac = {
-  id: 'yakinlastir',
-  etiketAnahtari: 'arac.yakinlastir',
-  imlec: 'zoom-in',
+  id: "yakinlastir",
+  etiketAnahtari: "arac.yakinlastir",
+  imlec: "zoom-in",
   sira: 91,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5">
     <circle cx="7" cy="7" r="4.5" />

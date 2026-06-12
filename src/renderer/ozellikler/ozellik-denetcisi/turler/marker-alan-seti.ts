@@ -1,11 +1,14 @@
-import { LitElement, html, css, type PropertyValues } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
-import { gez, type Dugum } from '../../../../cekirdek/belge/model/dugum';
-import { stilUygulaKomutu } from '../../../boya/stil-uygula';
-import { cizimErisimi } from '../../../tuval/cizim-erisimi';
-import { ayristir, parlaklik, type RGBA } from '../../../boya/renk';
-import { t } from '../../../diller/dil';
-import { alanSetiKayitDefteri, type AlanSetiBaglami } from './alan-seti-registry';
+import { LitElement, html, css, type PropertyValues } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
+import { gez, type Dugum } from "../../../../cekirdek/belge/model/dugum";
+import { stilUygulaKomutu } from "../../../boya/stil-uygula";
+import { cizimErisimi } from "../../../tuval/cizim-erisimi";
+import { ayristir, parlaklik, type RGBA } from "../../../boya/renk";
+import { t } from "../../../diller/dil";
+import {
+  alanSetiKayitDefteri,
+  type AlanSetiBaglami,
+} from "./alan-seti-registry";
 
 /**
  * Marker (uç işaretleri) alan seti (§10.5 DENETÇİ) — marker uygulanabilen
@@ -15,21 +18,21 @@ import { alanSetiKayitDefteri, type AlanSetiBaglami } from './alan-seti-registry
  * Bir kutuya tıklamak o pozisyon (marker-start/mid/end) için belgedeki
  * marker'lardan seçtiren menü açar. Yazım moda göre (TK-18), tek Command (İlke 2).
  */
-type MarkerPoz = 'start' | 'mid' | 'end';
-const POZLAR: MarkerPoz[] = ['start', 'mid', 'end'];
-const SVG_NS = 'http://www.w3.org/2000/svg';
+type MarkerPoz = "start" | "mid" | "end";
+const POZLAR: MarkerPoz[] = ["start", "mid", "end"];
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 /** `style` dizesinden tek bir özelliğin değerini okur (yoksa null). */
 function stilOku(style: string, ozellik: string): string | null {
-  for (const parca of style.split(';')) {
-    const i = parca.indexOf(':');
+  for (const parca of style.split(";")) {
+    const i = parca.indexOf(":");
     if (i === -1) continue;
     if (parca.slice(0, i).trim() === ozellik) return parca.slice(i + 1).trim();
   }
   return null;
 }
 
-@customElement('marker-alani')
+@customElement("marker-alani")
 export class MarkerAlani extends LitElement {
   static override styles = css`
     :host {
@@ -108,7 +111,7 @@ export class MarkerAlani extends LitElement {
 
   override willUpdate(degisen: PropertyValues): void {
     // Seçili nesne değişince açık menüyü kapat (yanlış nesneye yazmayı önle).
-    if (degisen.has('baglam') && this.#sonDugum !== this.baglam?.dugum) {
+    if (degisen.has("baglam") && this.#sonDugum !== this.baglam?.dugum) {
       this.#sonDugum = this.baglam?.dugum ?? null;
       this.acik = null;
     }
@@ -118,8 +121,8 @@ export class MarkerAlani extends LitElement {
   #markerlar(): string[] {
     const ids: string[] = [];
     for (const d of gez(this.baglam.belge.kok)) {
-      const id = d.oznitelikler.get('id');
-      if (d.etiket === 'marker' && id) ids.push(id);
+      const id = d.oznitelikler.get("id");
+      if (d.etiket === "marker" && id) ids.push(id);
     }
     return ids;
   }
@@ -127,7 +130,7 @@ export class MarkerAlani extends LitElement {
   /** id'li marker düğümü (yoksa null). */
   #markerDugumu(id: string): Dugum | null {
     for (const d of gez(this.baglam.belge.kok)) {
-      if (d.etiket === 'marker' && d.oznitelikler.get('id') === id) return d;
+      if (d.etiket === "marker" && d.oznitelikler.get("id") === id) return d;
     }
     return null;
   }
@@ -142,25 +145,31 @@ export class MarkerAlani extends LitElement {
     const ozellik = `marker-${poz}`;
     const dugum = this.baglam.dugum;
     const el = cizimErisimi.eleman(dugum.kimlik);
-    let deger = el instanceof Element ? getComputedStyle(el).getPropertyValue(ozellik).trim() : '';
+    let deger =
+      el instanceof Element
+        ? getComputedStyle(el).getPropertyValue(ozellik).trim()
+        : "";
     if (!deger) {
-      deger = stilOku(dugum.oznitelikler.get('style') ?? '', ozellik) ?? dugum.oznitelikler.get(ozellik) ?? '';
+      deger =
+        stilOku(dugum.oznitelikler.get("style") ?? "", ozellik) ??
+        dugum.oznitelikler.get(ozellik) ??
+        "";
     }
-    if (deger === '' || deger === 'none') return null;
+    if (deger === "" || deger === "none") return null;
     return /url\(["']?#([^"')]+)["']?\)/.exec(deger)?.[1] ?? null;
   }
 
   /** Marker'ın render edilmiş öğesindeki ilk SABİT (context-* değil) rengi. */
   #markerRengi(el: Element): RGBA | null {
-    for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
-      for (const attr of ['fill', 'stroke'] as const) {
+    for (const node of [el, ...Array.from(el.querySelectorAll("*"))]) {
+      for (const attr of ["fill", "stroke"] as const) {
         const ham = node.getAttribute(attr);
         if (ham && /context-(fill|stroke)/.test(ham)) continue; // bağlama bağlı
         const aday =
           ham && !/none|inherit|currentColor/.test(ham)
             ? ham
             : getComputedStyle(node).getPropertyValue(attr).trim();
-        if (aday && aday !== 'none') {
+        if (aday && aday !== "none") {
           const rgba = ayristir(aday);
           if (rgba && rgba.a > 0.05) return rgba;
         }
@@ -171,7 +180,9 @@ export class MarkerAlani extends LitElement {
 
   /** Tema yüzey rengini (kutu varsayılan zemini) parlaklık olarak okur. */
   #zeminParlaklik(): number {
-    const bg = ayristir(getComputedStyle(this).getPropertyValue('--yuzey-2').trim());
+    const bg = ayristir(
+      getComputedStyle(this).getPropertyValue("--yuzey-2").trim(),
+    );
     return bg ? parlaklik(bg) : 0.15; // okunamazsa koyu varsay
   }
 
@@ -180,14 +191,14 @@ export class MarkerAlani extends LitElement {
     if (!renk) return null;
     const lm = parlaklik(renk);
     if (Math.abs(lm - this.#zeminParlaklik()) >= 0.28) return null; // yeterli kontrast
-    return lm > 0.5 ? '#22262e' : '#eef1f5'; // açık marker → koyu zemin, koyu → açık
+    return lm > 0.5 ? "#22262e" : "#eef1f5"; // açık marker → koyu zemin, koyu → açık
   }
 
   /** Önizlemede context-* ve currentColor için kullanılacak (zemine kontrastlı) renk. */
   #cizgiRengi(zemin: string | null): string {
-    const bg = ayristir(zemin ?? '');
+    const bg = ayristir(zemin ?? "");
     const lb = bg ? parlaklik(bg) : this.#zeminParlaklik();
-    return lb > 0.5 ? '#1f2430' : '#e8e8ea';
+    return lb > 0.5 ? "#1f2430" : "#e8e8ea";
   }
 
   /**
@@ -206,14 +217,14 @@ export class MarkerAlani extends LitElement {
     const zemin = this.#kutuZemin(renk);
     const cizgi = this.#cizgiRengi(zemin);
 
-    const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg.classList.add('marker-onizle');
+    const svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    svg.classList.add("marker-onizle");
     // Yalnız `color` ver: context-fill/stroke → currentColor bununla çözülür.
     // `stroke` VERME — SVG'de stroke kalıtsaldır; stroke'suz bir ok ucu istenmeyen
     // (açık) bir kontur miras alırdı. Okunurluk kutu ZEMİNİYLE sağlanır (#kutuZemin).
     svg.style.color = cizgi;
-    const g = document.createElementNS(SVG_NS, 'g');
+    const g = document.createElementNS(SVG_NS, "g");
     for (const c of Array.from(el.children)) {
       const klon = c.cloneNode(true) as Element;
       this.#contextRenkDuzelt(klon);
@@ -225,8 +236,10 @@ export class MarkerAlani extends LitElement {
 
   /** Önizleme SVG'lerini içeriğin gerçek bbox'ına göre ölçekle (kutuya sığsın). */
   override updated(): void {
-    for (const svg of this.renderRoot.querySelectorAll<SVGSVGElement>('.marker-onizle')) {
-      if (svg.dataset['fit'] === '1') continue; // bu düğüm zaten ölçeklendi
+    for (const svg of this.renderRoot.querySelectorAll<SVGSVGElement>(
+      ".marker-onizle",
+    )) {
+      if (svg.dataset["fit"] === "1") continue; // bu düğüm zaten ölçeklendi
       const g = svg.firstElementChild as SVGGraphicsElement | null;
       if (!g) continue;
       try {
@@ -234,10 +247,10 @@ export class MarkerAlani extends LitElement {
         if (b.width <= 0 && b.height <= 0) continue; // ölçülemez/boş → atla
         const pad = Math.max(b.width, b.height) * 0.12 || 0.5;
         svg.setAttribute(
-          'viewBox',
+          "viewBox",
           `${b.x - pad} ${b.y - pad} ${b.width + 2 * pad} ${b.height + 2 * pad}`,
         );
-        svg.dataset['fit'] = '1';
+        svg.dataset["fit"] = "1";
       } catch {
         /* getBBox ölçemezse (gizli/boş) atla */
       }
@@ -246,14 +259,18 @@ export class MarkerAlani extends LitElement {
 
   /** Klon içindeki context-fill/stroke'ları currentColor'a çevir (bağlam yok). */
   #contextRenkDuzelt(el: Element): void {
-    for (const node of [el, ...Array.from(el.querySelectorAll('*'))]) {
-      for (const attr of ['fill', 'stroke'] as const) {
+    for (const node of [el, ...Array.from(el.querySelectorAll("*"))]) {
+      for (const attr of ["fill", "stroke"] as const) {
         const v = node.getAttribute(attr);
-        if (v && /context-(fill|stroke)/.test(v)) node.setAttribute(attr, 'currentColor');
+        if (v && /context-(fill|stroke)/.test(v))
+          node.setAttribute(attr, "currentColor");
       }
-      const style = node.getAttribute('style');
+      const style = node.getAttribute("style");
       if (style && /context-(fill|stroke)/.test(style)) {
-        node.setAttribute('style', style.replace(/context-(fill|stroke)/g, 'currentColor'));
+        node.setAttribute(
+          "style",
+          style.replace(/context-(fill|stroke)/g, "currentColor"),
+        );
       }
     }
   }
@@ -261,7 +278,12 @@ export class MarkerAlani extends LitElement {
   /** Bir pozisyona marker uygular (id) ya da kaldırır (null → none). Moda göre. */
   #uygula(poz: MarkerPoz, id: string | null): void {
     this.baglam.komut(
-      stilUygulaKomutu(this.baglam.belge, this.baglam.dugum, `marker-${poz}`, id ? `url(#${id})` : 'none'),
+      stilUygulaKomutu(
+        this.baglam.belge,
+        this.baglam.dugum,
+        `marker-${poz}`,
+        id ? `url(#${id})` : "none",
+      ),
     );
     this.acik = null;
   }
@@ -274,41 +296,48 @@ export class MarkerAlani extends LitElement {
           const cur = this.#mevcutId(poz);
           const oniz = cur ? this.#onizleme(cur) : null;
           return html`<button
-            class="kutu ${this.acik === poz ? 'acik' : ''}"
+            class="kutu ${this.acik === poz ? "acik" : ""}"
             title=${t(`denetci.marker.${poz}`)}
-            style=${oniz?.zemin ? `background:${oniz.zemin}` : ''}
+            style=${oniz?.zemin ? `background:${oniz.zemin}` : ""}
             @click=${() => (this.acik = this.acik === poz ? null : poz)}
           >
-            ${oniz ? oniz.node : html`<span class="bos">${cur ? `#${cur}` : '—'}</span>`}
+            ${oniz
+              ? oniz.node
+              : html`<span class="bos">${cur ? `#${cur}` : "—"}</span>`}
           </button>`;
         })}
       </div>
       ${this.acik
         ? html`<div class="menu">
-            <button @click=${() => this.#uygula(this.acik!, null)}>${t('denetci.marker.yok')}</button>
+            <button @click=${() => this.#uygula(this.acik!, null)}>
+              ${t("denetci.marker.yok")}
+            </button>
             ${liste.length === 0
-              ? html`<div class="bos">${t('denetci.marker.bos')}</div>`
+              ? html`<div class="bos">${t("denetci.marker.bos")}</div>`
               : liste.map(
-                  (id) => html`<button @click=${() => this.#uygula(this.acik!, id)}>#${id}</button>`,
+                  (id) =>
+                    html`<button @click=${() => this.#uygula(this.acik!, id)}>
+                      #${id}
+                    </button>`,
                 )}
           </div>`
-        : ''}
+        : ""}
     `;
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'marker-alani': MarkerAlani;
+    "marker-alani": MarkerAlani;
   }
 }
 
 /** Marker uygulanabilen şekiller (SVG: yalnız bu öğeler marker render eder). */
-const MARKERLI = new Set(['path', 'line', 'polyline', 'polygon']);
+const MARKERLI = new Set(["path", "line", "polyline", "polygon"]);
 
 alanSetiKayitDefteri.kaydet({
-  id: 'marker',
-  baslikAnahtari: 'denetci.grup.marker',
+  id: "marker",
+  baslikAnahtari: "denetci.grup.marker",
   sira: 30,
   uygunMu: (dugum) => MARKERLI.has(dugum.etiket),
   render: (baglam) => html`<marker-alani .baglam=${baglam}></marker-alani>`,

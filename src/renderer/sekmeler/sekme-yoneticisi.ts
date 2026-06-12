@@ -1,8 +1,12 @@
-import { BelgeDeposu } from '../../cekirdek/belge/belge-deposu';
-import { SecimDeposu } from '../../cekirdek/secim/secim-deposu';
-import { KomutGecmisi } from '../../cekirdek/komutlar/komut-gecmisi';
-import { SecimGecmisIzleyici } from '../../cekirdek/secim/secim-gecmis-izleyici';
-import { BelgeDeposuVekil, SecimDeposuVekil, KomutGecmisiVekil } from './sekme-vekiller';
+import { BelgeDeposu } from "../../cekirdek/belge/belge-deposu";
+import { SecimDeposu } from "../../cekirdek/secim/secim-deposu";
+import { KomutGecmisi } from "../../cekirdek/komutlar/komut-gecmisi";
+import { SecimGecmisIzleyici } from "../../cekirdek/secim/secim-gecmis-izleyici";
+import {
+  BelgeDeposuVekil,
+  SecimDeposuVekil,
+  KomutGecmisiVekil,
+} from "./sekme-vekiller";
 
 /**
  * Bir sekme (çalışma alanı/belge oturumu) — kendi belge/seçim/geçmiş store'ları.
@@ -45,7 +49,9 @@ class SekmeYoneticisi {
     const secim = new SecimDeposu();
     const gecmis = new KomutGecmisi();
     // Seçim geçmişi (§9.6): kimlik → düğüm çözümü aktif belgeden (silinmişse undefined).
-    const secimGecmisi = new SecimGecmisIzleyici(secim, gecmis, (k) => belge.belge?.dugumBul(k));
+    const secimGecmisi = new SecimGecmisIzleyici(secim, gecmis, (k) =>
+      belge.belge?.dugumBul(k),
+    );
     return { belge, secim, gecmis, secimGecmisi };
   }
 
@@ -71,7 +77,12 @@ class SekmeYoneticisi {
 
   /** Aktif sekmeyi değiştirir (vekiller yeni sekmeye yönlenir, paneller tepki verir). */
   aktifSec(indis: number): void {
-    if (indis < 0 || indis >= this.#sekmeler.length || indis === this.#aktifIndis) return;
+    if (
+      indis < 0 ||
+      indis >= this.#sekmeler.length ||
+      indis === this.#aktifIndis
+    )
+      return;
     this.#aktifIndis = indis;
     this.#vekilleriBagla();
     this.#bildir();
@@ -92,9 +103,11 @@ class SekmeYoneticisi {
     if (indis < 0 || indis >= this.#sekmeler.length) return;
     this.#sekmeler[indis]!.secimGecmisi.birak(); // aboneliği bırak (sızıntı önle)
     this.#sekmeler.splice(indis, 1);
-    if (this.#sekmeler.length === 0) this.#sekmeler.push(this.#yeniSekmeNesnesi());
+    if (this.#sekmeler.length === 0)
+      this.#sekmeler.push(this.#yeniSekmeNesnesi());
     if (this.#aktifIndis > indis) this.#aktifIndis--;
-    if (this.#aktifIndis >= this.#sekmeler.length) this.#aktifIndis = this.#sekmeler.length - 1;
+    if (this.#aktifIndis >= this.#sekmeler.length)
+      this.#aktifIndis = this.#sekmeler.length - 1;
     this.#vekilleriBagla();
     this.#bildir();
   }

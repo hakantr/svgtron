@@ -1,5 +1,5 @@
-import { LitElement, html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { LitElement, html, css } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 /** Açık menüde gösterilen tek bir öğe. */
 export interface MenuGorunumOgesi {
@@ -26,7 +26,7 @@ export interface MenuGorunumOgesi {
  * - Yaprak öğe seçilince menü ÖNCE kapanır (`kapat`), sonra eylem çalışır —
  *   async eylemlerde (dosya penceresi) menü açık kalmaz.
  */
-@customElement('uygulama-menusu')
+@customElement("uygulama-menusu")
 export class UygulamaMenusu extends LitElement {
   static override styles = css`
     :host {
@@ -95,7 +95,9 @@ export class UygulamaMenusu extends LitElement {
       return;
     }
     // Önce menüyü kapat (async eylemde menü açık kalmasın), sonra çalıştır.
-    this.dispatchEvent(new CustomEvent('kapat', { bubbles: true, composed: true }));
+    this.dispatchEvent(
+      new CustomEvent("kapat", { bubbles: true, composed: true }),
+    );
     void oge.calistir?.();
   }
 
@@ -112,7 +114,7 @@ export class UygulamaMenusu extends LitElement {
         (oge, indis) => html`
           <div class="oge">
             <button
-              class=${indis === this.odakIndis ? 'odak' : ''}
+              class=${indis === this.odakIndis ? "odak" : ""}
               title=${oge.ipucu ?? oge.etiket}
               aria-label=${oge.ipucu ?? oge.etiket}
               @mouseenter=${() => this.uzerineGel(oge)}
@@ -123,7 +125,7 @@ export class UygulamaMenusu extends LitElement {
                 ? html`<span class="iz">▸</span>`
                 : oge.secili
                   ? html`<span class="iz">✓</span>`
-                  : ''}
+                  : ""}
             </button>
             ${oge.altOgeler && this.acikAlt === oge
               ? html`
@@ -131,7 +133,7 @@ export class UygulamaMenusu extends LitElement {
                     <uygulama-menusu .ogeler=${oge.altOgeler}></uygulama-menusu>
                   </div>
                 `
-              : ''}
+              : ""}
           </div>
         `,
       )}
@@ -141,6 +143,6 @@ export class UygulamaMenusu extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'uygulama-menusu': UygulamaMenusu;
+    "uygulama-menusu": UygulamaMenusu;
   }
 }

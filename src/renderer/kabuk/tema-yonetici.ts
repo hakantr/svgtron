@@ -1,5 +1,5 @@
-import { temaKayitDefteri } from '../../cekirdek/registry/tema-registry';
-import { VARSAYILAN_TEMA_ID } from '../ozellikler/temalar/temalar';
+import { temaKayitDefteri } from "../../cekirdek/registry/tema-registry";
+import { VARSAYILAN_TEMA_ID } from "../ozellikler/temalar/temalar";
 
 /**
  * Tema yöneticisi (renderer/kabuk).
@@ -9,7 +9,7 @@ import { VARSAYILAN_TEMA_ID } from '../ozellikler/temalar/temalar';
  * saklar. Tema verisi çekirdekteki registry'den gelir; burası yalnızca DOM'a
  * uygulama ve kalıcılık işini yapar.
  */
-const DEPOLAMA_ANAHTARI = 'svgtron.tema';
+const DEPOLAMA_ANAHTARI = "svgtron.tema";
 
 class TemaYonetici {
   #mevcutId = VARSAYILAN_TEMA_ID;
@@ -23,12 +23,15 @@ class TemaYonetici {
   /** Kayıtlı seçimi (yoksa varsayılanı) uygular. Başlangıçta bir kez çağrılır. */
   baslat(): void {
     const kayitli = this.#oku();
-    this.uygula(kayitli && temaKayitDefteri.bul(kayitli) ? kayitli : VARSAYILAN_TEMA_ID);
+    this.uygula(
+      kayitli && temaKayitDefteri.bul(kayitli) ? kayitli : VARSAYILAN_TEMA_ID,
+    );
   }
 
   /** Verilen temayı uygular ve seçimi saklar. Bilinmeyen id varsayılana düşer. */
   uygula(id: string): void {
-    const tema = temaKayitDefteri.bul(id) ?? temaKayitDefteri.bul(VARSAYILAN_TEMA_ID);
+    const tema =
+      temaKayitDefteri.bul(id) ?? temaKayitDefteri.bul(VARSAYILAN_TEMA_ID);
     if (!tema) return; // hiç tema kayıtlı değilse sessizce çık
 
     const kok = document.documentElement;
@@ -36,7 +39,7 @@ class TemaYonetici {
       kok.style.setProperty(anahtar, deger);
     }
     // Tarayıcı bileşenleri (kaydırma çubuğu, form kontrolleri) için ipucu.
-    kok.style.colorScheme = tema.tur === 'acik' ? 'light' : 'dark';
+    kok.style.colorScheme = tema.tur === "acik" ? "light" : "dark";
 
     this.#mevcutId = tema.id;
     this.#yaz(tema.id);

@@ -1,5 +1,5 @@
 /**
- * Süreçler arası iletişim için TEK tipli sözleşme (CLAUDE.md İlke 4).
+ * Süreçler arası iletişim için TEK tipli sözleşme (AGENTS.md İlke 4).
  *
  * Bu dosya main (handler), preload (köprü) ve renderer (tüketici) tarafından
  * ortak kaynak olarak kullanılır. Yeni özellik eklemek = buraya yeni bir kanal
@@ -9,31 +9,31 @@
 /** IPC kanal adları — tek yerde tanımlı, sihirli string yok. */
 export const KANALLAR = {
   /** Uygulama/çalışma zamanı sürüm bilgisini döndürür (köprü kanıtı). */
-  surumBilgisi: 'app:surum-bilgisi',
+  surumBilgisi: "app:surum-bilgisi",
   /** Dosya seçtirip SVG içeriğini okur. */
-  dosyaAc: 'dosya:ac',
+  dosyaAc: "dosya:ac",
   /** Verilen yoldaki SVG'yi okur (son dosyalar listesinden yeniden açma). */
-  dosyaYoldanAc: 'dosya:yoldan-ac',
+  dosyaYoldanAc: "dosya:yoldan-ac",
   /** SVG içeriğini bir dosyaya kaydeder. */
-  dosyaKaydet: 'dosya:kaydet',
+  dosyaKaydet: "dosya:kaydet",
   /** Görsel seçtirip data-URI olarak okur (image yerleştirme). */
-  gorselAc: 'dosya:gorsel-ac',
+  gorselAc: "dosya:gorsel-ac",
   /** Dil dosyasını (kod.dil) tr.dil'e göre eksik anahtarlarla senkronlar (geliştirme). */
-  dilSenkron: 'dil:senkron',
+  dilSenkron: "dil:senkron",
   /** Pencereyi simge durumuna küçültür. */
-  pencereSimgelestir: 'pencere:simgelestir',
+  pencereSimgelestir: "pencere:simgelestir",
   /** Pencereyi ekrana kaplar / önceki boyuta döndürür. */
-  pencereBuyutGeriAl: 'pencere:buyut-geri-al',
+  pencereBuyutGeriAl: "pencere:buyut-geri-al",
   /** Pencereyi kapatır (kapanış onayı akışını tetikler). */
-  pencereKapat: 'pencere:kapat',
+  pencereKapat: "pencere:kapat",
   /** Kapanış istendi; renderer kaydetmeyi sorup onaylamalı (main → renderer olayı). */
-  pencereKapanisIstegi: 'pencere:kapanis-istegi',
+  pencereKapanisIstegi: "pencere:kapanis-istegi",
   /** Renderer kapanışı onayladı → pencere gerçekten kapanır (renderer → main). */
-  pencereKapatGercek: 'pencere:kapat-gercek',
+  pencereKapatGercek: "pencere:kapat-gercek",
   /** Pencere ekranı kaplıyor mu? (invoke → boolean) */
-  pencereKaplandiMi: 'pencere:kaplandi-mi',
+  pencereKaplandiMi: "pencere:kaplandi-mi",
   /** Pencere kapla/geri-al durumu değişti (main → renderer olayı). */
-  pencereDurumDegisti: 'pencere:durum-degisti',
+  pencereDurumDegisti: "pencere:durum-degisti",
 } as const;
 
 /** {@link KANALLAR.surumBilgisi} kanalının dönüş yükü. */
@@ -58,7 +58,7 @@ export interface AcilanDosya {
  * Renderer'a açılan dar, tiplenmiş API yüzeyi.
  *
  * preload bunu `window.api` olarak yayınlar; renderer YALNIZCA bu arayüzü görür,
- * `ipcRenderer`'a ya da Node'a doğrudan erişemez (CLAUDE.md §3 güvenlik modeli).
+ * `ipcRenderer`'a ya da Node'a doğrudan erişemez (AGENTS.md §3 güvenlik modeli).
  */
 export interface KopruApi {
   /** Çalışan platform ('darwin' | 'win32' | 'linux'). UI yerleşimi için. */

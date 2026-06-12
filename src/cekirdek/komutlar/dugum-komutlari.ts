@@ -1,6 +1,6 @@
-import type { Belge } from '../belge/belge';
-import type { Dugum } from '../belge/model/dugum';
-import type { Komut } from './komut';
+import type { Belge } from "../belge/belge";
+import type { Dugum } from "../belge/model/dugum";
+import type { Komut } from "./komut";
 
 /**
  * Düğüm yapısı komutları (İlke 2) — ekleme/çıkarma/bileşik. Gradyan/filtre gibi
@@ -9,7 +9,7 @@ import type { Komut } from './komut';
 
 /** Bir düğümü bir ebeveynin çocuklarına ekler. */
 export class DugumEkleKomutu implements Komut {
-  readonly etiket = 'düğüm ekle';
+  readonly etiket = "düğüm ekle";
   constructor(
     private readonly belge: Belge,
     private readonly ebeveyn: Dugum,
@@ -34,7 +34,7 @@ export class DugumEkleKomutu implements Komut {
 
 /** Bir düğümü ebeveyninden çıkarır (yerini geri-al için saklar). */
 export class DugumCikarKomutu implements Komut {
-  readonly etiket = 'düğüm sil';
+  readonly etiket = "düğüm sil";
   #indeks = -1;
   constructor(
     private readonly belge: Belge,
@@ -65,7 +65,7 @@ export class DugumCikarKomutu implements Komut {
  * eşdeğer `line` ile değiştirme (geometri sadeleştirme).
  */
 export class DugumDegistirKomutu implements Komut {
-  readonly etiket = 'düğüm değiştir';
+  readonly etiket = "düğüm değiştir";
   constructor(
     private readonly belge: Belge,
     private readonly ebeveyn: Dugum,
@@ -93,7 +93,7 @@ export class DugumDegistirKomutu implements Komut {
 
 /** Bir düğümü ebeveyni içinde yeni bir konuma taşır (z-sıralama, §9.4). */
 export class SiraKomutu implements Komut {
-  readonly etiket = 'sırala';
+  readonly etiket = "sırala";
   #eskiIndeks = -1;
 
   constructor(
@@ -134,6 +134,7 @@ export class BilesikKomut implements Komut {
   }
 
   geriAl(): void {
-    for (let i = this.komutlar.length - 1; i >= 0; i--) this.komutlar[i]!.geriAl();
+    for (let i = this.komutlar.length - 1; i >= 0; i--)
+      this.komutlar[i]!.geriAl();
   }
 }
