@@ -12,6 +12,7 @@ import { alanSetiKayitDefteri } from "./turler/alan-seti-registry";
 // Alan setleri import edilince kendilerini registry'ye kaydeder (İlke 5).
 import "./turler/gorunum-alan-seti";
 import "./turler/geometri-alan-seti";
+import "./turler/metin-alan-seti";
 import "./turler/metadata-alan-seti";
 import "./turler/marker-alan-seti";
 import "./turler/tanim-alan-seti";

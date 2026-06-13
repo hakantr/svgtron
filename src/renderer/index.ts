@@ -13,6 +13,7 @@ import "./ozellikler/duzen/duzen-eylemleri";
 import "./ozellikler/yol-islemleri/yol-eylemleri";
 import "./ozellikler/yol-islemleri/yol-duzenleme-eylemleri";
 import "./ozellikler/semboller/sembol-eylemleri";
+import "./ozellikler/metin/metin-eylemleri";
 import "./ozellikler/optimize/optimize-eylemleri";
 import "./ozellikler/donustur/yansit-eylemleri";
 import "./araclar/tools/sec-araci";
