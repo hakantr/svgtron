@@ -36,6 +36,13 @@ const api: KopruApi = {
     return () =>
       ipcRenderer.removeListener(KANALLAR.pencereDurumDegisti, dinleyici);
   },
+  uygulamaMenusunuKur: (gruplar) =>
+    ipcRenderer.send(KANALLAR.uygulamaMenusu, gruplar),
+  menuEylemineAbone: (geriCagri) => {
+    const dinleyici = (_olay: unknown, id: string): void => geriCagri(id);
+    ipcRenderer.on(KANALLAR.menuEylem, dinleyici);
+    return () => ipcRenderer.removeListener(KANALLAR.menuEylem, dinleyici);
+  },
 };
 
 contextBridge.exposeInMainWorld("api", api);

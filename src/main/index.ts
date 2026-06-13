@@ -8,6 +8,7 @@ import {
   gorselDosyasiAc,
 } from "./dosya-servisi";
 import { dilDosyasiniSenkronla } from "./dil-servisi";
+import { uygulamaMenusunuBagla } from "./uygulama-menusu";
 
 /**
  * Electron ana süreç giriş noktası.
@@ -80,6 +81,8 @@ ipcMain.handle(
   KANALLAR.pencereKaplandiMi,
   (olay) => BrowserWindow.fromWebContents(olay.sender)?.isMaximized() ?? false,
 );
+// macOS native uygulama menüsü (TK-36) — yalnız darwin'de etki eder.
+uygulamaMenusunuBagla();
 
 app.whenReady().then(() => {
   // macOS: dock ikonu (Win/Linux'ta pencere `icon` seçeneğiyle ayarlanır).

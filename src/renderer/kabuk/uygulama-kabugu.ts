@@ -554,6 +554,7 @@ export class UygulamaKabugu extends LitElement {
   @state() private dilAcik = false;
   #degisiklikCoz?: () => void;
   #disaAktarCoz?: () => void;
+  #menuEylemCoz?: () => void;
   #kapanisCoz?: () => void;
   #sekmeCoz?: () => void;
   #hakkindaCoz?: () => void;
@@ -754,7 +755,10 @@ export class UygulamaKabugu extends LitElement {
       this.acikDosyaAdi = this.#depo.kaynak?.ad;
     });
     // Dil değişince tüm metinleri yeniden çiz.
-    this.#dilCoz = dilYonetici.dinle(() => this.requestUpdate());
+    this.#dilCoz = dilYonetici.dinle(() => {
+      this.requestUpdate();
+      this.#nativeMenuKur(); // macOS menü etiketleri dile göre tazelensin (TK-36)
+    });
     // Geçici bildirimlere (araç/menü/dosya) abone ol → toast.
     this.#bildirimCoz = bildirimServisi.dinle((b) => this.#bildirimGoster(b));
     // Kaydetme sorusu açık/kapalı → modalı çiz.
@@ -771,6 +775,13 @@ export class UygulamaKabugu extends LitElement {
     );
     // Yardım → Hakkında isteği → modalı aç.
     this.#hakkindaCoz = hakkindaServisi.dinle(() => (this.acikHakkinda = true));
+    // macOS: native uygulama menüsü (TK-36) — yapıyı gönder, tıklamaları dinle.
+    if (window.api.platform === "darwin") {
+      this.#menuEylemCoz = window.api.menuEylemineAbone((id) =>
+        this.#nativeMenuEylem(id),
+      );
+      this.#nativeMenuKur();
+    }
     // Sekme listesi/aktif değişimi → çubuğu/başlığı tazele.
     this.#sekmeCoz = sekmeYoneticisi.dinle(() => {
       this.acikDosyaAdi = this.#depo.kaynak?.ad;
@@ -790,6 +801,7 @@ export class UygulamaKabugu extends LitElement {
     this.#bildirimCoz?.();
     this.#degisiklikCoz?.();
     this.#disaAktarCoz?.();
+    this.#menuEylemCoz?.();
     this.#kapanisCoz?.();
     this.#sekmeCoz?.();
     this.#hakkindaCoz?.();
@@ -916,6 +928,30 @@ export class UygulamaKabugu extends LitElement {
     };
     window.addEventListener("pointermove", hareket);
     window.addEventListener("pointerup", birak);
+  }
+
+  /**
+   * macOS native menü yapısını (TK-36) registry'den üretip main'e gönderir.
+   * Etiketler yerelleştirilir; eylem mantığı KOPYALANMAZ (tıklama id'yi geri yollar,
+   * {@link #nativeMenuEylem} registry'yi çalıştırır). Yalnız darwin'de anlamlı.
+   */
+  #nativeMenuKur(): void {
+    if (window.api.platform !== "darwin") return;
+    const gruplar = menuKayitDefteri.gruplar().map((g) => ({
+      etiket: t(`menu.grup.${g.grup}`),
+      ogeler: g.ogeler.map((o) => ({ id: o.id, etiket: t(o.etiketAnahtari) })),
+    }));
+    window.api.uygulamaMenusunuKur(gruplar);
+  }
+
+  /** Native menü ögesi tıklandı → registry eylemini id ile çalıştır (TK-36). */
+  #nativeMenuEylem(id: string): void {
+    for (const g of menuKayitDefteri.gruplar())
+      for (const o of g.ogeler)
+        if (o.id === id) {
+          void o.calistir(this.#menuBaglami);
+          return;
+        }
   }
 
   /** Registry menü grupları, görünüm öğeleri olarak. (Dil artık üst çubukta — dünya simgesi.) */
@@ -1266,15 +1302,19 @@ export class UygulamaKabugu extends LitElement {
 
   /** Toplu mod: hamburger · "SVG Editör" · dosya adı. */
   private topluGorunumu() {
+    // macOS'ta üst menü native uygulama menüsüdür (TK-36) → hamburger gizlenir.
+    const macOS = window.api.platform === "darwin";
     return html`
-      <button
-        class="hamburger"
-        title=${t("menu.ac")}
-        aria-label=${t("menu.ac")}
-        @click=${this.menuModaGec}
-      >
-        <span></span><span></span><span></span>
-      </button>
+      ${macOS
+        ? ""
+        : html`<button
+            class="hamburger"
+            title=${t("menu.ac")}
+            aria-label=${t("menu.ac")}
+            @click=${this.menuModaGec}
+          >
+            <span></span><span></span><span></span>
+          </button>`}
       <span class="ad">${t("uygulama.ad")}</span>
       ${this.acikDosyaAdi
         ? html`<span class="dosya">${this.acikDosyaAdi}</span>`

@@ -34,7 +34,24 @@ export const KANALLAR = {
   pencereKaplandiMi: "pencere:kaplandi-mi",
   /** Pencere kapla/geri-al durumu değişti (main → renderer olayı). */
   pencereDurumDegisti: "pencere:durum-degisti",
+  /** macOS: renderer, native uygulama menüsü yapısını main'e gönderir (TK-36). */
+  uygulamaMenusu: "menu:uygulama-menusu",
+  /** macOS: native menü ögesi tıklandı (main → renderer; eylem id'siyle). */
+  menuEylem: "menu:eylem",
 } as const;
+
+/** macOS native uygulama menüsü yapısı (TK-36) — renderer'dan main'e gönderilir. */
+export interface NativeMenuOgesi {
+  /** Menü registry eylem id'si (tıklanınca renderer bu id'yi çalıştırır). */
+  id: string;
+  /** Yerelleştirilmiş etiket. */
+  etiket: string;
+}
+export interface NativeMenuGrubu {
+  /** Yerelleştirilmiş grup başlığı. */
+  etiket: string;
+  ogeler: NativeMenuOgesi[];
+}
 
 /** {@link KANALLAR.surumBilgisi} kanalının dönüş yükü. */
 export interface SurumBilgisi {
@@ -92,4 +109,8 @@ export interface KopruApi {
   pencereKaplandiMi(): Promise<boolean>;
   /** Pencere kapla/geri-al durumu değişince haber verir; aboneliği iptal eder. */
   pencereDurumunaAbone(geriCagri: (kaplandi: boolean) => void): () => void;
+  /** macOS: native uygulama menüsünü (yapı) kurar/günceller (TK-36). Diğer platformlarda no-op. */
+  uygulamaMenusunuKur(gruplar: NativeMenuGrubu[]): void;
+  /** macOS: native menü ögesi tıklanınca eylem id'siyle çağrılır; aboneliği iptal eder. */
+  menuEylemineAbone(geriCagri: (id: string) => void): () => void;
 }
