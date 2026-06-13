@@ -19,6 +19,7 @@ import {
   type Kilavuz,
 } from "../../tuval/yapisma";
 import { izgara } from "../../tuval/izgara";
+import { kilavuzDeposu } from "../../tuval/kilavuz-deposu";
 
 /** Kapsayıcı/tanım etiketleri — kement nesne olarak ele almaz. */
 const NESNE_DISI = new Set(["defs", "style", "title", "desc", "metadata"]);
@@ -111,6 +112,21 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
     .filter((k) => k.sag - k.sol > 0 || k.alt - k.ust > 0);
   if (baglam.kok)
     hedefKutular.push(kutuYap(baglam.kok.getBoundingClientRect()));
+
+  // Kullanıcı kılavuzları (TK-37 #2) → tam-açıklıklı ince hedef kutular: dikey kılavuz
+  // yalnız X'te, yatay yalnız Y'de yapışır (öteki eksen ±1e6 → eşik dışı, tetiklemez).
+  const ctmK = baglam.kok?.getScreenCTM?.();
+  if (ctmK) {
+    for (const g of kilavuzDeposu.liste) {
+      if (g.yon === "dikey") {
+        const sx = new DOMPoint(g.konum, 0).matrixTransform(ctmK).x;
+        hedefKutular.push({ sol: sx, sag: sx, ust: -1e6, alt: 1e6 });
+      } else {
+        const sy = new DOMPoint(0, g.konum).matrixTransform(ctmK).y;
+        hedefKutular.push({ sol: -1e6, sag: 1e6, ust: sy, alt: sy });
+      }
+    }
+  }
 
   // Izgara ekran geometrisi (TK-37 #2) — kök CTM'inden (client koord; baslangicKutu/
   // hedefKutular da client koord). Zoom drag boyunca sabit olduğundan başta yakalanır.

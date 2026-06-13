@@ -22,6 +22,8 @@ import { say } from "./donusum";
 import type { Kilavuz } from "./yapisma";
 import { oranKilidi } from "./oran-kilidi";
 import { izgara } from "./izgara";
+import { kilavuzDeposu } from "./kilavuz-deposu";
+import { guzelAdim, tickler } from "./cetvel-yardimci";
 import {
   hizalaReferans,
   referansDugum,
@@ -113,6 +115,74 @@ export class TuvalAlani extends LitElement {
       inset: 0;
       display: none;
       pointer-events: none;
+    }
+    /* Kullanıcı kılavuzları (TK-37 #2) — #kullaniciKilavuzCiz imperatif doldurur. */
+    .kullanici-kilavuzlar {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .uguide {
+      position: absolute;
+      background: var(--kilavuz-user, #16b8c4);
+      pointer-events: auto;
+    }
+    .uguide.yatay {
+      left: 0;
+      right: 0;
+      height: 1px;
+      cursor: ns-resize;
+    }
+    .uguide.dikey {
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      cursor: ew-resize;
+    }
+    .uguide::after {
+      content: "";
+      position: absolute;
+      inset: -3px 0; /* yatay için tıklama bandını genişlet */
+    }
+    .uguide.dikey::after {
+      inset: 0 -3px;
+    }
+    /* Cetveller (TK-37 #2) — #cetvelCiz tick/etiketleri imperatif doldurur. */
+    .cetvel {
+      position: absolute;
+      display: none;
+      background: var(--yuzey-2, rgba(127, 127, 127, 0.1));
+      color: var(--metin-soluk);
+      z-index: 5;
+      font-size: 9px;
+    }
+    .cetvel-ust {
+      top: 0;
+      left: 20px;
+      right: 0;
+      height: 20px;
+      cursor: ns-resize;
+      border-bottom: 1px solid var(--kenarlik);
+    }
+    .cetvel-sol {
+      top: 20px;
+      left: 0;
+      bottom: 0;
+      width: 20px;
+      cursor: ew-resize;
+      border-right: 1px solid var(--kenarlik);
+    }
+    .cetvel-kose {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 20px;
+      height: 20px;
+      display: none;
+      background: var(--yuzey-2, rgba(127, 127, 127, 0.15));
+      border-right: 1px solid var(--kenarlik);
+      border-bottom: 1px solid var(--kenarlik);
+      z-index: 6;
     }
     /* Artboard (sayfa zemini) çerçevesi (TK-23) — belgenin sayfa sınırını gösterir;
        seçimden bağımsız, taşıma sırasında da görünür kalır. Soluk, kesik olmayan
@@ -219,6 +289,10 @@ export class TuvalAlani extends LitElement {
   @query(".secim-katman") private katman!: HTMLDivElement;
   @query(".kement") private kement!: HTMLDivElement;
   @query(".izgara") private izgaraKat!: HTMLDivElement;
+  @query(".cetvel-ust") private cetvelUst!: SVGSVGElement;
+  @query(".cetvel-sol") private cetvelSol!: SVGSVGElement;
+  @query(".cetvel-kose") private cetvelKose!: HTMLDivElement;
+  @query(".kullanici-kilavuzlar") private kullaniciKilavuzKat!: HTMLDivElement;
   @query(".sayfa-cerceve") private sayfaCerceve!: HTMLDivElement;
   @query(".kilavuzlar") private kilavuzlar!: HTMLDivElement;
   @query(".arac-katman") private aracKat!: HTMLDivElement;
@@ -269,6 +343,7 @@ export class TuvalAlani extends LitElement {
   #aracCoz?: () => void;
   #hizalaCoz?: () => void;
   #izgaraCoz?: () => void;
+  #kilavuzCoz?: () => void;
   #oncekiArac = aracDeposu.aktif;
   #rafKimligi = 0;
   #basNokta: { x: number; y: number } | null = null;
@@ -306,6 +381,11 @@ export class TuvalAlani extends LitElement {
     this.#hizalaCoz = hizalaReferans.dinle(() => this.#konumla());
     // Izgara tercihi değişince (TK-37 #2) ızgarayı yeniden çiz.
     this.#izgaraCoz = izgara.dinle(() => this.#izgaraCiz());
+    // Cetvel/kılavuz değişince (TK-37 #2) yeniden çiz.
+    this.#kilavuzCoz = kilavuzDeposu.dinle(() => {
+      this.#cetvelCiz();
+      this.#kullaniciKilavuzCiz();
+    });
     // Denetçi, efektif (hesaplanmış) stilleri okuyabilsin diye render erişimi yayınla.
     cizimErisimi.kaynakAyarla((kimlik) => this.#yansitici.elemanGetir(kimlik));
   }
@@ -317,6 +397,7 @@ export class TuvalAlani extends LitElement {
     this.#aracCoz?.();
     this.#hizalaCoz?.();
     this.#izgaraCoz?.();
+    this.#kilavuzCoz?.();
     window.removeEventListener("resize", this.#konumla);
     window.removeEventListener("keydown", this.#zoomKlavye);
     window.removeEventListener("keydown", this.#aracTus);
@@ -662,10 +743,138 @@ export class TuvalAlani extends LitElement {
     this.izgaraKat.style.backgroundPosition = `${o.x - h.left}px ${o.y - h.top}px`;
   }
 
+  /** Bir client koordinatını kullanıcı (SVG) koordinatına çevirir (kök CTM ters). */
+  #kullaniciKoord(clientX: number, clientY: number): TuvalNoktasi | null {
+    const ctm = this.#yansitici.kok?.getScreenCTM?.();
+    if (!ctm) return null;
+    const p = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  /** Cetvelleri (TK-37 #2) çizer; görünür değilse gizler. */
+  #cetvelCiz(): void {
+    const goster = kilavuzDeposu.cetvel;
+    if (this.cetvelUst) this.cetvelUst.style.display = goster ? "block" : "none";
+    if (this.cetvelSol) this.cetvelSol.style.display = goster ? "block" : "none";
+    if (this.cetvelKose)
+      this.cetvelKose.style.display = goster ? "block" : "none";
+    const ctm = goster ? this.#yansitici.kok?.getScreenCTM?.() : null;
+    if (!ctm) return;
+    this.#cetvelEkseni(this.cetvelUst, ctm, "x");
+    this.#cetvelEkseni(this.cetvelSol, ctm, "y");
+  }
+
+  #cetvelEkseni(svg: SVGSVGElement, ctm: DOMMatrix, eksen: "x" | "y"): void {
+    if (!svg) return;
+    const NS = "http://www.w3.org/2000/svg";
+    const r = svg.getBoundingClientRect();
+    const olcek = Math.abs(eksen === "x" ? ctm.a : ctm.d) || 1;
+    const adim = guzelAdim(64, olcek);
+    const inv = ctm.inverse();
+    const uAt = (cli: number): number =>
+      eksen === "x"
+        ? new DOMPoint(cli, 0).matrixTransform(inv).x
+        : new DOMPoint(0, cli).matrixTransform(inv).y;
+    const u1 = uAt(eksen === "x" ? r.left : r.top);
+    const u2 = uAt(eksen === "x" ? r.right : r.bottom);
+    const cocuklar: SVGElement[] = [];
+    for (const t of tickler(Math.min(u1, u2), Math.max(u1, u2), adim, 400)) {
+      const sc =
+        eksen === "x"
+          ? new DOMPoint(t, 0).matrixTransform(ctm).x - r.left
+          : new DOMPoint(0, t).matrixTransform(ctm).y - r.top;
+      const line = document.createElementNS(NS, "line");
+      line.setAttribute("stroke", "currentColor");
+      line.setAttribute("opacity", "0.5");
+      if (eksen === "x") {
+        line.setAttribute("x1", String(sc));
+        line.setAttribute("x2", String(sc));
+        line.setAttribute("y1", "12");
+        line.setAttribute("y2", "20");
+      } else {
+        line.setAttribute("y1", String(sc));
+        line.setAttribute("y2", String(sc));
+        line.setAttribute("x1", "12");
+        line.setAttribute("x2", "20");
+      }
+      cocuklar.push(line);
+      const tx = document.createElementNS(NS, "text");
+      tx.textContent = String(Math.round(t));
+      tx.setAttribute("fill", "currentColor");
+      tx.setAttribute("font-size", "8");
+      if (eksen === "x") {
+        tx.setAttribute("x", String(sc + 2));
+        tx.setAttribute("y", "9");
+      } else {
+        tx.setAttribute("x", "2");
+        tx.setAttribute("y", String(sc - 2));
+      }
+      cocuklar.push(tx);
+    }
+    svg.replaceChildren(...cocuklar);
+  }
+
+  /** Kullanıcı kılavuzlarını (TK-37 #2) çizer (ekran konumuna). */
+  #kullaniciKilavuzCiz(): void {
+    if (!this.kullaniciKilavuzKat) return;
+    const ctm = this.#yansitici.kok?.getScreenCTM?.();
+    const h = this.getBoundingClientRect();
+    const cocuklar: HTMLElement[] = [];
+    if (ctm) {
+      kilavuzDeposu.liste.forEach((g, i) => {
+        const div = document.createElement("div");
+        div.className = `uguide ${g.yon}`;
+        if (g.yon === "yatay") {
+          const sy = new DOMPoint(0, g.konum).matrixTransform(ctm).y - h.top;
+          div.style.top = `${sy}px`;
+        } else {
+          const sx = new DOMPoint(g.konum, 0).matrixTransform(ctm).x - h.left;
+          div.style.left = `${sx}px`;
+        }
+        div.addEventListener("pointerdown", (e) => this.#kilavuzSurukle(i, e));
+        cocuklar.push(div);
+      });
+    }
+    this.kullaniciKilavuzKat.replaceChildren(...cocuklar);
+  }
+
+  /** Cetvelden yeni kılavuz oluştur + hemen sürükle (TK-37 #2). */
+  #cetveldenKilavuz(yon: "yatay" | "dikey", olay: PointerEvent): void {
+    olay.preventDefault();
+    const u = this.#kullaniciKoord(olay.clientX, olay.clientY);
+    if (!u) return;
+    const i = kilavuzDeposu.ekle({ yon, konum: yon === "yatay" ? u.y : u.x });
+    this.#kilavuzSurukle(i, olay);
+  }
+
+  /** Mevcut kılavuzu sürükle (taşı); cetvel bölgesine bırakılırsa sil. */
+  #kilavuzSurukle(i: number, olay: PointerEvent): void {
+    olay.preventDefault();
+    olay.stopPropagation();
+    const yon = kilavuzDeposu.liste[i]?.yon;
+    if (!yon) return;
+    const hareket = (o: PointerEvent): void => {
+      const u = this.#kullaniciKoord(o.clientX, o.clientY);
+      if (u) kilavuzDeposu.tasi(i, yon === "yatay" ? u.y : u.x);
+    };
+    const birak = (o: PointerEvent): void => {
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", birak);
+      const h = this.getBoundingClientRect();
+      const cetveldeMi =
+        yon === "yatay" ? o.clientY - h.top < 20 : o.clientX - h.left < 20;
+      if (cetveldeMi) kilavuzDeposu.sil(i);
+    };
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", birak);
+  }
+
   /** Her seçili düğüm için sınır kutusu çerçevesi çizer (referans belirgin). */
   readonly #konumla = (): void => {
     if (!this.katman) return;
     this.#izgaraCiz(); // ızgara seçimden bağımsız → her zaman güncelle
+    this.#cetvelCiz(); // cetveller + kullanıcı kılavuzları seçimden bağımsız
+    this.#kullaniciKilavuzCiz();
     // Artboard çerçevesi seçimden bağımsızdır → taşıma korumasından ÖNCE çiz.
     this.#sayfaCercevesiKonumla();
     // Nesne taşınırken (gövde sürüklemesi) seçim çerçevesi/tutamaçları gizle;
@@ -1011,6 +1220,7 @@ export class TuvalAlani extends LitElement {
       </div>
       <div class="secim-katman">
         <div class="izgara"></div>
+        <div class="kullanici-kilavuzlar"></div>
         <div class="sayfa-cerceve"></div>
         <div class="kilavuzlar"></div>
         <div class="arac-katman"></div>
@@ -1041,6 +1251,15 @@ export class TuvalAlani extends LitElement {
           )}
         </div>
       </div>
+      <svg
+        class="cetvel cetvel-ust"
+        @pointerdown=${(e: PointerEvent) => this.#cetveldenKilavuz("yatay", e)}
+      ></svg>
+      <svg
+        class="cetvel cetvel-sol"
+        @pointerdown=${(e: PointerEvent) => this.#cetveldenKilavuz("dikey", e)}
+      ></svg>
+      <div class="cetvel-kose"></div>
     `;
   }
 }

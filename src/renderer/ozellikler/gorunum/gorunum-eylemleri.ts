@@ -1,5 +1,6 @@
 import { menuKayitDefteri } from "../../../cekirdek/registry/menu-registry";
 import { izgara } from "../../tuval/izgara";
+import { kilavuzDeposu } from "../../tuval/kilavuz-deposu";
 import { bildirimServisi } from "../../kabuk/bildirim-servisi";
 import { t } from "../../diller/dil";
 
@@ -16,6 +17,20 @@ menuKayitDefteri.kaydet({
     izgara.degistir();
     bildirimServisi.bildir(
       izgara.gorunur ? t("izgara.acik") : t("izgara.kapali"),
+      "bilgi",
+    );
+  },
+});
+
+menuKayitDefteri.kaydet({
+  id: "gorunum.cetvel",
+  grup: "gorunum",
+  etiketAnahtari: "menu.gorunum.cetvel",
+  sira: 20,
+  calistir: () => {
+    kilavuzDeposu.cetvelDegistir();
+    bildirimServisi.bildir(
+      kilavuzDeposu.cetvel ? t("cetvel.acik") : t("cetvel.kapali"),
       "bilgi",
     );
   },
