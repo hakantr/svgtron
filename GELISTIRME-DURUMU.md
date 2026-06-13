@@ -52,6 +52,9 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 - **TK-37 #4 (1/2) — Hareket Yolu (animateMotion) uygulama** (069aa1e). "Animasyon"
   menüsü: seçili nesne + yol (referans) → nesneye animateMotion+mpath (rotate=auto).
   Saf `hareketYoluDugumu` 2/2 testli; SMIL oynar. **KALAN: tuvalde yol-çiz aracı (görsel).**
+- **TK-37 #3 (çekirdek) — Gradyan vektör geometrisi** (4b446aa). Saf `gradyan-geometri.ts`
+  (`noktaOfset`/`ofsetNokta`, 5/5 testli) — tuvalde durak sürüklemenin koordinat-bağımsız
+  çekirdeği. **KALAN: etkileşimli overlay (objectBoundingBox↔ekran eşlemesi) — görsel.**
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
   geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
@@ -61,13 +64,19 @@ disaAktar profil 4/4 · disaAktarSor 3/3 · stil-css (css-tree) 7/7 · sonRenkle
 referansDugum 4/4 · metin-yol 4/4. (Pano/oran-kilidi/denetçi alanları/foreignObject
 render DOM'a bağlı → typecheck/build/smoke + akıl yürütme; görseller gözle teyide tabi.)
 
-**Bekleyen (TK-37 backlog) — HEPSİ AĞIR GÖRSEL/CANVAS, gözle teyit gerektirir (§5):**
-sembol izolasyon (#1) · ızgara/cetvel/kılavuz (#2) · tuvalde gradyan sürükleme (#3) ·
-hareket yolu/animateMotion (#4) · zaman çizelgesi olgunlaştırma (#5). Bu oturumda
-VERIFIABLE çekirdeği olan tüm kalemler bitirildi; kalanlar çalışan ekranla yapılmalı
-(yapı kurulup typecheck/build/smoke ile doğrulanabilir ama render/etkileşim körlemesine
-"bitti" sayılMAMALI). **TK-36 (macOS menü) ERTELENDİ** — Linux'ta teyit edilemez,
-kullanıcı Pop!_OS'ta.
+**Bekleyen — yalnızca SAF GÖRSEL/ETKİLEŞİMLİ UI kaldı (testlenebilir mantık çekirdeği
+TÜKETİLDİ; çalışan ekran şart, §5):**
+- #2 cetvel (ruler) + sürüklenebilir kullanıcı kılavuzları
+- #3 gradyan overlay etkileşimi (çekirdek `gradyan-geometri.ts` HAZIR)
+- #4 tuvalde yol-çiz aracı (uygula çekirdeği HAZIR; araç-overlay framework TK-9'da)
+- #5 zaman çizelgesi (keyframe/easing/onion)
+- #1 sembol izolasyon modu
+- TK-36 macOS doğal menü (Linux'ta teyitsiz)
+
+Bu oturumda backlog'un **VERIFIABLE çekirdeği olan HER kalemi** bitirildi. Kalanlar için
+artık birim test edilebilir mantık yok; doğrulukları "ekranda doğru görünüyor/oynuyor mu?"
+sorusudur → `npm run dev` ile gözle yapılmalı. Yapı kurulabilir ama render/etkileşim
+körlemesine "bitti" sayılMAMALI.
 
 ---
 
