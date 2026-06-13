@@ -10,9 +10,11 @@ import type { Komut } from "../../../cekirdek/komutlar/komut";
 import {
   DugumEkleKomutu,
   DugumCikarKomutu,
+  DugumDegistirKomutu,
   BilesikKomut,
 } from "../../../cekirdek/komutlar/dugum-komutlari";
 import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
+import { izolasyon } from "./izolasyon";
 
 /**
  * Semboller / Bileşenler (AGENTS.md §11.3, §10.4) — `<symbol>` + `<use>`.
@@ -96,6 +98,107 @@ export function sembolYap(
     gecmis.calistir(new BilesikKomut("sembol yap", komutlar));
     secim.sec(use);
   });
+  return true;
+}
+
+/** `<use>`'un x/y/transform'unu tek transform dizesine toplar. */
+function useTransform(use: Dugum): string {
+  const parcalar: string[] = [];
+  const tr = use.oznitelikler.get("transform");
+  if (tr) parcalar.push(tr);
+  const x = parseFloat(use.oznitelikler.get("x") ?? "0") || 0;
+  const y = parseFloat(use.oznitelikler.get("y") ?? "0") || 0;
+  if (x || y) parcalar.push(`translate(${x}, ${y})`);
+  return parcalar.join(" ");
+}
+
+/**
+ * Sembol İzolasyonu (TK-37 #1) — seçili bir `<use>`'tan ana sembolü "yerinde"
+ * düzenlemeye girer: use, sembol içeriğinin düzenlenebilir bir `<g>` kopyasıyla
+ * değiştirilir ve izolasyon durumu kurulur. Düzenlemeler bu grupta yapılır; "Bitir"
+ * ({@link sembolBitir}) onları ana sembole geri yazar → tüm örnekler güncellenir.
+ * (Genişlet'ten farkı: bağ KOPMAZ; izolasyon kaydıyla geri yazma için izlenir.)
+ */
+export function sembolDuzenle(
+  belge: Belge,
+  secim: SecimDeposu,
+  gecmis: KomutGecmisi,
+): boolean {
+  const use = secim.secililer.length === 1 ? secim.secili : null;
+  if (!use || use.etiket !== "use") return false;
+  const href =
+    use.oznitelikler.get("href") ?? use.oznitelikler.get("xlink:href") ?? "";
+  const id = href.replace(/^#/, "");
+  const sembol = [...gez(belge.kok)].find(
+    (d) => d.etiket === "symbol" && d.oznitelikler.get("id") === id,
+  );
+  if (!id || !sembol) return false;
+  const ebeveyn = belge.ebeveyn(use) ?? belge.kok;
+  const idx = ebeveyn.cocuklar.indexOf(use);
+  const tr = useTransform(use);
+  const g = dugumOlustur(
+    "g",
+    tr ? { transform: tr } : {},
+    sembol.cocuklar.map(kopyalaIdsiz),
+  );
+  secimKaydiBastir(() => {
+    gecmis.calistir(
+      new BilesikKomut("sembolü düzenle", [
+        new DugumCikarKomutu(belge, ebeveyn, use),
+        new DugumEkleKomutu(belge, ebeveyn, g, idx),
+      ]),
+    );
+    secim.sec(g);
+  });
+  izolasyon.ayarla({ sembolId: id, grupKimlik: g.kimlik });
+  return true;
+}
+
+/**
+ * Sembol izolasyonunu bitirir: düzenlenen grubu ana sembole geri yazar (tüm `<use>`
+ * örnekleri güncellenir, İlke 3) ve grup yerine bir `<use>` koyar. Tek BilesikKomut.
+ */
+export function sembolBitir(
+  belge: Belge,
+  secim: SecimDeposu,
+  gecmis: KomutGecmisi,
+): boolean {
+  const durum = izolasyon.aktif;
+  if (!durum) return false;
+  const g = belge.dugumBul(durum.grupKimlik);
+  const eskiSembol = [...gez(belge.kok)].find(
+    (d) => d.etiket === "symbol" && d.oznitelikler.get("id") === durum.sembolId,
+  );
+  // Grup ya da sembol kaybolduysa (silme/undo) izolasyonu sessizce kapat.
+  if (!g || g.etiket !== "g" || !eskiSembol) {
+    izolasyon.ayarla(null);
+    return false;
+  }
+  const defs = belge.ebeveyn(eskiSembol);
+  const ebeveyn = belge.ebeveyn(g) ?? belge.kok;
+  const idx = ebeveyn.cocuklar.indexOf(g);
+
+  // Yeni sembol = aynı id + düzenlenen grubun (id'siz) içeriği.
+  const yeniSembol = dugumOlustur(
+    "symbol",
+    new Map(eskiSembol.oznitelikler),
+    g.cocuklar.map(kopyalaIdsiz),
+  );
+  const tr = g.oznitelikler.get("transform");
+  const use = dugumOlustur(
+    "use",
+    tr ? { href: `#${durum.sembolId}`, transform: tr } : { href: `#${durum.sembolId}` },
+  );
+  const komutlar: Komut[] = [];
+  if (defs) komutlar.push(new DugumDegistirKomutu(belge, defs, eskiSembol, yeniSembol));
+  komutlar.push(new DugumCikarKomutu(belge, ebeveyn, g));
+  komutlar.push(new DugumEkleKomutu(belge, ebeveyn, use, idx));
+
+  secimKaydiBastir(() => {
+    gecmis.calistir(new BilesikKomut("sembolü bitir", komutlar));
+    secim.sec(use);
+  });
+  izolasyon.ayarla(null);
   return true;
 }
 
