@@ -38,18 +38,29 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
   (a) yeni saf `referansDugum(belge, secililer, mod)` (hizala-referans.ts); Tuval
   işareti moda göre (son-secilen/anahtar/secim-belge-null); hizalama da aynı helper'ı
   kullanır (tek kaynak). §9.6(a/b) artık TAM.
+- **TK-37 #6 — Gelişmiş metin denetçisi + textPath bağlama** (6ccaa88). Yeni "Metin"
+  alan seti (yazı tipi/boyut/ağırlık/stil/hizalama/harf aralığı; efektif okuma+TK-18).
+  Yeni "Metin" menü grubu: Yola Bağla (textPath)/Yoldan Çöz; saf dönüşümler `metin-yol.ts`
+  (birim testli), wiring tek BilesikKomut.
+- **TK-37 #7 — foreignObject (Gömülü HTML) aracı** (54bd7a0). Tıkla→foreignObject+XHTML
+  div. **Yansıtıcı ad-uzayı duyarlı yapıldı** (foreignObject çocukları XHTML_NS; varsayılan
+  SVG_NS → sıfır regresyon). Güvenlik uyarısı toast (geniş-uyumluluk riski).
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
   geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
 
 **Bu oturumun saf-mantık testleri** (esbuild→`node --test`, §1; repoda tutulmaz):
 disaAktar profil 4/4 · disaAktarSor 3/3 · stil-css (css-tree) 7/7 · sonRenkler 5/5 ·
-referansDugum 4/4. (Pano/oran-kilidi DOM'a bağlı → typecheck/build/smoke + akıl yürütme.)
+referansDugum 4/4 · metin-yol 4/4. (Pano/oran-kilidi/denetçi alanları/foreignObject
+render DOM'a bağlı → typecheck/build/smoke + akıl yürütme; görseller gözle teyide tabi.)
 
-**Bekleyen (TK-37 backlog, görsel ağırlıklı — sıradaki):** sembol izolasyon (#1) ·
-textPath/gelişmiş metin (#6) · foreignObject (#7) · ızgara/cetvel (#2) · tuvalde gradyan
-(#3) · hareket yolu (#4) · zaman çizelgesi (#5). **TK-36 (macOS menü) ERTELENDİ** —
-Linux'ta davranış teyit edilemez (§5), kullanıcı Pop!_OS'ta.
+**Bekleyen (TK-37 backlog) — HEPSİ AĞIR GÖRSEL/CANVAS, gözle teyit gerektirir (§5):**
+sembol izolasyon (#1) · ızgara/cetvel/kılavuz (#2) · tuvalde gradyan sürükleme (#3) ·
+hareket yolu/animateMotion (#4) · zaman çizelgesi olgunlaştırma (#5). Bu oturumda
+VERIFIABLE çekirdeği olan tüm kalemler bitirildi; kalanlar çalışan ekranla yapılmalı
+(yapı kurulup typecheck/build/smoke ile doğrulanabilir ama render/etkileşim körlemesine
+"bitti" sayılMAMALI). **TK-36 (macOS menü) ERTELENDİ** — Linux'ta teyit edilemez,
+kullanıcı Pop!_OS'ta.
 
 ---
 
