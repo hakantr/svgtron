@@ -14,22 +14,42 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 
 ## 0. Son oturum — devir (2026-06-13)
 
-**Bu oturumda tamamlananlar (commit'li):**
-- **TK-37 #10 — Dışa aktarım profilleri görünür seçim oldu.** "Dosya › Dışa aktar"
-  artık profili (Uygulama-içi/Blink ↔ Geniş uyumluluk) bir modalla SORAR; eskiden
-  sessizce `genis-uyumluluk`'a sabitti. Yeni `disaAktarSor` servisi (`ozellikler/dosya/
-  disa-aktar-sor.ts`, görünüm durumu; `degisiklikSor` kuyruk/Promise + `hakkinda`
-  feature-tanımlı/kabuk-tüketir desenini birleştirir). Kabukta profil seçim modalı
-  (kart başına ad+açıklama; Enter=Geniş uyumluluk önerilen, Esc=iptal). Çıktı: blink →
-  `<ad>.svg`, genis → `<ad>-temiz.svg`. Kaydetme yine "blink" (İlke 10 korunur).
-  i18n: `dialog.disaAktar.*` (tr+en, parity 209=209). Menü etiketi "Dışa aktar…".
+**Bu oturumda tamamlananlar (commit'li, sırayla):**
+- **TK-37 #10 — Dışa aktarım profilleri görünür seçim** (commit 9353704). "Dosya ›
+  Dışa aktar" artık profili (Uygulama-içi/Blink ↔ Geniş uyumluluk) modalla SORAR;
+  eskiden sessizce `genis-uyumluluk`'a sabitti. `disaAktarSor` servisi (görünüm durumu;
+  `degisiklikSor` kuyruk/Promise + `hakkinda` feature-tanımlı/kabuk-tüketir deseni).
+  Çıktı: blink→`<ad>.svg`, genis→`<ad>-temiz.svg`. Kaydetme "blink" (İlke 10).
+- **TK-37 #9 — Kes/Kopyala/Yerinde Yapıştır + Oran kilidi** (7b8f7a0 + 84098c9).
+  Pano (görünüm durumu): Ctrl+C/X/V + Düzen menüsü; yapıştır YERİNDE (ebeveyn hâlâ
+  belgedeyse aynı koordinat uzayı, değilse kök); her yapıştırma id'siz yeni kopya.
+  Oran kilidi: `oranKilidi` store; tuval boyutlandırmada üniform = `acik XOR Shift`
+  (döndürülmüş zaten üniform); toggle denetçi geometri başında padlock.
+- **TK-39 — CSS editörünü css-tree'ye taşıdım + kütüphane raporu değerlendirmesi**
+  (5289975). `stil-css.ts` regex→AST: yalnız üst düzey kurallar, hedef kural konum
+  aralığıyla yerinde değişir → kural dışı her şey bayt-bayt korunur. **6 öneriden yalnız
+  css-tree alındı; path/renk/SVGO/CodeMirror/DOMPurify gerekçeyle ertelendi/reddedildi**
+  (TASARIM-KARARLARI.md TK-39). Bağımlılık: `css-tree@^3` + `@types/css-tree`.
+- **TK-37 #8 — Boya seçici son kullanılan renkler** (8b7b617). `sonRenkler` store
+  (12 sınır, dedup, şeffaf-atla); kapanışta düz renk(ler) işlenir, popover'da mini
+  swatch satırı. Kalıcı belge PALETİ (kaynak/metadata+Command) sonraya.
+- **§9.6 (a/b) — mod-duyarlı referans işareti + tıkla-referans-ata** (beb3be4).
+  (b) çoklu seçimde seçili nesneye modifiersiz tık = referans yap (seçim bozulmaz).
+  (a) yeni saf `referansDugum(belge, secililer, mod)` (hizala-referans.ts); Tuval
+  işareti moda göre (son-secilen/anahtar/secim-belge-null); hizalama da aynı helper'ı
+  kullanır (tek kaynak). §9.6(a/b) artık TAM.
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
-  bu oturumda geçersiz.
+  geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
 
-**Yeni saf-mantık testleri** (esbuild→`node --test`, §1; repoda tutulmaz):
-disaAktar profil farkı 4/4 (blink yorum yazar · genis ayıklar · yalnız-yorum-farkı ·
-bayraksızda özdeş) · `disaAktarSor` servisi 3/3 (çöz/iptal/kuyruk).
+**Bu oturumun saf-mantık testleri** (esbuild→`node --test`, §1; repoda tutulmaz):
+disaAktar profil 4/4 · disaAktarSor 3/3 · stil-css (css-tree) 7/7 · sonRenkler 5/5 ·
+referansDugum 4/4. (Pano/oran-kilidi DOM'a bağlı → typecheck/build/smoke + akıl yürütme.)
+
+**Bekleyen (TK-37 backlog, görsel ağırlıklı — sıradaki):** sembol izolasyon (#1) ·
+textPath/gelişmiş metin (#6) · foreignObject (#7) · ızgara/cetvel (#2) · tuvalde gradyan
+(#3) · hareket yolu (#4) · zaman çizelgesi (#5). **TK-36 (macOS menü) ERTELENDİ** —
+Linux'ta davranış teyit edilemez (§5), kullanıcı Pop!_OS'ta.
 
 ---
 
@@ -287,9 +307,10 @@ benzersizId, ReferansIndeksi — hepsi geçti.)
   çizelgesine dönüştü (düzenleme + seçim girdileri, tek `#konum`); `SecimGecmisIzleyici`
   erteleme/flush/bırakma + 5'lik kayan pencereyi uygular. Birim testli 8/8 (devir
   örneğinin tam izi dahil).
-- **§9.6 (a/b) referans işareti + seçili-nesneye-tıkla-referans-ata:** tek referans
-  nesnenin görsel ayrımı ve çoklu seçimde referans atama — HENÜZ tam değil (seç aracı
-  seçili nesneye modifiersiz tıklamayı referans yapmıyor; sec-araci.ts).
+- **§9.6 (a/b) referans işareti + tıkla-referans-ata: ÇÖZÜLDÜ (2026-06-13, beb3be4).**
+  (b) seç aracı çoklu seçimde modifiersiz tıkla = referans yap; (a) Tuval işareti
+  mod-duyarlı (`referansDugum` saf helper, hizalama ile tek kaynak). İşaretin GÖRSELİ
+  gözle teyide tabi.
 - **Sembol izolasyon modu:** ana sembolü yerinde düzenleme.
 
 **Mimari notlar:** Hizalama paneli artık rayda bir sekme (önceden seçimde
