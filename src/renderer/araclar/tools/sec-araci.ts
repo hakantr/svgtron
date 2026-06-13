@@ -270,8 +270,19 @@ const secAraci: Arac = {
     // seçimle beliren tutamaçların üstüne düşüp seçimi silebilir).
     const hedef = basHedef;
     if (hedef) {
-      if (olay.shiftKey) baglam.secim.degistir(hedef);
-      // Modifier yoksa nesne bas()'ta zaten seçildi — bir şey yapma (seçimi koru).
+      if (olay.shiftKey) {
+        baglam.secim.degistir(hedef);
+      } else if (
+        baglam.secim.icindeMi(hedef) &&
+        baglam.secim.secililer.length > 1
+      ) {
+        // §9.6(b): çoklu seçimde, ZATEN SEÇİLİ bir nesneye modifiersiz tıklamak
+        // seçimi BOZMAZ; o nesneyi etkin REFERANS (son seçilen) yapar. `ekle`
+        // düğümü sona taşır → SecimDeposu.secili artık o; hizalama referansı
+        // (son-secilen/anahtar değil — son-secilen) ona kayar.
+        baglam.secim.ekle(hedef);
+      }
+      // Aksi halde nesne bas()'ta zaten (tek) seçildi — seçimi koru.
     } else if (!olay.shiftKey) {
       baglam.secim.temizle();
     }

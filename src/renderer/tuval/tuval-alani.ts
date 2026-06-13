@@ -21,6 +21,10 @@ import { BilesikKomut } from "../../cekirdek/komutlar/dugum-komutlari";
 import { say } from "./donusum";
 import type { Kilavuz } from "./yapisma";
 import { oranKilidi } from "./oran-kilidi";
+import {
+  hizalaReferans,
+  referansDugum,
+} from "../ozellikler/hizalama/hizala-referans";
 import { bildirimServisi } from "../kabuk/bildirim-servisi";
 
 /** Grup seçim çerçevesi içerik kenarından bu kadar px DIŞARIDA durur (TK-21). */
@@ -254,6 +258,7 @@ export class TuvalAlani extends LitElement {
   #secimCoz?: () => void;
   #dilCoz?: () => void;
   #aracCoz?: () => void;
+  #hizalaCoz?: () => void;
   #oncekiArac = aracDeposu.aktif;
   #rafKimligi = 0;
   #basNokta: { x: number; y: number } | null = null;
@@ -287,6 +292,8 @@ export class TuvalAlani extends LitElement {
     window.addEventListener("resize", this.#konumla);
     window.addEventListener("keydown", this.#zoomKlavye);
     window.addEventListener("keydown", this.#aracTus);
+    // Hizalama referans modu değişince (§9.6a) referans işaretini tazele.
+    this.#hizalaCoz = hizalaReferans.dinle(() => this.#konumla());
     // Denetçi, efektif (hesaplanmış) stilleri okuyabilsin diye render erişimi yayınla.
     cizimErisimi.kaynakAyarla((kimlik) => this.#yansitici.elemanGetir(kimlik));
   }
@@ -296,6 +303,7 @@ export class TuvalAlani extends LitElement {
     this.#secimCoz?.();
     this.#dilCoz?.();
     this.#aracCoz?.();
+    this.#hizalaCoz?.();
     window.removeEventListener("resize", this.#konumla);
     window.removeEventListener("keydown", this.#zoomKlavye);
     window.removeEventListener("keydown", this.#aracTus);
@@ -626,7 +634,12 @@ export class TuvalAlani extends LitElement {
       return;
     }
     const h = this.getBoundingClientRect();
-    const ref = this.secim.secili;
+    // Referans işareti hizalama MODUNA göre (§9.6a): son-secilen → en son eklenen;
+    // anahtar → z-üst; secim/belge → tek-nesne referansı yok (işaret gösterilmez).
+    const belgeRef = this.depo.belge;
+    const ref = belgeRef
+      ? referansDugum(belgeRef, this.secim.secililer, hizalaReferans.mod)
+      : null;
     const cokMu = this.secim.secililer.length > 1;
     const kalan = new Set(this.#cerceveler.keys());
 

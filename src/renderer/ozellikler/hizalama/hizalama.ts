@@ -1,12 +1,16 @@
 import type { Belge } from "../../../cekirdek/belge/belge";
 import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
-import { gez, type Dugum } from "../../../cekirdek/belge/model/dugum";
+import { type Dugum } from "../../../cekirdek/belge/model/dugum";
 import type { Komut } from "../../../cekirdek/komutlar/komut";
 import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { cizimErisimi } from "../../tuval/cizim-erisimi";
 import { ekranDeltaKullanici, transformTasi } from "../../tuval/donusum";
-import { hizalaReferans, type HizalaReferans } from "./hizala-referans";
+import {
+  hizalaReferans,
+  referansDugum,
+  type HizalaReferans,
+} from "./hizala-referans";
 
 /**
  * Hizalama / dağıtma (§9.2) — seçili nesneleri bir REFERANSA göre hizalar ya da
@@ -63,22 +67,11 @@ function referansKutusu(
   kayit: { d: Dugum; r: DOMRect }[],
   ref: HizalaReferans,
 ): Kenarlar | null {
-  if (ref === "son-secilen") {
-    const sec = secim.secili;
-    const k = sec ? kayit.find((x) => x.d === sec) : null;
+  if (ref === "son-secilen" || ref === "anahtar") {
+    // Referans NESNESİ tek kaynaktan (referansDugum) — Tuval işaretiyle aynı (§9.6a).
+    const refD = referansDugum(belge, secim.secililer, ref);
+    const k = refD ? kayit.find((x) => x.d === refD) : null;
     return k ? kenarlar(k.r) : null;
-  }
-  if (ref === "anahtar") {
-    // z-sıralamada EN ÜSTTEKİ = belge traversal'inde en SONDAKİ seçili düğüm.
-    const sira = new Map<Dugum, number>();
-    let i = 0;
-    for (const d of gez(belge.kok)) sira.set(d, i++);
-    let enUst: { d: Dugum; r: DOMRect } | null = null;
-    for (const k of kayit) {
-      if (!enUst || (sira.get(k.d) ?? -1) > (sira.get(enUst.d) ?? -1))
-        enUst = k;
-    }
-    return enUst ? kenarlar(enUst.r) : null;
   }
   if (ref === "belge") {
     // viewBox / artboard sınırları (artboard varsa onu, yoksa kök <svg>).

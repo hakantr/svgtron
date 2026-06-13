@@ -12,6 +12,46 @@
  */
 export type HizalaReferans = 'son-secilen' | 'anahtar' | 'secim' | 'belge';
 
+import { gez, type Dugum } from '../../../cekirdek/belge/model/dugum';
+import type { Belge } from '../../../cekirdek/belge/belge';
+
+/**
+ * Etkin referans NESNESİ (mod tek-nesne referansıysa), yoksa null (§9.6a/§9.2).
+ * Tek doğruluk kaynağı: hem Tuval'in referans işareti (TK-35/§9.6a) hem hizalama
+ * (`hizalama.ts`) bunu kullanır → işaret ile gerçek hizalama referansı DAİMA uyuşur.
+ *
+ *  - `son-secilen` → seçime en son eklenen (`secililer.at(-1)`).
+ *  - `anahtar`     → z-sıralamada EN ÜSTTEKİ = belge traversal'inde en SONDAKİ seçili.
+ *  - `secim`/`belge` → tek-nesne referansı YOK → null (işaret gösterilmez).
+ *
+ * Saf (DOM'suz); `hizala-referans.ts` yalnız çekirdeğe bağlı kaldığından Tuval bunu
+ * döngüsüz import edebilir (`hizalama.ts` tuval'e bağımlı olduğundan oradan alınamaz).
+ */
+export function referansDugum(
+  belge: Belge,
+  secililer: readonly Dugum[],
+  mod: HizalaReferans,
+): Dugum | null {
+  if (secililer.length === 0) return null;
+  if (mod === 'son-secilen') return secililer.at(-1) ?? null;
+  if (mod === 'anahtar') {
+    const sira = new Map<Dugum, number>();
+    let i = 0;
+    for (const d of gez(belge.kok)) sira.set(d, i++);
+    let enUst: Dugum | null = null;
+    let enUstSira = -1;
+    for (const d of secililer) {
+      const s = sira.get(d) ?? -1;
+      if (s > enUstSira) {
+        enUstSira = s;
+        enUst = d;
+      }
+    }
+    return enUst;
+  }
+  return null; // secim / belge → tek-nesne referansı yok
+}
+
 const ANAHTAR = 'svgtron.hizalaReferans';
 const GECERLI: readonly HizalaReferans[] = ['son-secilen', 'anahtar', 'secim', 'belge'];
 
