@@ -49,6 +49,9 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
   ızgara overlay (kök CTM, zoom/pan tutarlı); seç aracı sürüklemede nesne-yapışması olmayan
   eksende ızgara çizgisine çeker (saf `izgaraYapis`, 5/5 testli). Görünüm menüsü toggle.
   **KALAN: cetvel + sürüklenebilir kılavuzlar (saf görsel).**
+- **TK-37 #4 (1/2) — Hareket Yolu (animateMotion) uygulama** (069aa1e). "Animasyon"
+  menüsü: seçili nesne + yol (referans) → nesneye animateMotion+mpath (rotate=auto).
+  Saf `hareketYoluDugumu` 2/2 testli; SMIL oynar. **KALAN: tuvalde yol-çiz aracı (görsel).**
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
   geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
