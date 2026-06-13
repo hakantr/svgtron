@@ -53,8 +53,25 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
   menüsü: seçili nesne + yol (referans) → nesneye animateMotion+mpath (rotate=auto).
   Saf `hareketYoluDugumu` 2/2 testli; SMIL oynar. **KALAN: tuvalde yol-çiz aracı (görsel).**
 - **TK-37 #3 (çekirdek) — Gradyan vektör geometrisi** (4b446aa). Saf `gradyan-geometri.ts`
-  (`noktaOfset`/`ofsetNokta`, 5/5 testli) — tuvalde durak sürüklemenin koordinat-bağımsız
-  çekirdeği. **KALAN: etkileşimli overlay (objectBoundingBox↔ekran eşlemesi) — görsel.**
+  (`noktaOfset`/`ofsetNokta`, 5/5 testli).
+
+### Kullanıcı yetkisiyle (dönünce kontrol) körlemesine kurulan görsel kalemler
+> Kullanıcı "tüm adımları bitir, gelince kontrol edeceğim" dedi → kalan görsel/canvas
+> kalemleri yapı olarak kuruldu, `typecheck`/`build`/`smoke` + saf-mantık testiyle
+> doğrulandı; **render/etkileşim/animasyon gözle teyit bekliyor (§5).**
+- **TK-37 #3 (2/2) gradyan aracı** (f4a867e): tuvalde uç/durak sürükleme; getBBox+CTM
+  eşlemesi (obb/userSpaceOnUse); araç-overlay (TK-9). Radyal v1-dışı.
+- **TK-37 #4 (2/2) hareket-yolu çiz aracı** (18bd70f): yol çiz → seçili nesneye
+  animateMotion. TK-37 #4 TAM.
+- **TK-37 #2 (2/2) cetvel + kullanıcı kılavuzları** (808f6a7): CTM tick (saf
+  guzelAdim/tickler 5/5); kenardan sürükle-oluştur, yapışma hedefi. TK-37 #2 TAM.
+- **TK-37 #1 sembol izolasyon** (9b3cb4c): use'tan düzenle→`<g>`, Bitir→ana sembole
+  yaz (DugumDegistir) → tüm örnekler güncellenir. `izolasyon` store.
+- **TK-37 #5 (kısmi) easing** (8e9503b): saf kübikBezier+keySplines (6/6); Animasyon
+  menüsü ease/in/out/in-out → SMIL calcMode=spline. **KALAN: keyframe track UI, easing
+  eğri editörü, onion skin, yol-üstü önizleme (görsel).**
+- **TK-36 macOS native menü** (698edad): darwin'de registry→IPC→Electron Menu; tık→id→
+  registry. Win/Linux SIFIR etki. **macOS'ta gözle teyit gerekir.**
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
   geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
@@ -64,19 +81,17 @@ disaAktar profil 4/4 · disaAktarSor 3/3 · stil-css (css-tree) 7/7 · sonRenkle
 referansDugum 4/4 · metin-yol 4/4. (Pano/oran-kilidi/denetçi alanları/foreignObject
 render DOM'a bağlı → typecheck/build/smoke + akıl yürütme; görseller gözle teyide tabi.)
 
-**Bekleyen — yalnızca SAF GÖRSEL/ETKİLEŞİMLİ UI kaldı (testlenebilir mantık çekirdeği
-TÜKETİLDİ; çalışan ekran şart, §5):**
-- #2 cetvel (ruler) + sürüklenebilir kullanıcı kılavuzları
-- #3 gradyan overlay etkileşimi (çekirdek `gradyan-geometri.ts` HAZIR)
-- #4 tuvalde yol-çiz aracı (uygula çekirdeği HAZIR; araç-overlay framework TK-9'da)
-- #5 zaman çizelgesi (keyframe/easing/onion)
-- #1 sembol izolasyon modu
-- TK-36 macOS doğal menü (Linux'ta teyitsiz)
+**TÜM backlog kalemleri (TK-37 #1–#10, §9.6, TK-36, TK-39) KURULDU.** Geriye yalnız
+gözle teyit gerektiren parçalar ve bilinçli v1-dışı bırakılanlar kaldı:
+- **GÖZLE TEYİT (kullanıcı dönünce):** gradyan aracı handle/koordinat eşlemesi · cetvel/
+  kılavuz render+sürükleme · ızgara/yapışma hissi · hareket-yolu çizim+oynatma · sembol
+  izolasyon akışı · foreignObject/textPath/metin denetçisi render · **macOS native menü
+  (gerçek macOS gerekir).**
+- **v1-DIŞI (sonraki tur):** gradyan aracında RADYAL · zaman çizelgesi UI (keyframe track,
+  easing eğri editörü, onion skin, yol-üstü canlı önizleme) · belge PALETİ (kalıcı renk) ·
+  tuvalde gradyan rotasyonlu obb tam-sadakat.
 
-Bu oturumda backlog'un **VERIFIABLE çekirdeği olan HER kalemi** bitirildi. Kalanlar için
-artık birim test edilebilir mantık yok; doğrulukları "ekranda doğru görünüyor/oynuyor mu?"
-sorusudur → `npm run dev` ile gözle yapılmalı. Yapı kurulabilir ama render/etkileşim
-körlemesine "bitti" sayılMAMALI.
+`npm run dev` ile doğrula; sorun görülen görsel kalemi söyle, hedefli düzeltirim.
 
 ---
 
