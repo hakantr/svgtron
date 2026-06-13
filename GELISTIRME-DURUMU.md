@@ -45,6 +45,10 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 - **TK-37 #7 — foreignObject (Gömülü HTML) aracı** (54bd7a0). Tıkla→foreignObject+XHTML
   div. **Yansıtıcı ad-uzayı duyarlı yapıldı** (foreignObject çocukları XHTML_NS; varsayılan
   SVG_NS → sıfır regresyon). Güvenlik uyarısı toast (geniş-uyumluluk riski).
+- **TK-37 #2 (1/2) — Izgara + ızgaraya yapışma** (8d1acf3). `izgara` store; tuval CSS-arka-plan
+  ızgara overlay (kök CTM, zoom/pan tutarlı); seç aracı sürüklemede nesne-yapışması olmayan
+  eksende ızgara çizgisine çeker (saf `izgaraYapis`, 5/5 testli). Görünüm menüsü toggle.
+  **KALAN: cetvel + sürüklenebilir kılavuzlar (saf görsel).**
 - **Not (kullanıcı talimatı):** Commit'lere `Co-Authored-By` trailer'ı EKLENMEDİ
   (kullanıcı "kendini contributors'a kaydetme" dedi) — §5'teki eski trailer kuralı
   geçersiz. Push YAPILMADI (yerel commit'ler; dışarı çıkış onayı saklı).
