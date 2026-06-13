@@ -16,6 +16,7 @@ import "./ozellikler/semboller/sembol-eylemleri";
 import "./ozellikler/metin/metin-eylemleri";
 import "./ozellikler/gorunum/gorunum-eylemleri";
 import "./ozellikler/animasyon/hareket-yolu-eylemleri";
+import "./ozellikler/animasyon/easing-eylemleri";
 import "./ozellikler/optimize/optimize-eylemleri";
 import "./ozellikler/donustur/yansit-eylemleri";
 import "./araclar/tools/sec-araci";
