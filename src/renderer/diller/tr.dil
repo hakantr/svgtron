@@ -114,6 +114,7 @@ arac.spiral = Spiral
 arac.metin = Metin
 arac.gorsel = Görsel Yerleştir
 arac.foreignObject = Gömülü HTML (foreignObject)
+arac.gradyan = Gradyan (tuvalde durak/uç sürükle)
 arac.pipet = Pipet (önce hedefi seç, kaynağa tıkla)
 arac.el = Kaydır (el)
 arac.yakinlastir = Yakınlaştır

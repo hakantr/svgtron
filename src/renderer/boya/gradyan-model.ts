@@ -30,7 +30,7 @@ export function urlId(fill: string): string | null {
   return /url\(["']?#([^"')]+)["']?\)/.exec(fill)?.[1] ?? null;
 }
 
-function gradyanBul(belge: Belge, id: string): Dugum | null {
+export function gradyanBul(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok)) {
     if (
       d.oznitelikler.get("id") === id &&

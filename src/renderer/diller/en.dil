@@ -114,6 +114,7 @@ arac.spiral = Spiral
 arac.metin = Text
 arac.gorsel = Place Image
 arac.foreignObject = Embedded HTML (foreignObject)
+arac.gradyan = Gradient (drag stops/ends on canvas)
 arac.pipet = Eyedropper (first select target, then click source)
 arac.el = Pan (hand)
 arac.yakinlastir = Zoom
