@@ -2,6 +2,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, state, query } from "lit/decorators.js";
 import { ayristir, hex, metin, rgbToHsv, hsvToRgb, type HSVA } from "./renk";
 import type { BoyaDegeri, GradyanDurak } from "./boya-degeri";
+import { sonRenkler } from "./son-renkler";
 import { t } from "../diller/dil";
 
 type Mod = "yok" | "duz" | "dogrusal" | "radyal";
@@ -198,6 +199,28 @@ export class BoyaSecici extends LitElement {
       border-radius: 6px;
       border: 1px solid var(--kenarlik);
     }
+    .son-renkler {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      border-top: 1px solid var(--kenarlik);
+      padding-top: 8px;
+    }
+    .son-renkler .mini {
+      width: 18px;
+      height: 18px;
+      padding: 0;
+      border: 1px solid var(--kenarlik);
+      border-radius: 4px;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .son-renkler .mini span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 3px;
+    }
   `;
 
   /** Gelen boya değeri. */
@@ -234,9 +257,17 @@ export class BoyaSecici extends LitElement {
   #klavye = (olay: KeyboardEvent): void => {
     if (olay.key === "Escape") this.kapat();
   };
+  #sonRenklerCoz?: () => void;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    // Son renkler değişince açık popover'ı tazele (TK-37 #8).
+    this.#sonRenklerCoz = sonRenkler.dinle(() => this.requestUpdate());
+  }
 
   override disconnectedCallback(): void {
     this.#kapatDinleyici();
+    this.#sonRenklerCoz?.();
     super.disconnectedCallback();
   }
 
@@ -273,8 +304,24 @@ export class BoyaSecici extends LitElement {
 
   private kapat(): void {
     if (!this.acik) return;
+    this.#sonRenkleriKaydet();
     this.acik = false;
     this.#kapatDinleyici();
+  }
+
+  /** Kapanışta kullanılan düz renk(ler)i son renklere işler (TK-37 #8). */
+  #sonRenkleriKaydet(): void {
+    if (this.mod === "duz") {
+      sonRenkler.ekle(metin(hsvToRgb(this.hsva)));
+    } else if (this.mod === "dogrusal" || this.mod === "radyal") {
+      for (const d of this.duraklar) sonRenkler.ekle(d.renk);
+    }
+  }
+
+  /** Bir son-rengi etkin renge (düz ya da seçili durak) uygular. */
+  private sonRenkSec(renk: string): void {
+    const c = ayristir(renk);
+    if (c) this.renkGuncelle(rgbToHsv(c));
   }
   #kapatDinleyici(): void {
     window.removeEventListener("pointerdown", this.#disKapat, true);
@@ -421,7 +468,7 @@ export class BoyaSecici extends LitElement {
             </div>`
           : html`
               ${gradyanMi ? this.#gradyanAlani() : ""}
-              ${this.#renkSecici(rgb, tonRenk)}
+              ${this.#renkSecici(rgb, tonRenk)} ${this.#sonRenklerSatiri()}
             `}
       </div>
     `;
@@ -478,6 +525,27 @@ export class BoyaSecici extends LitElement {
             </div>
           `
         : ""}
+    `;
+  }
+
+  /** Son kullanılan renkler satırı (TK-37 #8); boşsa gizli. */
+  #sonRenklerSatiri() {
+    const renkler = sonRenkler.renkler;
+    if (renkler.length === 0) return "";
+    return html`
+      <div class="son-renkler">
+        ${renkler.map(
+          (r) => html`
+            <button
+              class="mini dama"
+              title=${r}
+              @click=${() => this.sonRenkSec(r)}
+            >
+              <span style="background:${r}"></span>
+            </button>
+          `,
+        )}
+      </div>
     `;
   }
 
