@@ -12,11 +12,13 @@ import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
 import { transformTasi, ekranDeltaKullanici } from "../../tuval/donusum";
 import {
   yapismaHesapla,
+  izgaraYapis,
   kutuYap,
   birlestir,
   type Kutu,
   type Kilavuz,
 } from "../../tuval/yapisma";
+import { izgara } from "../../tuval/izgara";
 
 /** Kapsayıcı/tanım etiketleri — kement nesne olarak ele almaz. */
 const NESNE_DISI = new Set(["defs", "style", "title", "desc", "metadata"]);
@@ -39,6 +41,13 @@ let asillar: { dugum: Dugum; transform: string; ctm: DOMMatrix }[] = [];
 // Yapışma durumu (§11.1) — taşıma başında bir kez yakalanır.
 let baslangicKutu: Kutu | null = null; // taşınan seçimin ekran sınır kutusu
 let hedefKutular: Kutu[] = []; // sabit hedefler (diğer nesneler + tuval çerçevesi)
+// Izgara ekran geometrisi (TK-37 #2) — taşıma başında bir kez yakalanır (client koord).
+let izgaraEkran: {
+  ox: number;
+  oy: number;
+  adimX: number;
+  adimY: number;
+} | null = null;
 
 function nesneler(b: AracBaglami): Dugum[] {
   const kok = b.depo.belge?.kok;
@@ -102,6 +111,20 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
     .filter((k) => k.sag - k.sol > 0 || k.alt - k.ust > 0);
   if (baglam.kok)
     hedefKutular.push(kutuYap(baglam.kok.getBoundingClientRect()));
+
+  // Izgara ekran geometrisi (TK-37 #2) — kök CTM'inden (client koord; baslangicKutu/
+  // hedefKutular da client koord). Zoom drag boyunca sabit olduğundan başta yakalanır.
+  izgaraEkran = null;
+  const ctm = izgara.gorunur ? baglam.kok?.getScreenCTM?.() : null;
+  if (ctm && ctm.a > 0 && ctm.d > 0) {
+    const o = new DOMPoint(0, 0).matrixTransform(ctm);
+    izgaraEkran = {
+      ox: o.x,
+      oy: o.y,
+      adimX: izgara.adim * ctm.a,
+      adimY: izgara.adim * ctm.d,
+    };
+  }
 }
 
 /** Ham ekran ötelemesini yapışmayla düzeltir (Alt → kapalı). Kılavuzları da döndürür. */
@@ -118,7 +141,22 @@ function yapismaUygula(
     alt: baslangicKutu.alt + sdy,
   };
   const s = yapismaHesapla(hareketli, hedefKutular, YAPISMA_ESIGI);
-  return { dx: sdx + s.ax, dy: sdy + s.ay, kilavuzlar: s.kilavuzlar };
+  let ax = s.ax;
+  let ay = s.ay;
+  // Izgaraya yapışma: nesne yapışması OLMAYAN eksende ızgara çizgisine çek (TK-37 #2).
+  if (izgaraEkran) {
+    const g = izgaraYapis(
+      { sol: hareketli.sol + ax, sag: hareketli.sag + ax, ust: hareketli.ust + ay, alt: hareketli.alt + ay },
+      izgaraEkran.ox,
+      izgaraEkran.oy,
+      izgaraEkran.adimX,
+      izgaraEkran.adimY,
+      YAPISMA_ESIGI,
+    );
+    if (ax === 0) ax += g.ax;
+    if (ay === 0) ay += g.ay;
+  }
+  return { dx: sdx + ax, dy: sdy + ay, kilavuzlar: s.kilavuzlar };
 }
 
 /**
@@ -234,6 +272,7 @@ const secAraci: Arac = {
       asillar = [];
       baslangicKutu = null;
       hedefKutular = [];
+      izgaraEkran = null;
       return;
     }
     // Kement.
@@ -322,6 +361,7 @@ const secAraci: Arac = {
     baglam.kementCiz(null);
     baslangicKutu = null;
     hedefKutular = [];
+    izgaraEkran = null;
     drillAday = null;
     tasiBas = null;
     tasindi = false;

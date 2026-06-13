@@ -125,6 +125,49 @@ export function yapismaHesapla(
   return { ax, ay, kilavuzlar };
 }
 
+/**
+ * Izgaraya yapışma (TK-37 #2) — saf. Taşınan kutunun kenarlarını, ekran-uzayında
+ * `kaynak` orijinli ve `adim` aralıklı ızgara çizgilerine yapıştırır; her eksende en
+ * küçük düzeltmeyi (eşik içinde) seçer. (Izgara kullanıcı-uzayında tanımlı; çağıran,
+ * orijini/adımı CTM ile ekran-uzayına çevirip verir.)
+ *
+ * @param hareketli Ham ötelemeden sonraki taşınan kutu (ekran px).
+ * @param kaynakX/kaynakY Izgara orijininin ekran konumu (kullanıcı 0 noktasının ekranı).
+ * @param adimX/adimY Izgara adımı (ekran px; = adım_kullanıcı × ölçek).
+ * @param esik Yapışma eşiği (ekran px).
+ */
+export function izgaraYapis(
+  hareketli: Kutu,
+  kaynakX: number,
+  kaynakY: number,
+  adimX: number,
+  adimY: number,
+  esik: number,
+): { ax: number; ay: number } {
+  const eksen = (
+    kenarlar: number[],
+    kaynak: number,
+    adim: number,
+  ): number => {
+    if (!(adim > 0)) return 0;
+    let en = 0;
+    let enMutlak = Infinity;
+    for (const e of kenarlar) {
+      const cizgi = kaynak + Math.round((e - kaynak) / adim) * adim;
+      const fark = cizgi - e;
+      if (Math.abs(fark) <= esik && Math.abs(fark) < enMutlak) {
+        enMutlak = Math.abs(fark);
+        en = fark;
+      }
+    }
+    return en;
+  };
+  return {
+    ax: eksen([hareketli.sol, hareketli.sag], kaynakX, adimX),
+    ay: eksen([hareketli.ust, hareketli.alt], kaynakY, adimY),
+  };
+}
+
 /** DOMRect benzeri bir nesneyi ekran-uzayı {@link Kutu}'ya çevirir. */
 export function kutuYap(r: {
   left: number;

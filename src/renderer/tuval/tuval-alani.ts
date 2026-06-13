@@ -21,6 +21,7 @@ import { BilesikKomut } from "../../cekirdek/komutlar/dugum-komutlari";
 import { say } from "./donusum";
 import type { Kilavuz } from "./yapisma";
 import { oranKilidi } from "./oran-kilidi";
+import { izgara } from "./izgara";
 import {
   hizalaReferans,
   referansDugum,
@@ -105,6 +106,13 @@ export class TuvalAlani extends LitElement {
       border: 1px dashed rgba(130, 175, 255, 0.95);
       background: rgba(130, 175, 255, 0.12);
       border-radius: 1px;
+    }
+    /* Izgara (TK-37 #2) — ekran-uzayı CSS arka planı; arka plan #izgaraCiz'de kurulur. */
+    .izgara {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
     }
     /* Artboard (sayfa zemini) çerçevesi (TK-23) — belgenin sayfa sınırını gösterir;
        seçimden bağımsız, taşıma sırasında da görünür kalır. Soluk, kesik olmayan
@@ -210,6 +218,7 @@ export class TuvalAlani extends LitElement {
   @query(".icerik") private icerik!: HTMLDivElement;
   @query(".secim-katman") private katman!: HTMLDivElement;
   @query(".kement") private kement!: HTMLDivElement;
+  @query(".izgara") private izgaraKat!: HTMLDivElement;
   @query(".sayfa-cerceve") private sayfaCerceve!: HTMLDivElement;
   @query(".kilavuzlar") private kilavuzlar!: HTMLDivElement;
   @query(".arac-katman") private aracKat!: HTMLDivElement;
@@ -259,6 +268,7 @@ export class TuvalAlani extends LitElement {
   #dilCoz?: () => void;
   #aracCoz?: () => void;
   #hizalaCoz?: () => void;
+  #izgaraCoz?: () => void;
   #oncekiArac = aracDeposu.aktif;
   #rafKimligi = 0;
   #basNokta: { x: number; y: number } | null = null;
@@ -294,6 +304,8 @@ export class TuvalAlani extends LitElement {
     window.addEventListener("keydown", this.#aracTus);
     // Hizalama referans modu değişince (§9.6a) referans işaretini tazele.
     this.#hizalaCoz = hizalaReferans.dinle(() => this.#konumla());
+    // Izgara tercihi değişince (TK-37 #2) ızgarayı yeniden çiz.
+    this.#izgaraCoz = izgara.dinle(() => this.#izgaraCiz());
     // Denetçi, efektif (hesaplanmış) stilleri okuyabilsin diye render erişimi yayınla.
     cizimErisimi.kaynakAyarla((kimlik) => this.#yansitici.elemanGetir(kimlik));
   }
@@ -304,6 +316,7 @@ export class TuvalAlani extends LitElement {
     this.#dilCoz?.();
     this.#aracCoz?.();
     this.#hizalaCoz?.();
+    this.#izgaraCoz?.();
     window.removeEventListener("resize", this.#konumla);
     window.removeEventListener("keydown", this.#zoomKlavye);
     window.removeEventListener("keydown", this.#aracTus);
@@ -619,9 +632,40 @@ export class TuvalAlani extends LitElement {
     this.sayfaCerceve.style.height = `${r.height}px`;
   }
 
+  /**
+   * Izgara CSS arka planını ekran-uzayında kurar (TK-37 #2). Kullanıcı (0,0)'ın
+   * ekran konumunu ve adım×ölçek aralığını kök SVG'nin CTM'inden alır → zoom/pan ile
+   * tutarlı. Görünmezse ya da aşırı sıklaşırsa (zoom-out) çizmez.
+   */
+  #izgaraCiz(): void {
+    if (!this.izgaraKat) return;
+    const svg = this.#yansitici.kok;
+    const ctm = svg?.getScreenCTM?.();
+    if (!izgara.gorunur || !svg || !ctm) {
+      this.izgaraKat.style.display = "none";
+      return;
+    }
+    const adimX = izgara.adim * ctm.a;
+    const adimY = izgara.adim * ctm.d;
+    if (!(adimX > 2) || !(adimY > 2)) {
+      this.izgaraKat.style.display = "none"; // çok sık → moiré/performans
+      return;
+    }
+    const h = this.getBoundingClientRect();
+    const o = new DOMPoint(0, 0).matrixTransform(ctm);
+    const cizgi = "var(--izgara-cizgi, rgba(127, 127, 127, 0.2))";
+    this.izgaraKat.style.display = "block";
+    this.izgaraKat.style.backgroundImage =
+      `linear-gradient(to right, ${cizgi} 1px, transparent 1px),` +
+      `linear-gradient(to bottom, ${cizgi} 1px, transparent 1px)`;
+    this.izgaraKat.style.backgroundSize = `${adimX}px ${adimY}px`;
+    this.izgaraKat.style.backgroundPosition = `${o.x - h.left}px ${o.y - h.top}px`;
+  }
+
   /** Her seçili düğüm için sınır kutusu çerçevesi çizer (referans belirgin). */
   readonly #konumla = (): void => {
     if (!this.katman) return;
+    this.#izgaraCiz(); // ızgara seçimden bağımsız → her zaman güncelle
     // Artboard çerçevesi seçimden bağımsızdır → taşıma korumasından ÖNCE çiz.
     this.#sayfaCercevesiKonumla();
     // Nesne taşınırken (gövde sürüklemesi) seçim çerçevesi/tutamaçları gizle;
@@ -966,6 +1010,7 @@ export class TuvalAlani extends LitElement {
         <div class="icerik"></div>
       </div>
       <div class="secim-katman">
+        <div class="izgara"></div>
         <div class="sayfa-cerceve"></div>
         <div class="kilavuzlar"></div>
         <div class="arac-katman"></div>
