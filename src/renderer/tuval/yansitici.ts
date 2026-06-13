@@ -2,6 +2,15 @@ import type { Dugum } from "../../cekirdek/belge/model/dugum";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const XLINK_NS = "http://www.w3.org/1999/xlink";
+const XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+/**
+ * Bir düğümün ÇOCUKLARININ ad uzayı: `<foreignObject>` içeriği XHTML'dir (HTML
+ * gibi render edilsin diye), diğer her şey ebeveynin ad uzayını sürdürür (TK-37 #7).
+ */
+function cocukNs(dugum: Dugum, ns: string): string {
+  return dugum.etiket === "foreignObject" ? XHTML_NS : ns;
+}
 
 /**
  * Yansıtıcı — soyut belge modelini canlı SVG DOM'una çevirir ve sonraki
@@ -39,8 +48,8 @@ export class Yansitici {
     if (this.#kok) this.#uyumlaEleman(this.#kok, kokDugum);
   }
 
-  #olustur(dugum: Dugum): Element {
-    const el = document.createElementNS(SVG_NS, dugum.etiket);
+  #olustur(dugum: Dugum, ns: string = SVG_NS): Element {
+    const el = document.createElementNS(ns, dugum.etiket);
     el.setAttribute("data-kimlik", dugum.kimlik);
     for (const [ad, deger] of dugum.oznitelikler)
       this.#oznitelikYaz(el, ad, deger);
@@ -48,14 +57,16 @@ export class Yansitici {
     if (dugum.metin !== undefined && dugum.cocuklar.length === 0) {
       el.textContent = dugum.metin;
     } else {
-      for (const cocuk of dugum.cocuklar) el.appendChild(this.#olustur(cocuk));
+      const cns = cocukNs(dugum, ns);
+      for (const cocuk of dugum.cocuklar)
+        el.appendChild(this.#olustur(cocuk, cns));
     }
 
     this.#elemanlar.set(dugum.kimlik, el);
     return el;
   }
 
-  #uyumlaEleman(el: Element, dugum: Dugum): void {
+  #uyumlaEleman(el: Element, dugum: Dugum, ns: string = SVG_NS): void {
     this.#elemanlar.set(dugum.kimlik, el);
 
     // Öznitelikleri senkronla (data-kimlik hariç).
@@ -71,10 +82,14 @@ export class Yansitici {
       if (el.textContent !== dugum.metin) el.textContent = dugum.metin;
       return;
     }
-    this.#uyumlaCocuklar(el, dugum.cocuklar);
+    this.#uyumlaCocuklar(el, dugum.cocuklar, cocukNs(dugum, ns));
   }
 
-  #uyumlaCocuklar(domEbeveyn: Element, modelCocuklar: Dugum[]): void {
+  #uyumlaCocuklar(
+    domEbeveyn: Element,
+    modelCocuklar: Dugum[],
+    ns: string = SVG_NS,
+  ): void {
     const mevcut = new Map<string, Element>();
     for (const c of Array.from(domEbeveyn.children)) {
       const k = c.getAttribute("data-kimlik");
@@ -85,10 +100,10 @@ export class Yansitici {
     for (const md of modelCocuklar) {
       let el = mevcut.get(md.kimlik);
       if (el) {
-        this.#uyumlaEleman(el, md);
+        this.#uyumlaEleman(el, md, ns);
         mevcut.delete(md.kimlik);
       } else {
-        el = this.#olustur(md);
+        el = this.#olustur(md, ns);
       }
       const suanki = domEbeveyn.children[i] ?? null;
       if (suanki !== el) domEbeveyn.insertBefore(el, suanki);

@@ -106,6 +106,7 @@ arac.yildiz = Yıldız
 arac.spiral = Spiral
 arac.metin = Metin
 arac.gorsel = Görsel Yerleştir
+arac.foreignObject = Gömülü HTML (foreignObject)
 arac.pipet = Pipet (önce hedefi seç, kaynağa tıkla)
 arac.el = Kaydır (el)
 arac.yakinlastir = Yakınlaştır
@@ -113,6 +114,8 @@ arac.yakinlastir = Yakınlaştır
 # Araç bildirimleri (toast)
 pipet.hedefYok = Önce dolgu uygulanacak nesne(ler)i seçin, sonra kaynağa tıklayın.
 gorsel.yuklenemedi = Görsel yüklenemedi (geçersiz veya desteklenmeyen dosya).
+foreignObject.ornek = Düzenlenebilir HTML
+foreignObject.uyari = foreignObject her motorda aynı render olmayabilir (geniş uyumluluk profilinde riskli).
 
 # Boya (renk) seçici
 boya.sec = Renk seç

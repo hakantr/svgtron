@@ -22,6 +22,7 @@ import "./araclar/tools/sekil-olusturucu-araci";
 import "./araclar/tools/kalem-araci";
 import "./araclar/tools/kursun-kalem-araci";
 import "./araclar/tools/gorsel-araci";
+import "./araclar/tools/foreign-object-araci";
 import "./araclar/tools/pipet-araci";
 import "./araclar/tools/sekil-araclari";
 import "./araclar/tools/ek-sekiller";
