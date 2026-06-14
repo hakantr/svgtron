@@ -175,13 +175,14 @@ export class KodPaneli extends LitElement {
     /* Üst tutamaç (zaman çizelgesi ile kod paneli arasında) — yüksekliği sürükle.
        Sağ araç takımının .sag-tutamac'ının yatay eşdeğeri. */
     .tutamac {
-      height: 5px;
+      height: 3px;
       cursor: ns-resize;
-      background: var(--kenarlik);
+      background: transparent;
+      transition: background 0.12s;
     }
     .tutamac:hover {
       background: var(--vurgu, #4a90e2);
-      opacity: 0.5;
+      opacity: 0.45;
     }
     .kap {
       border-top: 1px solid var(--kenarlik);
