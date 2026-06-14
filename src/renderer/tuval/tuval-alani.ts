@@ -47,6 +47,9 @@ export class TuvalAlani extends LitElement {
     :host {
       display: block;
       position: relative;
+      /* Kendi yığın bağlamını oluştur → cetvel/ızgara/tutamaç z-index'leri tuval
+         İÇİNDE kalır, kabuğun menülerinin üstüne SIZMAZ (menüler tuvalin üstünde). */
+      isolation: isolate;
       height: 100%;
       overflow: hidden;
     }
@@ -156,10 +159,14 @@ export class TuvalAlani extends LitElement {
       z-index: 5;
       font-size: 9px;
     }
+    /* SVG yer-tutuculu (replaced) eleman olduğundan left/right ile ESNEMEZ; açık
+       width/height verilmezse içsel 300×150 boyutunda kalır → cetvel kısa görünür.
+       Bu yüzden boyutu calc ile tam uzunluğa sabitliyoruz. */
     .cetvel-ust {
       top: 0;
       left: 20px;
       right: 0;
+      width: calc(100% - 20px);
       height: 20px;
       cursor: ns-resize;
       border-bottom: 1px solid var(--kenarlik);
@@ -169,6 +176,7 @@ export class TuvalAlani extends LitElement {
       left: 0;
       bottom: 0;
       width: 20px;
+      height: calc(100% - 20px);
       cursor: ew-resize;
       border-right: 1px solid var(--kenarlik);
     }
