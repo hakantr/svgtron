@@ -24,20 +24,58 @@ import { kodMetni, konumdakiKimlik } from "./kod-metin";
 
 /** Seçili düğüm aralıklarını vurgulayan decoration alanı (StateEffect ile güncellenir). */
 const seciliEtkisi = StateEffect.define<{ from: number; to: number }[]>();
+/**
+ * Seçili bloğun zemin vurgusu — kapsadığı HER satıra tam-genişlik decoration.
+ * İlk satır `cm-secili-bas` (üst köşe yuvarlama + sol uç bandı), son satır
+ * `cm-secili-son` (alt köşe yuvarlama) sınıfını da alır → grup gövdesi tek blok
+ * olarak okunur. Tek satırlık (yaprak) eleman ikisini birden alır.
+ */
+const satirDeko = Decoration.line({ class: "cm-secili-satir" });
+const basSatirDeko = Decoration.line({ class: "cm-secili-satir cm-secili-bas" });
+const sonSatirDeko = Decoration.line({ class: "cm-secili-satir cm-secili-son" });
+const tekSatirDeko = Decoration.line({
+  class: "cm-secili-satir cm-secili-bas cm-secili-son",
+});
+
+/** Verilen aralıkların kapsadığı tüm satırlara zemin decoration'ı üretir (tekilleştirir). */
+function blokDekor(
+  doc: { lineAt: (pos: number) => { from: number; to: number } },
+  araliklar: { from: number; to: number }[],
+): DecorationSet {
+  const satira = new Map<number, Decoration>(); // line.from → decoration
+  for (const r of araliklar.filter((r) => r.to >= r.from)) {
+    let pos = r.from;
+    let ilk = true;
+    while (pos <= r.to) {
+      const satir = doc.lineAt(pos);
+      const son = r.to <= satir.to;
+      const deko =
+        ilk && son
+          ? tekSatirDeko
+          : ilk
+            ? basSatirDeko
+            : son
+              ? sonSatirDeko
+              : satirDeko;
+      // İç içe seçimde aynı satıra birden çok aralık düşerse ilk yazılanı koru.
+      if (!satira.has(satir.from)) satira.set(satir.from, deko);
+      ilk = false;
+      if (satir.to + 1 > pos) pos = satir.to + 1;
+      else break;
+    }
+  }
+  const isaretler = [...satira.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([from, deko]) => deko.range(from));
+  return Decoration.set(isaretler, true);
+}
+
 const seciliAlan = StateField.define<DecorationSet>({
   create: () => Decoration.none,
   update(deco, tr) {
     deco = deco.map(tr.changes);
     for (const e of tr.effects) {
-      if (e.is(seciliEtkisi)) {
-        const isaretler = e.value
-          .filter((r) => r.to > r.from)
-          .sort((a, b) => a.from - b.from || a.to - b.to)
-          .map((r) =>
-            Decoration.mark({ class: "cm-secili" }).range(r.from, r.to),
-          );
-        deco = Decoration.set(isaretler, true);
-      }
+      if (e.is(seciliEtkisi)) deco = blokDekor(tr.state.doc, e.value);
     }
     return deco;
   },
@@ -215,14 +253,21 @@ export class KodPaneli extends LitElement {
         color: "var(--metin-soluk)",
         border: "none",
       },
-      ".cm-secili": {
+      // Seçili düğümün gövdesi (grup/tek) — tam satır zemini ayrı renkte.
+      ".cm-secili-satir": {
         backgroundColor:
-          "color-mix(in srgb, var(--vurgu, #4a90e2) 24%, transparent)",
+          "color-mix(in srgb, var(--vurgu, #4a90e2) 18%, transparent)",
         boxShadow: "inset 2px 0 0 var(--vurgu, #4a90e2)",
       },
+      ".cm-secili-bas": { borderTopLeftRadius: "3px", borderTopRightRadius: "3px" },
+      ".cm-secili-son": {
+        borderBottomLeftRadius: "3px",
+        borderBottomRightRadius: "3px",
+      },
+      // Metin (caret) seçimi — bloğun zemininden ayırt edilsin diye farklı tonda.
       "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
         backgroundColor:
-          "color-mix(in srgb, var(--vurgu, #4a90e2) 30%, transparent)",
+          "color-mix(in srgb, var(--vurgu, #4a90e2) 34%, transparent)",
       },
     });
   }
