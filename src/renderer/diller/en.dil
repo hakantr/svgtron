@@ -167,6 +167,7 @@ kod.duzenle = Edit
 kod.goruntule = View
 kod.bosBelge = No document yet.
 kod.renklendirme = Syntax theme
+kod.yukseklik = Drag to resize height
 
 # Tabs (multi-document)
 sekme.adsiz = untitled

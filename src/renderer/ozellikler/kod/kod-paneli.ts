@@ -54,16 +54,22 @@ const tekSatirDeko = Decoration.line({
 
 /** Verilen aralıkların kapsadığı tüm satırlara zemin decoration'ı üretir (tekilleştirir). */
 function blokDekor(
-  doc: { lineAt: (pos: number) => { from: number; to: number } },
+  doc: { length: number; lineAt: (pos: number) => { from: number; to: number } },
   araliklar: { from: number; to: number }[],
 ): DecorationSet {
   const satira = new Map<number, Decoration>(); // line.from → decoration
-  for (const r of araliklar.filter((r) => r.to >= r.from)) {
-    let pos = r.from;
+  for (const r of araliklar.filter((r) => r.to > r.from)) {
+    // 'to' eleman bloğunun sonundaki \n'i de aşar (bir sonraki satırın başı);
+    // bir eksiğini al ki fazladan satır işaretlenmesin. Ayrıca doc sonuna kısta
+    // (kodMetni sondaki \n'leri kırptığından son eleman to'su taşabilir).
+    const bas = Math.min(r.from, doc.length);
+    const bitis = Math.min(r.to - 1, doc.length);
+    if (bitis < bas) continue;
+    let pos = bas;
     let ilk = true;
-    while (pos <= r.to) {
+    while (pos <= bitis) {
       const satir = doc.lineAt(pos);
-      const son = r.to <= satir.to;
+      const son = bitis <= satir.to;
       const deko =
         ilk && son
           ? tekSatirDeko
@@ -166,12 +172,21 @@ export class KodPaneli extends LitElement {
       cursor: pointer;
       max-width: 9rem;
     }
+    /* Üst tutamaç (zaman çizelgesi ile kod paneli arasında) — yüksekliği sürükle.
+       Sağ araç takımının .sag-tutamac'ının yatay eşdeğeri. */
+    .tutamac {
+      height: 5px;
+      cursor: ns-resize;
+      background: var(--kenarlik);
+    }
+    .tutamac:hover {
+      background: var(--vurgu, #4a90e2);
+      opacity: 0.5;
+    }
     .kap {
       border-top: 1px solid var(--kenarlik);
-      /* Açıldıktan sonra kullanıcı yüksekliği aşağı kenardan sürükleyerek değiştirir. */
       height: 240px;
       min-height: 80px;
-      resize: vertical;
       overflow: hidden;
     }
     .kap.gizli {
@@ -232,7 +247,6 @@ export class KodPaneli extends LitElement {
   #dilCoz?: () => void;
   /** Panel yüksekliği (görünüm durumu, İlke 9 → undo'ya girmez; oturumlar arası korunur). */
   #yukseklik = yukseklikOku();
-  #boyutGozlem?: ResizeObserver;
   /** Söz-dizimi renklendirme teması (görünüm durumu; Compartment ile canlı değişir). */
   @state() private temaId = temaOku();
   #temaBolme = new Compartment();
@@ -249,8 +263,6 @@ export class KodPaneli extends LitElement {
     this.#depoCoz?.();
     this.#secimCoz?.();
     this.#dilCoz?.();
-    this.#boyutGozlem?.disconnect();
-    this.#boyutGozlem = undefined;
     this.#view?.destroy();
     this.#view = undefined;
     super.disconnectedCallback();
@@ -264,16 +276,25 @@ export class KodPaneli extends LitElement {
       this.#view.destroy();
       this.#view = undefined;
     }
-    // Kullanıcının resize ile değiştirdiği yüksekliği yakala ve kalıcı sakla.
-    if (this.kap && !this.#boyutGozlem) {
-      this.#boyutGozlem = new ResizeObserver(() => {
-        const h = this.kap?.offsetHeight;
-        if (!h || h < 80 || h === this.#yukseklik) return;
-        this.#yukseklik = h;
-        localStorage.setItem(YUKSEKLIK_ANAHTAR, String(h));
-      });
-      this.#boyutGozlem.observe(this.kap);
-    }
+  }
+
+  /** Üst tutamaçtan yüksekliği sürükle (yukarı = büyür); İlke 9 → undo'ya girmez. */
+  #yuksBoyutBasla(olay: PointerEvent): void {
+    olay.preventDefault();
+    const basY = olay.clientY;
+    const basYuk = this.#yukseklik;
+    const hareket = (o: PointerEvent): void => {
+      const yeni = Math.max(80, Math.min(640, basYuk + (basY - o.clientY)));
+      this.#yukseklik = yeni;
+      if (this.kap) this.kap.style.height = `${yeni}px`; // canlı (yeniden render etmeden)
+    };
+    const birak = (): void => {
+      window.removeEventListener("pointermove", hareket);
+      window.removeEventListener("pointerup", birak);
+      localStorage.setItem(YUKSEKLIK_ANAHTAR, String(this.#yukseklik));
+    };
+    window.addEventListener("pointermove", hareket);
+    window.addEventListener("pointerup", birak);
   }
 
   #editorKur(): void {
@@ -385,6 +406,13 @@ export class KodPaneli extends LitElement {
   override render() {
     const belge = this.depo.belge;
     return html`
+      ${this.acik && belge
+        ? html`<div
+            class="tutamac"
+            title=${t("kod.yukseklik")}
+            @pointerdown=${(e: PointerEvent) => this.#yuksBoyutBasla(e)}
+          ></div>`
+        : ""}
       <div class="baslik" @click=${() => (this.acik = !this.acik)}>
         <span class="ok">${this.acik ? "▾" : "▸"}</span>
         <span class="ad">${t("kod.baslik")}</span>

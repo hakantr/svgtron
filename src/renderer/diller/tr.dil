@@ -167,6 +167,7 @@ kod.duzenle = Düzenle
 kod.goruntule = Görüntüle
 kod.bosBelge = Henüz belge yok.
 kod.renklendirme = Renklendirme teması
+kod.yukseklik = Yüksekliği sürükle
 
 # Sekmeler (çoklu belge)
 sekme.adsiz = adsız
