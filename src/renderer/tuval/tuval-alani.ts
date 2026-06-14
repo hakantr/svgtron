@@ -307,6 +307,13 @@ export class TuvalAlani extends LitElement {
   @query(".tutamaclar") private tutamaclar!: HTMLDivElement;
   @query(".uc-tutamaclar") private ucTutamaclar!: HTMLDivElement;
 
+  /** Cetvel imleç göstergesi (kullanıcı isteği): fareyi izleyen ince çizgiler. */
+  #imlecUst?: SVGLineElement;
+  #imlecSol?: SVGLineElement;
+  /** Son fare client konumu (cetvel göstergesi için); fare tuvalden çıkınca null. */
+  #sonImlecX: number | null = null;
+  #sonImlecY: number | null = null;
+
   /** Seçili düğüm kimliği → çerçeve divi. */
   readonly #cerceveler = new Map<string, HTMLDivElement>();
 
@@ -415,6 +422,7 @@ export class TuvalAlani extends LitElement {
     window.removeEventListener("pointerup", this.#ucBirak);
     this.kaydir?.removeEventListener("wheel", this.#tekerlek);
     this.kaydir?.removeEventListener("pointermove", this.#hover);
+    this.kaydir?.removeEventListener("pointerleave", this.#cetvelImlecCik);
     this.#izlemeyiDurdur();
     cizimErisimi.kaynakAyarla(null);
     super.disconnectedCallback();
@@ -423,6 +431,7 @@ export class TuvalAlani extends LitElement {
   override firstUpdated(): void {
     this.kaydir.addEventListener("wheel", this.#tekerlek, { passive: false });
     this.kaydir.addEventListener("pointermove", this.#hover);
+    this.kaydir.addEventListener("pointerleave", this.#cetvelImlecCik);
     this.belgeyiGuncelle();
   }
 
@@ -631,8 +640,19 @@ export class TuvalAlani extends LitElement {
 
   // Tuş basılı DEĞİLken hareket (hover) → aktif araca (örn. kalem ipucu çizgisi).
   readonly #hover = (olay: PointerEvent): void => {
+    // Cetvel imleç göstergesi her harekette (sürükleme dâhil) güncellenir.
+    this.#sonImlecX = olay.clientX;
+    this.#sonImlecY = olay.clientY;
+    this.#cetvelImlecKonumla();
     if (olay.buttons !== 0) return;
     aracDeposu.aktif?.hareket?.(olay, this.#aracBaglami());
+  };
+
+  /** Fare tuvalden çıkınca cetvel göstergesini gizle. */
+  readonly #cetvelImlecCik = (): void => {
+    this.#sonImlecX = null;
+    this.#sonImlecY = null;
+    this.#cetvelImlecKonumla();
   };
 
   // Araç etkinken klavye (Enter/Esc gibi) → aktif araca (giriş alanında değilken).
@@ -859,7 +879,48 @@ export class TuvalAlani extends LitElement {
       }
       cocuklar.push(tx);
     }
+    // Fareyi izleyen imleç çizgisi (kalıcı) — en üstte dursun diye en sona eklenir.
+    let imlec = eksen === "x" ? this.#imlecUst : this.#imlecSol;
+    if (!imlec) {
+      imlec = document.createElementNS(NS, "line");
+      imlec.setAttribute("stroke", "var(--cetvel-imlec, #25d07d)");
+      imlec.setAttribute("stroke-width", "1");
+      imlec.setAttribute("pointer-events", "none");
+      imlec.style.display = "none";
+      if (eksen === "x") this.#imlecUst = imlec;
+      else this.#imlecSol = imlec;
+    }
+    cocuklar.push(imlec);
     svg.replaceChildren(...cocuklar);
+    this.#cetvelImlecKonumla(); // yeniden çizimden sonra son fare konumuna getir
+  }
+
+  /** Cetvel imleç çizgilerini son fare konumuna taşır (görünmüyorsa gizler). */
+  #cetvelImlecKonumla(): void {
+    const ust = this.#imlecUst;
+    if (ust && this.cetvelUst) {
+      const r = this.cetvelUst.getBoundingClientRect();
+      const x = this.#sonImlecX == null ? -1 : this.#sonImlecX - r.left;
+      if (x >= 0 && x <= r.width) {
+        ust.setAttribute("x1", String(x));
+        ust.setAttribute("x2", String(x));
+        ust.setAttribute("y1", "0");
+        ust.setAttribute("y2", "20");
+        ust.style.display = "";
+      } else ust.style.display = "none";
+    }
+    const sol = this.#imlecSol;
+    if (sol && this.cetvelSol) {
+      const r = this.cetvelSol.getBoundingClientRect();
+      const y = this.#sonImlecY == null ? -1 : this.#sonImlecY - r.top;
+      if (y >= 0 && y <= r.height) {
+        sol.setAttribute("y1", String(y));
+        sol.setAttribute("y2", String(y));
+        sol.setAttribute("x1", "0");
+        sol.setAttribute("x2", "20");
+        sol.style.display = "";
+      } else sol.style.display = "none";
+    }
   }
 
   /** Kullanıcı kılavuzlarını (TK-37 #2) çizer (ekran konumuna). */
