@@ -23,17 +23,18 @@ import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
 import { dilYonetici, t } from "../../diller/dil";
 import { kodMetni, konumdakiKimlik } from "./kod-metin";
 import { kodTemalari, kodTemaUzanti, VARSAYILAN_KOD_TEMA } from "./kod-temalari";
+import { yerelOku, yerelYaz } from "../../yerel-depo";
 
 /** Panel yüksekliği (görünüm durumu) localStorage anahtarı. */
 const YUKSEKLIK_ANAHTAR = "kodPaneli.yukseklik";
 function yukseklikOku(): number {
-  const v = Number(localStorage.getItem(YUKSEKLIK_ANAHTAR));
+  const v = Number(yerelOku(YUKSEKLIK_ANAHTAR));
   return Number.isFinite(v) && v >= 80 ? v : 240;
 }
 /** Söz-dizimi renklendirme teması localStorage anahtarı. */
 const TEMA_ANAHTAR = "kodPaneli.tema";
 function temaOku(): string {
-  const id = localStorage.getItem(TEMA_ANAHTAR);
+  const id = yerelOku(TEMA_ANAHTAR);
   return id && kodTemalari.some((x) => x.id === id) ? id : VARSAYILAN_KOD_TEMA;
 }
 
@@ -292,7 +293,7 @@ export class KodPaneli extends LitElement {
     const birak = (): void => {
       window.removeEventListener("pointermove", hareket);
       window.removeEventListener("pointerup", birak);
-      localStorage.setItem(YUKSEKLIK_ANAHTAR, String(this.#yukseklik));
+      yerelYaz(YUKSEKLIK_ANAHTAR, String(this.#yukseklik));
     };
     window.addEventListener("pointermove", hareket);
     window.addEventListener("pointerup", birak);
@@ -334,7 +335,7 @@ export class KodPaneli extends LitElement {
   #temaDegistir(id: string): void {
     if (id === this.temaId) return;
     this.temaId = id;
-    localStorage.setItem(TEMA_ANAHTAR, id);
+    yerelYaz(TEMA_ANAHTAR, id);
     this.#view?.dispatch({
       effects: this.#temaBolme.reconfigure(kodTemaUzanti(id)),
     });

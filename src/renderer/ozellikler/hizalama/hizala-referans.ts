@@ -14,6 +14,7 @@ export type HizalaReferans = 'son-secilen' | 'anahtar' | 'secim' | 'belge';
 
 import { gez, type Dugum } from '../../../cekirdek/belge/model/dugum';
 import type { Belge } from '../../../cekirdek/belge/belge';
+import { yerelOku, yerelYaz } from '../../yerel-depo';
 
 /**
  * Etkin referans NESNESİ (mod tek-nesne referansıysa), yoksa null (§9.6a/§9.2).
@@ -60,12 +61,8 @@ class HizalaReferansModu {
   readonly #dinleyiciler = new Set<() => void>();
 
   constructor() {
-    try {
-      const k = localStorage.getItem(ANAHTAR);
-      if (k && GECERLI.includes(k as HizalaReferans)) this.#mod = k as HizalaReferans;
-    } catch {
-      /* localStorage yoksa varsayılan kalır */
-    }
+    const k = yerelOku(ANAHTAR);
+    if (k && GECERLI.includes(k as HizalaReferans)) this.#mod = k as HizalaReferans;
   }
 
   get mod(): HizalaReferans {
@@ -75,11 +72,7 @@ class HizalaReferansModu {
   ayarla(mod: HizalaReferans): void {
     if (mod === this.#mod) return;
     this.#mod = mod;
-    try {
-      localStorage.setItem(ANAHTAR, mod);
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz(ANAHTAR, mod);
     for (const d of this.#dinleyiciler) d();
   }
 

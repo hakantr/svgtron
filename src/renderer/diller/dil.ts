@@ -17,6 +17,8 @@
  * dosyada görünür. Çevrilmemiş işareti olan `?` değeri, çalışma anında "yok"
  * sayılır (Türkçe'ye düşülür) — UI bozulmaz, marker yalnız dosya içindir.
  */
+import { yerelOku, yerelYaz } from "../yerel-depo";
+
 const VARSAYILAN_DIL = "tr";
 const DEPOLAMA_ANAHTARI = "svgtron.dil";
 /** Çevrilmemiş anahtar işareti (dosyada gözükür; çalışma anında "yok" sayılır). */
@@ -139,19 +141,11 @@ class DilYonetici {
   }
 
   #oku(): string | null {
-    try {
-      return localStorage.getItem(DEPOLAMA_ANAHTARI);
-    } catch {
-      return null;
-    }
+    return yerelOku(DEPOLAMA_ANAHTARI);
   }
 
   #yaz(kod: string): void {
-    try {
-      localStorage.setItem(DEPOLAMA_ANAHTARI, kod);
-    } catch {
-      /* kalıcılık yoksa sorun değil */
-    }
+    yerelYaz(DEPOLAMA_ANAHTARI, kod);
   }
 }
 

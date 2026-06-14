@@ -1,5 +1,6 @@
 import { temaKayitDefteri } from "../../cekirdek/registry/tema-registry";
 import { VARSAYILAN_TEMA_ID } from "../ozellikler/temalar/temalar";
+import { yerelOku, yerelYaz } from "../yerel-depo";
 
 /**
  * Tema yöneticisi (renderer/kabuk).
@@ -52,21 +53,13 @@ class TemaYonetici {
     return () => this.#dinleyiciler.delete(dinleyici);
   }
 
-  // localStorage `file://` altında SecurityError atabilir; sessizce yut.
+  // localStorage `file://` altında SecurityError atabilir; yerelOku/Yaz sessiz yutar.
   #oku(): string | null {
-    try {
-      return localStorage.getItem(DEPOLAMA_ANAHTARI);
-    } catch {
-      return null;
-    }
+    return yerelOku(DEPOLAMA_ANAHTARI);
   }
 
   #yaz(id: string): void {
-    try {
-      localStorage.setItem(DEPOLAMA_ANAHTARI, id);
-    } catch {
-      /* kalıcılık yoksa sorun değil */
-    }
+    yerelYaz(DEPOLAMA_ANAHTARI, id);
   }
 }
 

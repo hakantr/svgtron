@@ -6,6 +6,8 @@
  * GİRMEZ. Oturumlar arası localStorage'da korunur. Tek doğruluk kaynağı budur;
  * `stilUygulaKomutu` bunu okur.
  */
+import { yerelOku, yerelYaz } from '../yerel-depo';
+
 export type StilModu = 'inline' | 'css' | 'otomatik';
 
 const ANAHTAR = 'svgtron.stilModu';
@@ -16,12 +18,8 @@ class StilYazimModu {
   readonly #dinleyiciler = new Set<() => void>();
 
   constructor() {
-    try {
-      const k = localStorage.getItem(ANAHTAR);
-      if (k && GECERLI.includes(k as StilModu)) this.#mod = k as StilModu;
-    } catch {
-      /* localStorage yoksa varsayılan kalır */
-    }
+    const k = yerelOku(ANAHTAR);
+    if (k && GECERLI.includes(k as StilModu)) this.#mod = k as StilModu;
   }
 
   get mod(): StilModu {
@@ -31,11 +29,7 @@ class StilYazimModu {
   ayarla(mod: StilModu): void {
     if (mod === this.#mod) return;
     this.#mod = mod;
-    try {
-      localStorage.setItem(ANAHTAR, mod);
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz(ANAHTAR, mod);
     for (const d of this.#dinleyiciler) d();
   }
 

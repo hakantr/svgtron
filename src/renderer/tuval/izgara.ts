@@ -4,19 +4,17 @@
  * Oturumlar arası localStorage'da korunur. Izgaraya yapışma bu adımı kullanır; ızgara
  * GİZLİYKEN yapışma da uygulanmaz (görünmeyen şeye yapışma şaşırtıcı olur).
  */
+import { yerelOku, yerelYaz } from "../yerel-depo";
+
 class Izgara {
   #gorunur = false;
   #adim = 10;
   readonly #dinleyiciler = new Set<() => void>();
 
   constructor() {
-    try {
-      this.#gorunur = localStorage.getItem("svgtron.izgara.gorunur") === "1";
-      const a = Number(localStorage.getItem("svgtron.izgara.adim"));
-      if (Number.isFinite(a) && a > 0) this.#adim = a;
-    } catch {
-      /* yoksa varsayılan */
-    }
+    this.#gorunur = yerelOku("svgtron.izgara.gorunur") === "1";
+    const a = Number(yerelOku("svgtron.izgara.adim"));
+    if (Number.isFinite(a) && a > 0) this.#adim = a;
   }
 
   get gorunur(): boolean {
@@ -48,11 +46,7 @@ class Izgara {
   }
 
   #kaydet(anahtar: string, deger: string): void {
-    try {
-      localStorage.setItem(anahtar, deger);
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz(anahtar, deger);
   }
   #bildir(): void {
     for (const d of this.#dinleyiciler) d();

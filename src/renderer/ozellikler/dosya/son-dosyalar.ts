@@ -3,6 +3,8 @@
  * alt menüsünü besler. localStorage'da kalıcı; en yeni başta, en çok 8 kayıt,
  * aynı yol tekrarlanmaz. Belge modeline dokunmaz (İlke 9).
  */
+import { yerelOku, yerelYaz } from '../../yerel-depo';
+
 export interface SonDosya {
   readonly yol: string;
   readonly ad: string;
@@ -17,7 +19,7 @@ class SonDosyalar {
 
   constructor() {
     try {
-      const ham = localStorage.getItem(ANAHTAR);
+      const ham = yerelOku(ANAHTAR);
       const p: unknown = ham ? JSON.parse(ham) : null;
       if (Array.isArray(p)) {
         this.#liste = p
@@ -60,11 +62,7 @@ class SonDosyalar {
   }
 
   #kaydet(): void {
-    try {
-      localStorage.setItem(ANAHTAR, JSON.stringify(this.#liste));
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz(ANAHTAR, JSON.stringify(this.#liste));
   }
 
   #bildir(): void {

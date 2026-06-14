@@ -8,16 +8,14 @@
  * davranış: yalnız Shift üniform yapar. (Döndürülmüş/eğik nesne, skew'i önlemek için
  * her durumda üniform kalır — bu bir tercih değil, doğruluk kısıtıdır; bkz. tuval-alani.)
  */
+import { yerelOku, yerelYaz } from "../yerel-depo";
+
 class OranKilidi {
   #acik = false;
   readonly #dinleyiciler = new Set<() => void>();
 
   constructor() {
-    try {
-      this.#acik = localStorage.getItem("svgtron.oranKilidi") === "1";
-    } catch {
-      /* localStorage yoksa varsayılan (kapalı) kalır */
-    }
+    this.#acik = yerelOku("svgtron.oranKilidi") === "1";
   }
 
   get acik(): boolean {
@@ -27,11 +25,7 @@ class OranKilidi {
   ayarla(acik: boolean): void {
     if (acik === this.#acik) return;
     this.#acik = acik;
-    try {
-      localStorage.setItem("svgtron.oranKilidi", acik ? "1" : "0");
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz("svgtron.oranKilidi", acik ? "1" : "0");
     for (const d of this.#dinleyiciler) d();
   }
 

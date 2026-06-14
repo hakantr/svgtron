@@ -7,6 +7,8 @@
  * tekilleştirilir, en çok {@link SINIR} kayıt. (Belgeye yazılan kalıcı bir PALET
  * ayrı bir tasarımdır — kaynak/metadata + Command; TK-37 #8 notu — burada yok.)
  */
+import { yerelOku, yerelYaz } from "../yerel-depo";
+
 const ANAHTAR = "svgtron.sonRenkler";
 const SINIR = 12;
 
@@ -16,7 +18,7 @@ class SonRenkler {
 
   constructor() {
     try {
-      const ham = localStorage.getItem(ANAHTAR);
+      const ham = yerelOku(ANAHTAR);
       if (ham) {
         const dizi = JSON.parse(ham);
         if (Array.isArray(dizi))
@@ -43,11 +45,7 @@ class SonRenkler {
     if (!r || /^rgba\([^)]*,\s*0(\.0+)?\s*\)$/i.test(r)) return;
     const kalan = this.#renkler.filter((x) => x !== r);
     this.#renkler = [r, ...kalan].slice(0, SINIR);
-    try {
-      localStorage.setItem(ANAHTAR, JSON.stringify(this.#renkler));
-    } catch {
-      /* yoksa yalnız bellekte */
-    }
+    yerelYaz(ANAHTAR, JSON.stringify(this.#renkler));
     for (const d of this.#dinleyiciler) d();
   }
 

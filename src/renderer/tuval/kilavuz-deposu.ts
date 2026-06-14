@@ -4,6 +4,8 @@
  * KULLANICI koordinatında tutulur (zoom/pan ile tutarlı). Bellekte; belge değişince
  * temizlenir (kılavuzlar belgeye yazılmaz — saf SVG kalır, İlke 10).
  */
+import { yerelOku, yerelYaz } from "../yerel-depo";
+
 export interface KullaniciKilavuzu {
   yon: "yatay" | "dikey";
   /** Kullanıcı koordinatı (yatay → y; dikey → x). */
@@ -16,11 +18,7 @@ class KilavuzDeposu {
   readonly #dinleyiciler = new Set<() => void>();
 
   constructor() {
-    try {
-      this.#cetvel = localStorage.getItem("svgtron.cetvel") === "1";
-    } catch {
-      /* yoksa varsayılan */
-    }
+    this.#cetvel = yerelOku("svgtron.cetvel") === "1";
   }
 
   get liste(): readonly KullaniciKilavuzu[] {
@@ -32,11 +30,7 @@ class KilavuzDeposu {
 
   cetvelDegistir(): void {
     this.#cetvel = !this.#cetvel;
-    try {
-      localStorage.setItem("svgtron.cetvel", this.#cetvel ? "1" : "0");
-    } catch {
-      /* yoksa bellekte */
-    }
+    yerelYaz("svgtron.cetvel", this.#cetvel ? "1" : "0");
     this.#bildir();
   }
 
