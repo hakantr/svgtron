@@ -549,8 +549,24 @@ export class TuvalAlani extends LitElement {
     }
     this.#konumla();
   }
-  #yakinlastir(faktor: number): void {
-    this.#olcek = Math.min(64, Math.max(0.05, this.#olcek * faktor));
+  /**
+   * Yakınlaştırır. `ankraj` (imleç ekran konumu) verilirse o nokta SABİT kalır,
+   * gerisi onun çevresinde ölçeklenir (zoom-to-cursor). `.icerik` ölçeği merkez
+   * (transform-origin) etrafında uygulandığından, ankraj sabitliği pan ile telafi
+   * edilir: pan1 = (1-k)·(C-O) + k·pan0  (O = kutu merkezi, C = imleç, k = gerçek
+   * uygulanan ölçek oranı). Ankraj yoksa merkez etrafında (klavye/araç zoom'u).
+   */
+  #yakinlastir(faktor: number, ankraj?: { x: number; y: number }): void {
+    const yeni = Math.min(64, Math.max(0.05, this.#olcek * faktor));
+    const k = yeni / this.#olcek; // clamp sonrası gerçek oran
+    if (ankraj && this.kaydir && k !== 1) {
+      const r = this.kaydir.getBoundingClientRect();
+      const cx = ankraj.x - (r.left + r.width / 2);
+      const cy = ankraj.y - (r.top + r.height / 2);
+      this.#panX = (1 - k) * cx + k * this.#panX;
+      this.#panY = (1 - k) * cy + k * this.#panY;
+    }
+    this.#olcek = yeni;
     this.#transformUygula();
   }
   #kaydir(dx: number, dy: number): void {
@@ -567,7 +583,11 @@ export class TuvalAlani extends LitElement {
 
   readonly #tekerlek = (olay: WheelEvent): void => {
     olay.preventDefault();
-    this.#yakinlastir(olay.deltaY < 0 ? 1.12 : 1 / 1.12);
+    // İmlecin altındaki nokta sabit kalsın (zoom-to-cursor).
+    this.#yakinlastir(olay.deltaY < 0 ? 1.12 : 1 / 1.12, {
+      x: olay.clientX,
+      y: olay.clientY,
+    });
   };
 
   readonly #zoomKlavye = (olay: KeyboardEvent): void => {
