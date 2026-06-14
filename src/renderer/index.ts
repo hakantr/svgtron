@@ -49,5 +49,4 @@ import "./ozellikler/tanimlar-paneli/turler/maske-turu";
 import "./ozellikler/tanimlar-paneli/tanimlar-paneli-panel";
 import "./ozellikler/zaman-cizelgesi/zaman-cizelgesi-panel";
 import "./ozellikler/kod/kod-paneli";
-import "./ozellikler/komut-paleti/komut-paleti";
 import "./kabuk/uygulama-kabugu";

@@ -36,7 +36,10 @@ import {
 } from "../ozellikler/dosya/dosya-eylemleri";
 import { degisiklikSor } from "./degisiklik-sor";
 import { hakkindaServisi } from "../ozellikler/yardim/hakkinda";
-import { komutPaletiDeposu } from "../ozellikler/komut-paleti/komut-paleti-deposu";
+import {
+  paletEylemleri,
+  paletSuz,
+} from "../ozellikler/komut-paleti/palet-eylemleri";
 import "./pencere-kontrolleri";
 import "./uygulama-menusu";
 
@@ -198,6 +201,72 @@ export class UygulamaKabugu extends LitElement {
       border: 1px solid var(--kenarlik);
       border-radius: 4px;
       color: var(--metin-soluk);
+    }
+    /* Yerinde arama: kutu açılınca biraz genişler; liste altından açılır. */
+    .komut-ara {
+      position: relative;
+    }
+    .komut-ara.acik {
+      min-width: 360px;
+      max-width: 460px;
+      background: var(--yuzey-2, var(--yuzey));
+      border-color: var(--vurgu, #4a90e2);
+    }
+    .komut-ara input {
+      flex: 1;
+      min-width: 0;
+      font: inherit;
+      font-size: 0.8rem;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--metin);
+      outline: none;
+    }
+    .komut-ara input::placeholder {
+      color: var(--metin-soluk);
+    }
+    /* Açılır liste — title bardaki komut-ara görünümüyle aynı (yüzey-2/kenarlık/yuvarlama). */
+    .komut-liste {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 0.25rem;
+      list-style: none;
+      max-height: 60vh;
+      overflow-y: auto;
+      background: var(--yuzey-2, var(--yuzey));
+      color: var(--metin);
+      border: 1px solid var(--kenarlik);
+      border-radius: 7px;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4);
+      z-index: 60;
+      -webkit-app-region: no-drag;
+    }
+    .komut-oge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .komut-oge.sec {
+      background: var(--vurgu, #4a90e2);
+      color: var(--vurgu-metin, #fff);
+    }
+    .komut-oge .ipucu {
+      font-size: 0.72rem;
+      opacity: 0.7;
+    }
+    .komut-bos {
+      padding: 0.6rem 0.5rem;
+      color: var(--metin-soluk);
+      font-size: 0.8rem;
     }
 
     .hamburger {
@@ -555,6 +624,11 @@ export class UygulamaKabugu extends LitElement {
   @state() private acikHakkinda = false;
   /** Üst çubuktaki dil (dünya simgesi) açılırı açık mı? */
   @state() private dilAcik = false;
+  // Komut araması (üst çubuk; eski modal yerine yerinde açılır liste).
+  @state() private komutAcik = false;
+  @state() private komutSorgu = "";
+  @state() private komutIndis = 0;
+  @query(".komut-ara input") private komutGirisEl?: HTMLInputElement;
   #degisiklikCoz?: () => void;
   #disaAktarCoz?: () => void;
   #menuEylemCoz?: () => void;
@@ -597,6 +671,13 @@ export class UygulamaKabugu extends LitElement {
 
   // Klavye: menü modu gezinmesi + düzenleme kısayolları (giriş alanında değilken).
   readonly #klavye = (olay: KeyboardEvent): void => {
+    // Ctrl/Cmd+K: üst çubuk komut aramasına odaklan (eski modal yerine).
+    if ((olay.ctrlKey || olay.metaKey) && olay.key.toLowerCase() === "k") {
+      olay.preventDefault();
+      this.komutGirisEl?.focus();
+      this.komutGirisEl?.select();
+      return;
+    }
     // Dil açılırı açıkken Esc kapatır.
     if (this.dilAcik && olay.key === "Escape") {
       olay.preventDefault();
@@ -745,6 +826,69 @@ export class UygulamaKabugu extends LitElement {
       );
     if (!iceride) this.menuModunuKapat();
   };
+
+  // --- Komut araması (üst çubuk, yerinde açılır liste) ---
+  #komutGiris(olay: Event): void {
+    this.komutSorgu = (olay.target as HTMLInputElement).value;
+    this.komutIndis = 0;
+    this.komutAcik = true;
+  }
+  #komutKapat(): void {
+    this.komutAcik = false;
+    this.komutSorgu = "";
+    this.komutIndis = 0;
+  }
+  #komutKlavye(olay: KeyboardEvent): void {
+    olay.stopPropagation(); // arama klavyeyi sahiplenir → araç kısayolları tetiklenmesin
+    const liste = paletSuz(paletEylemleri(this.#menuBaglami), this.komutSorgu);
+    switch (olay.key) {
+      case "Escape":
+        olay.preventDefault();
+        this.#komutKapat();
+        this.komutGirisEl?.blur();
+        break;
+      case "ArrowDown":
+        olay.preventDefault();
+        this.komutIndis = Math.min(this.komutIndis + 1, liste.length - 1);
+        break;
+      case "ArrowUp":
+        olay.preventDefault();
+        this.komutIndis = Math.max(this.komutIndis - 1, 0);
+        break;
+      case "Enter":
+        olay.preventDefault();
+        void this.#komutSec(liste[this.komutIndis]);
+        break;
+    }
+  }
+  async #komutSec(eylem?: {
+    calistir(): void | Promise<void>;
+  }): Promise<void> {
+    if (!eylem) return;
+    this.#komutKapat();
+    this.komutGirisEl?.blur();
+    await eylem.calistir();
+  }
+  #komutListe() {
+    const liste = paletSuz(paletEylemleri(this.#menuBaglami), this.komutSorgu);
+    if (liste.length === 0)
+      return html`<div class="komut-liste">
+        <div class="komut-bos">${t("komutpalet.bos")}</div>
+      </div>`;
+    return html`<ul class="komut-liste">
+      ${liste.map(
+        (e, i) => html`<li
+          class="komut-oge ${i === this.komutIndis ? "sec" : ""}"
+          @mousedown=${(ev: Event) => ev.preventDefault()}
+          @mouseenter=${() => (this.komutIndis = i)}
+          @click=${() => this.#komutSec(e)}
+        >
+          <span class="etiket">${e.etiket}</span>
+          <span class="ipucu">${e.ipucu}</span>
+        </li>`,
+      )}
+    </ul>`;
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -1055,11 +1199,7 @@ export class UygulamaKabugu extends LitElement {
 
         <span class="bosluk"></span>
 
-        <button
-          class="komut-ara"
-          title=${t("komutpalet.ipucu")}
-          @click=${() => komutPaletiDeposu.ayarla(true)}
-        >
+        <div class="komut-ara ${this.komutAcik ? "acik" : ""}">
           <svg
             viewBox="0 0 16 16"
             width="13"
@@ -1071,9 +1211,21 @@ export class UygulamaKabugu extends LitElement {
             <circle cx="7" cy="7" r="4.5" />
             <path d="M11 11 L14.5 14.5" stroke-linecap="round" />
           </svg>
-          <span class="etiket">${t("komutpalet.ara")}</span>
-          <kbd>${window.api.platform === "darwin" ? "⌘K" : "Ctrl+K"}</kbd>
-        </button>
+          <input
+            type="text"
+            placeholder=${t("komutpalet.ara")}
+            title=${t("komutpalet.ipucu")}
+            .value=${this.komutSorgu}
+            @focus=${() => (this.komutAcik = true)}
+            @input=${this.#komutGiris}
+            @keydown=${this.#komutKlavye}
+            @blur=${() => (this.komutAcik = false)}
+          />
+          ${this.komutAcik
+            ? ""
+            : html`<kbd>${macOS ? "⌘K" : "Ctrl+K"}</kbd>`}
+          ${this.komutAcik ? this.#komutListe() : ""}
+        </div>
 
         <span class="bosluk"></span>
 
