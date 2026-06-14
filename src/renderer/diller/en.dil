@@ -166,6 +166,7 @@ kod.gecersiz = Invalid SVG.
 kod.duzenle = Edit
 kod.goruntule = View
 kod.bosBelge = No document yet.
+kod.renklendirme = Syntax theme
 
 # Tabs (multi-document)
 sekme.adsiz = untitled

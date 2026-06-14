@@ -166,6 +166,7 @@ kod.gecersiz = Geçersiz SVG.
 kod.duzenle = Düzenle
 kod.goruntule = Görüntüle
 kod.bosBelge = Henüz belge yok.
+kod.renklendirme = Renklendirme teması
 
 # Sekmeler (çoklu belge)
 sekme.adsiz = adsız

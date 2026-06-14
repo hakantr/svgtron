@@ -7,13 +7,14 @@ import {
   Decoration,
   type DecorationSet,
 } from "@codemirror/view";
-import { EditorState, StateEffect, StateField } from "@codemirror/state";
+import {
+  Compartment,
+  EditorState,
+  StateEffect,
+  StateField,
+} from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { html as htmlDili } from "@codemirror/lang-html";
-import {
-  syntaxHighlighting,
-  defaultHighlightStyle,
-} from "@codemirror/language";
 import type { BelgeDeposu } from "../../../cekirdek/belge/belge-deposu";
 import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
 import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
@@ -21,6 +22,20 @@ import { KodUygulaKomutu } from "../../../cekirdek/komutlar/kod-uygula-komutu";
 import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
 import { dilYonetici, t } from "../../diller/dil";
 import { kodMetni, konumdakiKimlik } from "./kod-metin";
+import { kodTemalari, kodTemaUzanti, VARSAYILAN_KOD_TEMA } from "./kod-temalari";
+
+/** Panel yüksekliği (görünüm durumu) localStorage anahtarı. */
+const YUKSEKLIK_ANAHTAR = "kodPaneli.yukseklik";
+function yukseklikOku(): number {
+  const v = Number(localStorage.getItem(YUKSEKLIK_ANAHTAR));
+  return Number.isFinite(v) && v >= 80 ? v : 240;
+}
+/** Söz-dizimi renklendirme teması localStorage anahtarı. */
+const TEMA_ANAHTAR = "kodPaneli.tema";
+function temaOku(): string {
+  const id = localStorage.getItem(TEMA_ANAHTAR);
+  return id && kodTemalari.some((x) => x.id === id) ? id : VARSAYILAN_KOD_TEMA;
+}
 
 /** Seçili düğüm aralıklarını vurgulayan decoration alanı (StateEffect ile güncellenir). */
 const seciliEtkisi = StateEffect.define<{ from: number; to: number }[]>();
@@ -139,8 +154,25 @@ export class KodPaneli extends LitElement {
       color: var(--vurgu-metin);
       cursor: pointer;
     }
+    /* Söz-dizimi renklendirme seçici — başlık barının en sağında. */
+    .tema-sec {
+      font: inherit;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.3rem;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      background: var(--yuzey-2, var(--yuzey));
+      color: var(--metin);
+      cursor: pointer;
+      max-width: 9rem;
+    }
     .kap {
       border-top: 1px solid var(--kenarlik);
+      /* Açıldıktan sonra kullanıcı yüksekliği aşağı kenardan sürükleyerek değiştirir. */
+      height: 240px;
+      min-height: 80px;
+      resize: vertical;
+      overflow: hidden;
     }
     .kap.gizli {
       display: none;
@@ -150,13 +182,32 @@ export class KodPaneli extends LitElement {
       color: var(--metin-soluk);
       font-size: 0.74rem;
     }
-    /* CodeMirror düzeni (tema EditorView.theme'de; renkler CSS değişkenlerinden). */
+    /* CodeMirror, .kap'ın yüksekliğini doldursun; kaydırma scroller'da olur. */
     .cm-editor {
-      max-height: 240px;
+      height: 100%;
       font-size: 0.72rem;
+    }
+    .cm-content,
+    .cm-gutters {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .cm-editor.cm-focused {
       outline: none;
+    }
+    /* Seçili düğümün gövdesi (grup/tek) — tam satır zemini ayrı renkte.
+       NOT: --vurgu bazı temalarda gradient olduğundan color-mix'te kullanılamaz;
+       o yüzden sabit yarı-saydam mavi kullanıyoruz (her temada görünür). */
+    .cm-line.cm-secili-satir {
+      background-color: rgba(74, 144, 226, 0.22);
+      box-shadow: inset 2px 0 0 #4a90e2;
+    }
+    .cm-line.cm-secili-bas {
+      border-top-left-radius: 3px;
+      border-top-right-radius: 3px;
+    }
+    .cm-line.cm-secili-son {
+      border-bottom-left-radius: 3px;
+      border-bottom-right-radius: 3px;
     }
   `;
 
@@ -179,6 +230,12 @@ export class KodPaneli extends LitElement {
   #depoCoz?: () => void;
   #secimCoz?: () => void;
   #dilCoz?: () => void;
+  /** Panel yüksekliği (görünüm durumu, İlke 9 → undo'ya girmez; oturumlar arası korunur). */
+  #yukseklik = yukseklikOku();
+  #boyutGozlem?: ResizeObserver;
+  /** Söz-dizimi renklendirme teması (görünüm durumu; Compartment ile canlı değişir). */
+  @state() private temaId = temaOku();
+  #temaBolme = new Compartment();
 
   @query(".kap") private kap?: HTMLDivElement;
 
@@ -192,6 +249,8 @@ export class KodPaneli extends LitElement {
     this.#depoCoz?.();
     this.#secimCoz?.();
     this.#dilCoz?.();
+    this.#boyutGozlem?.disconnect();
+    this.#boyutGozlem = undefined;
     this.#view?.destroy();
     this.#view = undefined;
     super.disconnectedCallback();
@@ -204,6 +263,16 @@ export class KodPaneli extends LitElement {
     else if ((!this.acik || !belge) && this.#view) {
       this.#view.destroy();
       this.#view = undefined;
+    }
+    // Kullanıcının resize ile değiştirdiği yüksekliği yakala ve kalıcı sakla.
+    if (this.kap && !this.#boyutGozlem) {
+      this.#boyutGozlem = new ResizeObserver(() => {
+        const h = this.kap?.offsetHeight;
+        if (!h || h < 80 || h === this.#yukseklik) return;
+        this.#yukseklik = h;
+        localStorage.setItem(YUKSEKLIK_ANAHTAR, String(h));
+      });
+      this.#boyutGozlem.observe(this.kap);
     }
   }
 
@@ -222,10 +291,9 @@ export class KodPaneli extends LitElement {
           history(),
           keymap.of([...defaultKeymap, ...historyKeymap]),
           htmlDili(),
-          syntaxHighlighting(defaultHighlightStyle),
           seciliAlan,
           EditorView.lineWrapping,
-          this.#tema(),
+          this.#temaBolme.of(kodTemaUzanti(this.temaId)),
           EditorView.updateListener.of((u) => {
             if (u.docChanged && !this.#programatik && !this.kirli)
               this.kirli = true;
@@ -240,35 +308,13 @@ export class KodPaneli extends LitElement {
     this.#seciliVurgula();
   }
 
-  #tema() {
-    return EditorView.theme({
-      "&": {
-        color: "var(--metin)",
-        backgroundColor: "var(--zemin)",
-        fontFamily: "ui-monospace, SFMono-Regular, monospace",
-      },
-      ".cm-content": { caretColor: "var(--vurgu, #4a90e2)" },
-      ".cm-gutters": {
-        backgroundColor: "var(--yuzey)",
-        color: "var(--metin-soluk)",
-        border: "none",
-      },
-      // Seçili düğümün gövdesi (grup/tek) — tam satır zemini ayrı renkte.
-      ".cm-secili-satir": {
-        backgroundColor:
-          "color-mix(in srgb, var(--vurgu, #4a90e2) 18%, transparent)",
-        boxShadow: "inset 2px 0 0 var(--vurgu, #4a90e2)",
-      },
-      ".cm-secili-bas": { borderTopLeftRadius: "3px", borderTopRightRadius: "3px" },
-      ".cm-secili-son": {
-        borderBottomLeftRadius: "3px",
-        borderBottomRightRadius: "3px",
-      },
-      // Metin (caret) seçimi — bloğun zemininden ayırt edilsin diye farklı tonda.
-      "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-        backgroundColor:
-          "color-mix(in srgb, var(--vurgu, #4a90e2) 34%, transparent)",
-      },
+  /** Söz-dizimi renklendirme temasını canlı değiştirir (editör yeniden kurulmaz). */
+  #temaDegistir(id: string): void {
+    if (id === this.temaId) return;
+    this.temaId = id;
+    localStorage.setItem(TEMA_ANAHTAR, id);
+    this.#view?.dispatch({
+      effects: this.#temaBolme.reconfigure(kodTemaUzanti(id)),
     });
   }
 
@@ -353,11 +399,29 @@ export class KodPaneli extends LitElement {
               ${t("kod.uygula")}
             </button>`
           : ""}
+        ${this.acik
+          ? html`<select
+              class="tema-sec"
+              title=${t("kod.renklendirme")}
+              .value=${this.temaId}
+              @click=${(e: Event) => e.stopPropagation()}
+              @change=${(e: Event) =>
+                this.#temaDegistir((e.target as HTMLSelectElement).value)}
+            >
+              ${kodTemalari.map(
+                (tema) =>
+                  html`<option value=${tema.id}>${tema.etiket}</option>`,
+              )}
+            </select>`
+          : ""}
       </div>
       ${this.acik && !belge
         ? html`<div class="bos">${t("kod.bosBelge")}</div>`
         : ""}
-      <div class="kap ${this.acik && belge ? "" : "gizli"}"></div>
+      <div
+        class="kap ${this.acik && belge ? "" : "gizli"}"
+        style=${this.acik && belge ? `height:${this.#yukseklik}px` : ""}
+      ></div>
     `;
   }
 }

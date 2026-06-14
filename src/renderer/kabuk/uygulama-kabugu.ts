@@ -111,6 +111,9 @@ export class UygulamaKabugu extends LitElement {
       position: relative;
       display: flex;
       align-items: center;
+      /* Tema seçici ile dünya simgesi arasını ~2px'e indir (üst-bar gap'i 0.6rem;
+         negatif marj ile nötrlenip 2px bırakılır). */
+      margin-left: calc(2px - 0.6rem);
       margin-right: 0.5rem;
     }
     .dil-dugme {
