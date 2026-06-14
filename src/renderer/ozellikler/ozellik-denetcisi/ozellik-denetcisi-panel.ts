@@ -113,18 +113,44 @@ export class OzellikDenetcisiPanel extends LitElement {
       font-size: 0.75rem;
       color: var(--metin-soluk);
     }
-    /* Oranlı çift satırı: etiket · giriş · [kilit] · etiket · giriş (tek satır). */
+    /* Oranlı çift satırı: etiket · giriş · etiket · giriş · [kilit] (tek satır;
+       kilit en sonda — kullanıcı isteği). */
     .oran-cift {
       display: grid;
-      grid-template-columns: auto 1fr auto auto 1fr;
+      grid-template-columns: auto 1fr auto 1fr auto;
       align-items: center;
       gap: 0.3rem 0.4rem;
       padding: 0.3rem 0.75rem;
+    }
+    /* Ön-etiketli (örn. "Köşe") oranlı çift: ön · etiket · giriş · etiket · giriş · [kilit]. */
+    .oran-cift.onlu {
+      grid-template-columns: auto auto 1fr auto 1fr auto;
+    }
+    .oran-cift .on {
+      font-size: 0.66rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--metin-soluk);
     }
     .oran-cift label {
       font-size: 0.75rem;
       color: var(--metin-soluk);
       font-family: ui-monospace, monospace;
+    }
+    /* Konum başlığındaki "öte" onay kutusu (x/y ↔ tx/ty). */
+    .onay {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--metin-soluk);
+      cursor: pointer;
+    }
+    .onay input {
+      accent-color: var(--vurgu, #4a90e2);
+      cursor: pointer;
     }
     .satir {
       display: flex;

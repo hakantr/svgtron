@@ -48,6 +48,13 @@ let koselerBagli = true;
  */
 let olcekBagli = false;
 
+/**
+ * Konum giriş modu (görünüm durumu, undo'ya girmez). false → x/y (canlı konum),
+ * true → tx/ty (baseline'a göre öte). Tek çift giriş; checkbox ile dönüşür
+ * (kullanıcı isteği: x/y ve tx/ty için ayrı kutular YOK).
+ */
+let konumOteModu = false;
+
 /** Sayısal giriş: boş/geçersiz değer YAZILMAZ (eski değere döner). */
 function sayiDegisti(
   mevcut: string,
@@ -147,12 +154,6 @@ function oranCiftSatiri(
         ?disabled=${salt1}
         @change=${sayiDegisti(mev1, uy1)}
       />
-      ${kilitDugmesi(
-        kilitli,
-        kilitDegistir,
-        t("denetci.oranKilidi.acik"),
-        t("denetci.oranKilidi.kapali"),
-      )}
       <label>${et2}</label>
       <input
         type="number"
@@ -161,13 +162,19 @@ function oranCiftSatiri(
         ?disabled=${salt2}
         @change=${sayiDegisti(mev2, uy2)}
       />
+      ${kilitDugmesi(
+        kilitli,
+        kilitDegistir,
+        t("denetci.oranKilidi.acik"),
+        t("denetci.oranKilidi.kapali"),
+      )}
     </div>
   `;
 }
 
 /** Konum bölümü (§9.8): x/y (canlı) · sx/sy (baseline) · tx/ty (ofset). */
 function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
-  const { dugum, belge, yaz } = baglam;
+  const { dugum, belge, yaz, tazele } = baglam;
   const alanlar = konumAlanlari(dugum.etiket);
   const pos = konumOku(dugum);
   if (!alanlar || !pos) return "";
@@ -176,16 +183,37 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   const temel = belge.temelKonum(dugum) ?? { sx: pos.x, sy: pos.y };
   const tx = pos.x - temel.sx;
   const ty = pos.y - temel.sy;
+  const ote = konumOteModu;
 
   return html`
-    <div class="alt-baslik">${t("denetci.altbaslik.konum")}</div>
+    <div class="alt-baslik kose">
+      <span>${t("denetci.altbaslik.konum")}</span>
+      <label class="onay" title=${t("denetci.konum.oteIpucu")}>
+        <input
+          type="checkbox"
+          .checked=${ote}
+          @change=${() => {
+            konumOteModu = !konumOteModu;
+            tazele();
+          }}
+        />
+        ${t("denetci.konum.ote")}
+      </label>
+    </div>
     <div class="izgara">
-      ${alan("x", String(pos.x), (n) => yaz(xa, String(n)))}
-      ${alan("y", String(pos.y), (n) => yaz(ya, String(n)))}
-      ${alan("sx", String(temel.sx), () => {}, true)}
-      ${alan("sy", String(temel.sy), () => {}, true)}
-      ${alan("tx", String(tx), (n) => yaz(xa, String(temel.sx + n)))}
-      ${alan("ty", String(ty), (n) => yaz(ya, String(temel.sy + n)))}
+      ${ote
+        ? html`
+            ${alan("tx", String(say(tx)), (n) =>
+              yaz(xa, String(say(temel.sx + n))),
+            )}
+            ${alan("ty", String(say(ty)), (n) =>
+              yaz(ya, String(say(temel.sy + n))),
+            )}
+          `
+        : html`
+            ${alan("x", String(pos.x), (n) => yaz(xa, String(n)))}
+            ${alan("y", String(pos.y), (n) => yaz(ya, String(n)))}
+          `}
     </div>
   `;
 }
@@ -241,8 +269,22 @@ function dikdortgenBolumu(baglam: AlanSetiBaglami): TemplateResult {
       },
     )}
 
-    <div class="alt-baslik kose">
-      <span>${t("denetci.altbaslik.kose")}</span>
+    <div class="oran-cift onlu">
+      <span class="on">${t("denetci.altbaslik.kose")}</span>
+      <label>rx</label>
+      <input
+        type="number"
+        step="any"
+        .value=${etkinRx}
+        @change=${sayiDegisti(etkinRx, (n) => koseYaz(n, "rx"))}
+      />
+      <label>ry</label>
+      <input
+        type="number"
+        step="any"
+        .value=${etkinRy}
+        @change=${sayiDegisti(etkinRy, (n) => koseYaz(n, "ry"))}
+      />
       ${kilitDugmesi(
         koselerBagli,
         () => {
@@ -252,10 +294,6 @@ function dikdortgenBolumu(baglam: AlanSetiBaglami): TemplateResult {
         t("denetci.kose.bagli"),
         t("denetci.kose.bagimsiz"),
       )}
-    </div>
-    <div class="izgara">
-      ${alan("rx", etkinRx, (n) => koseYaz(n, "rx"))}
-      ${alan("ry", etkinRy, (n) => koseYaz(n, "ry"))}
     </div>
   `;
 }

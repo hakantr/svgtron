@@ -9,7 +9,8 @@ import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import { enDistakiGrup, atasiMi } from "../../../cekirdek/belge/grup";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
-import { transformTasi, ekranDeltaKullanici } from "../../tuval/donusum";
+import { transformTasi, ekranDeltaKullanici, say } from "../../tuval/donusum";
+import { konumAlanlari, konumOku } from "../../../cekirdek/belge/konum";
 import {
   yapismaHesapla,
   izgaraYapis,
@@ -38,7 +39,39 @@ let basHedef: Dugum | null = null;
 // Grup seçiliyken içine basıldığında DRILL adayı (TK-21): sürüklenirse grup taşınır
 // (drill iptal), tıklanırsa (release, sürükleme yok) bu nesne seçilir.
 let drillAday: Dugum | null = null;
-let asillar: { dugum: Dugum; transform: string; ctm: DOMMatrix }[] = [];
+/**
+ * Taşıma başlangıç durumu. `konumAlani`+`basKonum` doluysa nesnenin GERÇEK x/y
+ * (cx/cy) öznitelikleri taşınır (§9.8 canlı konum) — kullanıcı isteği: mouse ile
+ * taşırken "öte" (transform translate) değil x/y değişsin. Yoksa (path/poly/line/
+ * grup) transform'a translate eklenir (genel yol). `ownCtm` x/y deltası için
+ * elemanın KENDİ ekran CTM'i (kendi transform'unu da içerir → döndürülmüş nesnede
+ * doğru); `ctm` transform yolu için EBEVEYN CTM'i.
+ */
+let asillar: {
+  dugum: Dugum;
+  transform: string;
+  ctm: DOMMatrix;
+  konumAlani: readonly [string, string] | null;
+  basKonum: { x: number; y: number } | null;
+  ownCtm: DOMMatrix;
+}[] = [];
+
+/** Bir nesnenin ekran deltasına karşılık gelen öznitelik yazımları (x/y ya da transform). */
+function tasimaYazimlari(
+  a: (typeof asillar)[number],
+  dx: number,
+  dy: number,
+): { ad: string; deger: string }[] {
+  if (a.konumAlani && a.basKonum) {
+    const ld = ekranDeltaKullanici(a.ownCtm, dx, dy);
+    return [
+      { ad: a.konumAlani[0], deger: String(say(a.basKonum.x + ld.x)) },
+      { ad: a.konumAlani[1], deger: String(say(a.basKonum.y + ld.y)) },
+    ];
+  }
+  const d = ekranDeltaKullanici(a.ctm, dx, dy);
+  return [{ ad: "transform", deger: transformTasi(a.transform, d.x, d.y) }];
+}
 // Yapışma durumu (§11.1) — taşıma başında bir kez yakalanır.
 let baslangicKutu: Kutu | null = null; // taşınan seçimin ekran sınır kutusu
 let hedefKutular: Kutu[] = []; // sabit hedefler (diğer nesneler + tuval çerçevesi)
@@ -96,11 +129,23 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
     const el = baglam.eleman(dugum.kimlik);
     const ebeveyn = el?.parentElement as unknown as SVGGraphicsElement | null;
     const ctm = ebeveyn?.getScreenCTM?.() ?? new DOMMatrix();
+    const ownCtm =
+      (el as SVGGraphicsElement | null)?.getScreenCTM?.() ?? new DOMMatrix();
     if (el instanceof SVGGraphicsElement) {
       const k = kutuYap(el.getBoundingClientRect());
       birlesim = birlesim ? birlestir(birlesim, k) : k;
     }
-    return { dugum, transform: dugum.oznitelikler.get("transform") ?? "", ctm };
+    // x/y (cx/cy) ile taşınabiliyorsa onu tercih et; değilse transform.
+    const konumAlani = konumAlanlari(dugum.etiket);
+    const basKonum = konumAlani ? konumOku(dugum) : null;
+    return {
+      dugum,
+      transform: dugum.oznitelikler.get("transform") ?? "",
+      ctm,
+      konumAlani,
+      basKonum,
+      ownCtm,
+    };
   });
   baslangicKutu = birlesim;
   // Yapışma hedefleri: seçili OLMAYAN üst-düzey nesneler + tuval (kök) çerçevesi.
@@ -239,8 +284,8 @@ const secAraci: Arac = {
       for (const a of asillar) {
         const el = baglam.eleman(a.dugum.kimlik);
         if (!el) continue;
-        const d = ekranDeltaKullanici(a.ctm, dx, dy);
-        el.setAttribute("transform", transformTasi(a.transform, d.x, d.y)); // canlı önizleme
+        for (const w of tasimaYazimlari(a, dx, dy))
+          el.setAttribute(w.ad, w.deger); // canlı önizleme
       }
       baglam.kilavuzCiz(kilavuzlar); // akıllı kılavuzlar (görünüm durumu)
       return;
@@ -270,15 +315,11 @@ const secAraci: Arac = {
         const { dx, dy } = yapismaUygula(sdx, sdy, olay.altKey);
         const belge = baglam.depo.belge;
         if (belge) {
-          const komutlar = asillar.map((a) => {
-            const d = ekranDeltaKullanici(a.ctm, dx, dy);
-            return new OznitelikDegistirKomutu(
-              belge,
-              a.dugum,
-              "transform",
-              transformTasi(a.transform, d.x, d.y),
-            );
-          });
+          const komutlar = asillar.flatMap((a) =>
+            tasimaYazimlari(a, dx, dy).map(
+              (w) => new OznitelikDegistirKomutu(belge, a.dugum, w.ad, w.deger),
+            ),
+          );
           baglam.gecmis.calistir(new BilesikKomut("taşı", komutlar));
         }
       }
