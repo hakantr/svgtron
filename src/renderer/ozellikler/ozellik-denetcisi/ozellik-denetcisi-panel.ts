@@ -102,9 +102,29 @@ export class OzellikDenetcisiPanel extends LitElement {
       gap: 0.3rem;
       padding: 0.3rem 0.75rem;
     }
+    /* Tek satır alan (etiket + kontrol yan yana) — dolgu/kontur gibi alanlar iki
+       satır kaplamasın (kullanıcı isteği). */
+    .alan.satirici {
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      column-gap: 0.5rem;
+    }
     .alan label {
       font-size: 0.75rem;
       color: var(--metin-soluk);
+    }
+    /* Oranlı çift satırı: etiket · giriş · [kilit] · etiket · giriş (tek satır). */
+    .oran-cift {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto 1fr;
+      align-items: center;
+      gap: 0.3rem 0.4rem;
+      padding: 0.3rem 0.75rem;
+    }
+    .oran-cift label {
+      font-size: 0.75rem;
+      color: var(--metin-soluk);
+      font-family: ui-monospace, monospace;
     }
     .satir {
       display: flex;
@@ -152,6 +172,10 @@ export class OzellikDenetcisiPanel extends LitElement {
       color: var(--vurgu-metin);
       background: var(--vurgu);
       border-color: transparent;
+    }
+    .kilit.kucuk {
+      width: 22px;
+      height: 20px;
     }
     .kilit svg {
       display: block;

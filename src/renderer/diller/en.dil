@@ -252,12 +252,14 @@ denetci.meta.baslik = Title
 denetci.meta.aciklama = Description
 denetci.meta.aria = Accessibility
 denetci.oranKilidi.etiket = Ratio
-denetci.oranKilidi.acik = Ratio locked — resize handles keep aspect (Shift frees it)
-denetci.oranKilidi.kapali = Ratio free — hold Shift to keep aspect
+denetci.oranKilidi.acik = Ratio locked — editing one scales the other (resize keeps aspect; Shift frees it)
+denetci.oranKilidi.kapali = Ratio free — changes independently (hold Shift to keep aspect)
 denetci.kose.bagli = Corners linked (equal)
 denetci.kose.bagimsiz = Corners independent
 denetci.geo.genislik = Width
 denetci.geo.yukseklik = Height
+denetci.geo.gen = W
+denetci.geo.yuk = H
 denetci.geo.yaricap = Radius
 
 # Alignment

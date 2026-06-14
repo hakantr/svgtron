@@ -77,7 +77,7 @@ const gorunumAlanSeti: AlanSeti = {
       ${renkAlani(baglam, t("denetci.alan.fill"), "fill", fill)}
       ${renkAlani(baglam, t("denetci.alan.stroke"), "stroke", stroke)}
 
-      <div class="alan">
+      <div class="alan satirici">
         <label>${t("denetci.alan.strokeWidth")}</label>
         <input
           type="number"
@@ -96,7 +96,7 @@ const gorunumAlanSeti: AlanSeti = {
         />
       </div>
 
-      <div class="alan">
+      <div class="alan satirici">
         <label>${t("denetci.alan.opacity")}</label>
         <div class="satir">
           <input
@@ -154,7 +154,7 @@ function renkAlani(
   };
 
   return html`
-    <div class="alan">
+    <div class="alan satirici">
       <label>${etiket}</label>
       <div class="satir">
         <boya-secici

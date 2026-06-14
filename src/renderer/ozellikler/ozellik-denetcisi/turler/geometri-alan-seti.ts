@@ -6,6 +6,7 @@ import {
 } from "./alan-seti-registry";
 import { konumAlanlari, konumOku } from "../../../../cekirdek/belge/konum";
 import { OznitelikDegistirKomutu } from "../../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { BilesikKomut } from "../../../../cekirdek/komutlar/dugum-komutlari";
 import { t } from "../../../diller/dil";
 import { cizimErisimi } from "../../../tuval/cizim-erisimi";
 import { oranKilidi } from "../../../tuval/oran-kilidi";
@@ -39,6 +40,13 @@ const EPS = 1e-6;
  * undo'ya girmez). Bağlıyken tek değer ikisini de yazar; bağımsızken ayrı ayrı.
  */
 let koselerBagli = true;
+
+/**
+ * Dönüşüm ölçeği (sx/sy) oranlı mı — oturum tercihi (görünüm durumu, undo'ya
+ * girmez). Boyut oranından (oranKilidi) BAĞIMSIZDIR: kullanıcı biri oranlı diğeri
+ * serbest olsun isteyebilir (kullanıcı isteği). Açıkken sx/sy oranı korunur.
+ */
+let olcekBagli = false;
 
 /** Sayısal giriş: boş/geçersiz değer YAZILMAZ (eski değere döner). */
 function sayiDegisti(
@@ -76,6 +84,87 @@ function alan(
   `;
 }
 
+/** Küçük inline oran/bağ kilidi düğmesi (etiketli satıra değil, kutuların yanına). */
+function kilitDugmesi(
+  kilitli: boolean,
+  degistir: () => void,
+  baslikAcik: string,
+  baslikKapali: string,
+): TemplateResult {
+  return html`
+    <button
+      type="button"
+      class="kilit kucuk"
+      aria-pressed=${kilitli}
+      title=${kilitli ? baslikAcik : baslikKapali}
+      @click=${degistir}
+    >
+      ${kilitli ? KILIT_KAPALI : KILIT_ACIK}
+    </button>
+  `;
+}
+
+/** İki özniteliği TEK Command'da yazar (oranlı çift için → tek geri-al adımı). */
+function ciftYaz(
+  baglam: AlanSetiBaglami,
+  ad1: string,
+  n1: number,
+  ad2: string,
+  n2: number,
+): void {
+  baglam.komut(
+    new BilesikKomut("oranlı boyut", [
+      new OznitelikDegistirKomutu(baglam.belge, baglam.dugum, ad1, String(n1)),
+      new OznitelikDegistirKomutu(baglam.belge, baglam.dugum, ad2, String(n2)),
+    ]),
+  );
+}
+
+/**
+ * Oranlı çift satırı: `et1 [input] [kilit] et2 [input]` — ayrı "Boyut" başlığı
+ * YOK; oran kilidi tam etkilediği kutuların arasında (kullanıcı isteği). Kilit
+ * AÇIKKEN biri değişince diğeri orantılı (uyN geri çağırımları o mantığı taşır).
+ */
+function oranCiftSatiri(
+  et1: string,
+  mev1: string,
+  uy1: (n: number) => void,
+  salt1: boolean,
+  et2: string,
+  mev2: string,
+  uy2: (n: number) => void,
+  salt2: boolean,
+  kilitli: boolean,
+  kilitDegistir: () => void,
+): TemplateResult {
+  return html`
+    <div class="oran-cift">
+      <label>${et1}</label>
+      <input
+        type="number"
+        step="any"
+        .value=${mev1}
+        ?disabled=${salt1}
+        @change=${sayiDegisti(mev1, uy1)}
+      />
+      ${kilitDugmesi(
+        kilitli,
+        kilitDegistir,
+        t("denetci.oranKilidi.acik"),
+        t("denetci.oranKilidi.kapali"),
+      )}
+      <label>${et2}</label>
+      <input
+        type="number"
+        step="any"
+        .value=${mev2}
+        ?disabled=${salt2}
+        @change=${sayiDegisti(mev2, uy2)}
+      />
+    </div>
+  `;
+}
+
 /** Konum bölümü (§9.8): x/y (canlı) · sx/sy (baseline) · tx/ty (ofset). */
 function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   const { dugum, belge, yaz } = baglam;
@@ -101,10 +190,24 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   `;
 }
 
-/** rect: width/height + bağlı/bağımsız köşe yarıçapı (rx/ry). */
+/** rect: width/height (oranlı kilit) + bağlı/bağımsız köşe yarıçapı (rx/ry). */
 function dikdortgenBolumu(baglam: AlanSetiBaglami): TemplateResult {
-  const { dugum, yaz } = baglam;
+  const { dugum, yaz, tazele } = baglam;
   const oz = dugum.oznitelikler;
+
+  const wHam = oz.get("width") ?? "0";
+  const hHam = oz.get("height") ?? "0";
+  const wv = Number(wHam);
+  const hv = Number(hHam);
+  const kil = oranKilidi.acik;
+  const uyW = (n: number): void =>
+    kil && wv > 0 && hv > 0
+      ? ciftYaz(baglam, "width", n, "height", say((hv * n) / wv))
+      : yaz("width", String(n));
+  const uyH = (n: number): void =>
+    kil && wv > 0 && hv > 0
+      ? ciftYaz(baglam, "height", n, "width", say((wv * n) / hv))
+      : yaz("height", String(n));
 
   // §SVG: rx yoksa ry'ye, ry yoksa rx'e eşittir → etkin değeri göster.
   const rxHam = oz.get("rx");
@@ -122,32 +225,33 @@ function dikdortgenBolumu(baglam: AlanSetiBaglami): TemplateResult {
   };
 
   return html`
-    <div class="alt-baslik">${t("denetci.altbaslik.boyut")}</div>
-    <div class="izgara">
-      ${alan(t("denetci.geo.genislik"), oz.get("width") ?? "0", (n) =>
-        yaz("width", String(n)),
-      )}
-      ${alan(t("denetci.geo.yukseklik"), oz.get("height") ?? "0", (n) =>
-        yaz("height", String(n)),
-      )}
-    </div>
+    ${oranCiftSatiri(
+      t("denetci.geo.gen"),
+      wHam,
+      uyW,
+      false,
+      t("denetci.geo.yuk"),
+      hHam,
+      uyH,
+      false,
+      kil,
+      () => {
+        oranKilidi.degistir();
+        tazele();
+      },
+    )}
 
     <div class="alt-baslik kose">
       <span>${t("denetci.altbaslik.kose")}</span>
-      <button
-        type="button"
-        class="kilit"
-        aria-pressed=${koselerBagli}
-        title=${koselerBagli
-          ? t("denetci.kose.bagli")
-          : t("denetci.kose.bagimsiz")}
-        @click=${() => {
+      ${kilitDugmesi(
+        koselerBagli,
+        () => {
           koselerBagli = !koselerBagli;
-          baglam.tazele();
-        }}
-      >
-        ${koselerBagli ? KILIT_KAPALI : KILIT_ACIK}
-      </button>
+          tazele();
+        },
+        t("denetci.kose.bagli"),
+        t("denetci.kose.bagimsiz"),
+      )}
     </div>
     <div class="izgara">
       ${alan("rx", etkinRx, (n) => koseYaz(n, "rx"))}
@@ -211,12 +315,20 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
       return;
     }
     const s = hedef / mevcut;
+    // Oran kilidi AÇIKSA üniform ölçek (iki eksen de s); KAPALIYSA tek eksen.
+    if (oranKilidi.acik) {
+      onEkle(
+        `translate(${say(minX)}, ${say(minY)}) scale(${say(s)}, ${say(s)}) translate(${say(-minX)}, ${say(-minY)})`,
+      );
+      return;
+    }
     onEkle(
       eksen === "w"
         ? `translate(${say(minX)}, ${say(minY)}) scale(${say(s)}, 1) translate(${say(-minX)}, ${say(-minY)})`
         : `translate(${say(minX)}, ${say(minY)}) scale(1, ${say(s)}) translate(${say(-minX)}, ${say(-minY)})`,
     );
   };
+  const kil = oranKilidi.acik;
 
   return html`
     <div class="alt-baslik">${t("denetci.altbaslik.konum")}</div>
@@ -224,21 +336,21 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
       ${alan("x", String(say(minX)), (n) => tasi("x", n))}
       ${alan("y", String(say(minY)), (n) => tasi("y", n))}
     </div>
-    <div class="alt-baslik">${t("denetci.altbaslik.boyut")}</div>
-    <div class="izgara">
-      ${alan(
-        t("denetci.geo.genislik"),
-        String(say(w)),
-        (n) => olcekle("w", n),
-        w <= EPS,
-      )}
-      ${alan(
-        t("denetci.geo.yukseklik"),
-        String(say(h)),
-        (n) => olcekle("h", n),
-        h <= EPS,
-      )}
-    </div>
+    ${oranCiftSatiri(
+      t("denetci.geo.gen"),
+      String(say(w)),
+      (n) => olcekle("w", n),
+      w <= EPS,
+      t("denetci.geo.yuk"),
+      String(say(h)),
+      (n) => olcekle("h", n),
+      h <= EPS,
+      kil,
+      () => {
+        oranKilidi.degistir();
+        tazele();
+      },
+    )}
   `;
 }
 
@@ -278,10 +390,20 @@ function donusumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
     }
   };
   // Ölçek alanı: 0/çok küçük değer eleman'ı çökertir → reddet (eski değere dön).
+  // Oran kilidi (olcekBagli) AÇIKSA biri değişince diğeri sx/sy oranını korur.
   const olcekYaz = (eksen: "sx" | "sy", n: number): void => {
     if (Math.abs(n) < MIN_OLCEK) {
       tazele();
       return;
+    }
+    if (olcekBagli) {
+      const bu = eksen === "sx" ? p.sx : p.sy;
+      const diger = eksen === "sx" ? p.sy : p.sx;
+      const digerAd = eksen === "sx" ? "sy" : "sx";
+      if (Math.abs(bu) > MIN_OLCEK) {
+        yazP({ [eksen]: n, [digerAd]: say((diger * n) / bu) });
+        return;
+      }
     }
     yazP({ [eksen]: n });
   };
@@ -291,8 +413,6 @@ function donusumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
     <div class="izgara">
       ${alan(t("denetci.don.tx"), String(say(p.tx)), (n) => yazP({ tx: n }))}
       ${alan(t("denetci.don.ty"), String(say(p.ty)), (n) => yazP({ ty: n }))}
-      ${alan(t("denetci.don.sx"), String(say(p.sx)), (n) => olcekYaz("sx", n))}
-      ${alan(t("denetci.don.sy"), String(say(p.sy)), (n) => olcekYaz("sy", n))}
       ${alan(t("denetci.don.donme"), String(say(p.donme)), (n) =>
         yazP({ donme: n }),
       )}
@@ -300,6 +420,21 @@ function donusumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
         yazP({ egme: n }),
       )}
     </div>
+    ${oranCiftSatiri(
+      t("denetci.don.sx"),
+      String(say(p.sx)),
+      (n) => olcekYaz("sx", n),
+      false,
+      t("denetci.don.sy"),
+      String(say(p.sy)),
+      (n) => olcekYaz("sy", n),
+      false,
+      olcekBagli,
+      () => {
+        olcekBagli = !olcekBagli;
+        tazele();
+      },
+    )}
   `;
 }
 
@@ -313,22 +448,43 @@ function boyutBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
       return dikdortgenBolumu(baglam);
     case "circle":
       return html`
-        <div class="alt-baslik">${t("denetci.altbaslik.boyut")}</div>
         <div class="izgara">
           ${alan(t("denetci.geo.yaricap"), oz.get("r") ?? "0", (n) =>
             yaz("r", String(n)),
           )}
         </div>
       `;
-    case "ellipse":
-      // ellipse'te rx/ry yarıçaptır (köşe değil) → bağımsız.
-      return html`
-        <div class="alt-baslik">${t("denetci.altbaslik.boyut")}</div>
-        <div class="izgara">
-          ${alan("rx", oz.get("rx") ?? "0", (n) => yaz("rx", String(n)))}
-          ${alan("ry", oz.get("ry") ?? "0", (n) => yaz("ry", String(n)))}
-        </div>
-      `;
+    case "ellipse": {
+      // ellipse'te rx/ry yarıçaptır (köşe değil); oran kilidiyle orantılı tutulabilir.
+      const rxHam = oz.get("rx") ?? "0";
+      const ryHam = oz.get("ry") ?? "0";
+      const rxv = Number(rxHam);
+      const ryv = Number(ryHam);
+      const kil = oranKilidi.acik;
+      const uyRx = (n: number): void =>
+        kil && rxv > 0 && ryv > 0
+          ? ciftYaz(baglam, "rx", n, "ry", say((ryv * n) / rxv))
+          : yaz("rx", String(n));
+      const uyRy = (n: number): void =>
+        kil && rxv > 0 && ryv > 0
+          ? ciftYaz(baglam, "ry", n, "rx", say((rxv * n) / ryv))
+          : yaz("ry", String(n));
+      return oranCiftSatiri(
+        "rx",
+        rxHam,
+        uyRx,
+        false,
+        "ry",
+        ryHam,
+        uyRy,
+        false,
+        kil,
+        () => {
+          oranKilidi.degistir();
+          baglam.tazele();
+        },
+      );
+    }
     case "line":
       return html`
         <div class="alt-baslik">${t("denetci.altbaslik.uclar")}</div>
@@ -342,33 +498,6 @@ function boyutBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
     default:
       return "";
   }
-}
-
-/**
- * Oran kilidi toggle satırı (TK-37 #9): tuval boyutlandırma tutamacıyla ölçeklerken
- * en/boy oranını koruma tercihi (görünüm durumu, undo'ya girmez). Padlock; tıkla-değiştir.
- */
-function oranKilidiSatiri(baglam: AlanSetiBaglami): TemplateResult {
-  const acik = oranKilidi.acik;
-  return html`
-    <div class="alt-baslik kose">
-      <span>${t("denetci.oranKilidi.etiket")}</span>
-      <button
-        type="button"
-        class="kilit"
-        aria-pressed=${acik}
-        title=${acik
-          ? t("denetci.oranKilidi.acik")
-          : t("denetci.oranKilidi.kapali")}
-        @click=${() => {
-          oranKilidi.degistir();
-          baglam.tazele();
-        }}
-      >
-        ${acik ? KILIT_KAPALI : KILIT_ACIK}
-      </button>
-    </div>
-  `;
 }
 
 /**
@@ -392,10 +521,10 @@ const geometriAlanSeti: AlanSeti = {
   // tam denetim; rect resize'ının ürettiği scale buradan görülüp düzenlenir).
   render: (baglam) =>
     baglam.dugum.etiket === "g" || YOL_SEKILLERI.has(baglam.dugum.etiket)
-      ? html`${oranKilidiSatiri(baglam)}${donusumGeometriBolumu(baglam)}`
-      : html`${oranKilidiSatiri(baglam)}${konumBolumu(baglam)}${boyutBolumu(
+      ? html`${donusumGeometriBolumu(baglam)}`
+      : html`${konumBolumu(baglam)}${boyutBolumu(baglam)}${donusumBolumu(
           baglam,
-        )}${donusumBolumu(baglam)}`,
+        )}`,
 };
 
 alanSetiKayitDefteri.kaydet(geometriAlanSeti);

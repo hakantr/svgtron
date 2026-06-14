@@ -254,10 +254,12 @@ denetci.meta.aria = Erişilebilirlik
 denetci.kose.bagli = Köşeler bağlı (eşit)
 denetci.kose.bagimsiz = Köşeler bağımsız
 denetci.oranKilidi.etiket = Oran
-denetci.oranKilidi.acik = Oran kilitli — tutamaçla boyutlandırırken en/boy korunur (Shift serbest bırakır)
-denetci.oranKilidi.kapali = Oran serbest — Shift ile en/boy korunur
+denetci.oranKilidi.acik = Oran kilitli — biri değişince diğeri orantılı (tutamaçla da en/boy korunur; Shift serbest bırakır)
+denetci.oranKilidi.kapali = Oran serbest — bağımsız değişir (Shift ile en/boy korunur)
 denetci.geo.genislik = Genişlik
 denetci.geo.yukseklik = Yükseklik
+denetci.geo.gen = Gen.
+denetci.geo.yuk = Yük.
 denetci.geo.yaricap = Yarıçap
 
 # Hizalama
