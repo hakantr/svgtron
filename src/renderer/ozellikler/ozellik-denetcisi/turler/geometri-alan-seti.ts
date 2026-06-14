@@ -12,6 +12,7 @@ import { cizimErisimi } from "../../../tuval/cizim-erisimi";
 import { oranKilidi } from "../../../tuval/oran-kilidi";
 import {
   say,
+  ekranDeltaKullanici,
   donusumAyristir,
   donusumKur,
   type DonusumParcalari,
@@ -317,53 +318,84 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   } catch {
     return "";
   }
+  const koseler = [
+    [bbox.x, bbox.y],
+    [bbox.x + bbox.width, bbox.y],
+    [bbox.x + bbox.width, bbox.y + bbox.height],
+    [bbox.x, bbox.y + bbox.height],
+  ] as const;
+  const enKucukEnBuyuk = (
+    pts: DOMPoint[],
+  ): { minX: number; minY: number; w: number; h: number } => {
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    return { minX, minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+  };
+
+  // EBEVEYN uzayı (düzenleme transform'larının uygulandığı yer): elemanın KENDİ
+  // transform'u. Ölçek pivotu burada (minXp, minYp).
   const m = el.transform.baseVal.consolidate()?.matrix ?? new DOMMatrix();
-  const kose = (
-    [
-      [bbox.x, bbox.y],
-      [bbox.x + bbox.width, bbox.y],
-      [bbox.x + bbox.width, bbox.y + bbox.height],
-      [bbox.x, bbox.y + bbox.height],
-    ] as const
-  ).map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
-  const xs = kose.map((p) => p.x);
-  const ys = kose.map((p) => p.y);
-  const minX = Math.min(...xs);
-  const minY = Math.min(...ys);
-  const w = Math.max(...xs) - minX;
-  const h = Math.max(...ys) - minY;
+  const p = enKucukEnBuyuk(
+    koseler.map(([x, y]) => new DOMPoint(x, y).matrixTransform(m)),
+  );
+
+  // KÖK (viewBox) uzayı — CETVELLE AYNI; GÖSTERİM ve hedef-deltalar burada
+  // (kullanıcı isteği: denetçideki konum cetvelle eşleşsin, grup içindeyken bile).
+  const kok = el.ownerSVGElement;
+  const elScreen = el.getScreenCTM();
+  const rootScreen = kok?.getScreenCTM?.() ?? null;
+  const ebeveynEl = el.parentNode;
+  const parentScreen =
+    (ebeveynEl instanceof SVGGraphicsElement
+      ? ebeveynEl.getScreenCTM?.()
+      : null) ?? rootScreen;
+  const localToRoot =
+    rootScreen && elScreen
+      ? rootScreen.inverse().multiply(elScreen)
+      : new DOMMatrix();
+  const parentToRoot =
+    rootScreen && parentScreen
+      ? rootScreen.inverse().multiply(parentScreen)
+      : new DOMMatrix();
+  const { minX, minY, w, h } = enKucukEnBuyuk(
+    koseler.map(([x, y]) => new DOMPoint(x, y).matrixTransform(localToRoot)),
+  );
   const eskiT = dugum.oznitelikler.get("transform") ?? "";
 
   const onEkle = (T: string): void =>
     yaz("transform", `${T}${eskiT ? " " + eskiT : ""}`);
 
   const tasi = (eksen: "x" | "y", hedef: number): void => {
-    const dx = eksen === "x" ? hedef - minX : 0;
-    const dy = eksen === "y" ? hedef - minY : 0;
-    if (Math.abs(dx) < EPS && Math.abs(dy) < EPS) {
+    // Kök-uzayı hedef → ebeveyn-uzayı translate (ebeveyn ölçek/öteleme hesaba katılır).
+    const drx = eksen === "x" ? hedef - minX : 0;
+    const dry = eksen === "y" ? hedef - minY : 0;
+    const pd = ekranDeltaKullanici(parentToRoot, drx, dry);
+    if (Math.abs(pd.x) < EPS && Math.abs(pd.y) < EPS) {
       tazele();
       return;
     }
-    onEkle(`translate(${say(dx)}, ${say(dy)})`);
+    onEkle(`translate(${say(pd.x)}, ${say(pd.y)})`);
   };
   const olcekle = (eksen: "w" | "h", hedef: number): void => {
-    const mevcut = eksen === "w" ? w : h;
+    const mevcut = eksen === "w" ? w : h; // kök-uzayı boyut (oran için)
     if (hedef <= 0 || mevcut <= EPS) {
       tazele(); // 0/negatif yasak (ya da 0 boyut) → alanı eski değerine döndür
       return;
     }
     const s = hedef / mevcut;
-    // Oran kilidi AÇIKSA üniform ölçek (iki eksen de s); KAPALIYSA tek eksen.
+    // Ölçek pivotu EBEVEYN-uzayı sol-üst (p.minX/p.minY) — transform orada uygulanır.
     if (oranKilidi.acik) {
       onEkle(
-        `translate(${say(minX)}, ${say(minY)}) scale(${say(s)}, ${say(s)}) translate(${say(-minX)}, ${say(-minY)})`,
+        `translate(${say(p.minX)}, ${say(p.minY)}) scale(${say(s)}, ${say(s)}) translate(${say(-p.minX)}, ${say(-p.minY)})`,
       );
       return;
     }
     onEkle(
       eksen === "w"
-        ? `translate(${say(minX)}, ${say(minY)}) scale(${say(s)}, 1) translate(${say(-minX)}, ${say(-minY)})`
-        : `translate(${say(minX)}, ${say(minY)}) scale(1, ${say(s)}) translate(${say(-minX)}, ${say(-minY)})`,
+        ? `translate(${say(p.minX)}, ${say(p.minY)}) scale(${say(s)}, 1) translate(${say(-p.minX)}, ${say(-p.minY)})`
+        : `translate(${say(p.minX)}, ${say(p.minY)}) scale(1, ${say(s)}) translate(${say(-p.minX)}, ${say(-p.minY)})`,
     );
   };
   const kil = oranKilidi.acik;

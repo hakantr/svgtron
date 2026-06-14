@@ -9,7 +9,7 @@ import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import { enDistakiGrup, atasiMi } from "../../../cekirdek/belge/grup";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
-import { transformTasi, ekranDeltaKullanici, say } from "../../tuval/donusum";
+import { transformTasi, ekranDeltaKullanici } from "../../tuval/donusum";
 import { konumAlanlari, konumOku } from "../../../cekirdek/belge/konum";
 import {
   yapismaHesapla,
@@ -66,11 +66,11 @@ function noktalariOku(ham: string | undefined): number[] | null {
   return s;
 }
 
-/** Başlangıç noktalarını (dx,dy) kaydırıp `points` dizesi üretir. */
+/** Başlangıç noktalarını (dx,dy) kaydırıp `points` dizesi üretir (tam sayı px). */
 function noktalariKaydir(bas: number[], dx: number, dy: number): string {
   const par: string[] = [];
   for (let i = 0; i < bas.length; i += 2)
-    par.push(`${say(bas[i]! + dx)},${say(bas[i + 1]! + dy)}`);
+    par.push(`${Math.round(bas[i]! + dx)},${Math.round(bas[i + 1]! + dy)}`);
   return par.join(" ");
 }
 
@@ -84,11 +84,13 @@ function tasimaYazimlari(
   dx: number,
   dy: number,
 ): { ad: string; deger: string }[] {
+  // Taşıma tam sayı (px) ilerlesin → küsürat (250.254 gibi) oluşmasın; tipik
+  // SVG'de 1 kullanıcı birimi ≈ 1px, görünür etkisi yok (kullanıcı isteği).
   if (a.konumAlani && a.basKonum) {
     const ld = ekranDeltaKullanici(a.ownCtm, dx, dy);
     return [
-      { ad: a.konumAlani[0], deger: String(say(a.basKonum.x + ld.x)) },
-      { ad: a.konumAlani[1], deger: String(say(a.basKonum.y + ld.y)) },
+      { ad: a.konumAlani[0], deger: String(Math.round(a.basKonum.x + ld.x)) },
+      { ad: a.konumAlani[1], deger: String(Math.round(a.basKonum.y + ld.y)) },
     ];
   }
   if (a.basNoktalar) {
@@ -96,7 +98,12 @@ function tasimaYazimlari(
     return [{ ad: "points", deger: noktalariKaydir(a.basNoktalar, ld.x, ld.y) }];
   }
   const d = ekranDeltaKullanici(a.ctm, dx, dy);
-  return [{ ad: "transform", deger: transformTasi(a.transform, d.x, d.y) }];
+  return [
+    {
+      ad: "transform",
+      deger: transformTasi(a.transform, Math.round(d.x), Math.round(d.y)),
+    },
+  ];
 }
 // Yapışma durumu (§11.1) — taşıma başında bir kez yakalanır.
 let baslangicKutu: Kutu | null = null; // taşınan seçimin ekran sınır kutusu

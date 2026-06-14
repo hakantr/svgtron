@@ -310,6 +310,9 @@ export class TuvalAlani extends LitElement {
   /** Cetvel imleç göstergesi (kullanıcı isteği): fareyi izleyen ince çizgiler. */
   #imlecUst?: SVGLineElement;
   #imlecSol?: SVGLineElement;
+  /** İmleç çizgisinin yanındaki sayısal koordinat (kullanıcı/viewBox değeri). */
+  #imlecUstYazi?: SVGTextElement;
+  #imlecSolYazi?: SVGTextElement;
   /** Son fare client konumu (cetvel göstergesi için); fare tuvalden çıkınca null. */
   #sonImlecX: number | null = null;
   #sonImlecY: number | null = null;
@@ -879,7 +882,7 @@ export class TuvalAlani extends LitElement {
       }
       cocuklar.push(tx);
     }
-    // Fareyi izleyen imleç çizgisi (kalıcı) — en üstte dursun diye en sona eklenir.
+    // Fareyi izleyen imleç çizgisi + sayısal değer (kalıcı) — en sona eklenir (üstte).
     let imlec = eksen === "x" ? this.#imlecUst : this.#imlecSol;
     if (!imlec) {
       imlec = document.createElementNS(NS, "line");
@@ -890,36 +893,79 @@ export class TuvalAlani extends LitElement {
       if (eksen === "x") this.#imlecUst = imlec;
       else this.#imlecSol = imlec;
     }
-    cocuklar.push(imlec);
+    let yazi = eksen === "x" ? this.#imlecUstYazi : this.#imlecSolYazi;
+    if (!yazi) {
+      yazi = document.createElementNS(NS, "text");
+      yazi.setAttribute("fill", "var(--cetvel-imlec, #25d07d)");
+      yazi.setAttribute("font-size", "8");
+      yazi.setAttribute("font-weight", "700");
+      yazi.setAttribute("pointer-events", "none");
+      yazi.style.display = "none";
+      if (eksen === "x") this.#imlecUstYazi = yazi;
+      else this.#imlecSolYazi = yazi;
+    }
+    cocuklar.push(imlec, yazi);
     svg.replaceChildren(...cocuklar);
     this.#cetvelImlecKonumla(); // yeniden çizimden sonra son fare konumuna getir
   }
 
-  /** Cetvel imleç çizgilerini son fare konumuna taşır (görünmüyorsa gizler). */
+  /** Cetvel imleç çizgilerini + sayısal değerini son fare konumuna taşır (yoksa gizler). */
   #cetvelImlecKonumla(): void {
+    const ctm = this.#yansitici.kok?.getScreenCTM?.();
+    const inv = ctm ? ctm.inverse() : null;
+    // Fare client noktasını kullanıcı (viewBox) koordinatına çevir.
+    const u =
+      inv && this.#sonImlecX != null && this.#sonImlecY != null
+        ? new DOMPoint(this.#sonImlecX, this.#sonImlecY).matrixTransform(inv)
+        : null;
+
     const ust = this.#imlecUst;
     if (ust && this.cetvelUst) {
       const r = this.cetvelUst.getBoundingClientRect();
       const x = this.#sonImlecX == null ? -1 : this.#sonImlecX - r.left;
-      if (x >= 0 && x <= r.width) {
+      const gor = x >= 0 && x <= r.width;
+      if (gor) {
         ust.setAttribute("x1", String(x));
         ust.setAttribute("x2", String(x));
         ust.setAttribute("y1", "0");
         ust.setAttribute("y2", "20");
         ust.style.display = "";
       } else ust.style.display = "none";
+      const yazi = this.#imlecUstYazi;
+      if (yazi) {
+        if (gor && u) {
+          const sagYakin = x > r.width - 26;
+          yazi.textContent = String(Math.round(u.x));
+          yazi.setAttribute("text-anchor", sagYakin ? "end" : "start");
+          yazi.setAttribute("x", String(sagYakin ? x - 3 : x + 3));
+          yazi.setAttribute("y", "8");
+          yazi.style.display = "";
+        } else yazi.style.display = "none";
+      }
     }
+
     const sol = this.#imlecSol;
     if (sol && this.cetvelSol) {
       const r = this.cetvelSol.getBoundingClientRect();
       const y = this.#sonImlecY == null ? -1 : this.#sonImlecY - r.top;
-      if (y >= 0 && y <= r.height) {
+      const gor = y >= 0 && y <= r.height;
+      if (gor) {
         sol.setAttribute("y1", String(y));
         sol.setAttribute("y2", String(y));
         sol.setAttribute("x1", "0");
         sol.setAttribute("x2", "20");
         sol.style.display = "";
       } else sol.style.display = "none";
+      const yazi = this.#imlecSolYazi;
+      if (yazi) {
+        if (gor && u) {
+          yazi.textContent = String(Math.round(u.y));
+          yazi.setAttribute("text-anchor", "start");
+          yazi.setAttribute("x", "2");
+          yazi.setAttribute("y", String(Math.max(8, y - 2)));
+          yazi.style.display = "";
+        } else yazi.style.display = "none";
+      }
     }
   }
 
