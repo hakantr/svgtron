@@ -12,12 +12,14 @@ import type { Playback } from "./playback";
 export class WaapiPlayback implements Playback {
   readonly sure: number;
   readonly #sonsuz: boolean;
+  #dongu: boolean;
   #oynuyor = true; // CSS animasyonları varsayılan olarak oynar
   #rafKimligi = 0;
   readonly #dinleyiciler = new Set<() => void>();
   readonly #animasyonlar: Animation[];
 
-  constructor(svg: SVGSVGElement) {
+  constructor(svg: SVGSVGElement, dongu = false) {
+    this.#dongu = dongu;
     this.#animasyonlar = svg.getAnimations({ subtree: true });
 
     let sure = 0;
@@ -57,9 +59,14 @@ export class WaapiPlayback implements Playback {
     return this.#sonsuz;
   }
 
+  get dongu(): boolean {
+    return this.#dongu;
+  }
+
   oynat(): void {
     if (this.#oynuyor) return;
-    if (!this.#sonsuz && this.sure > 0 && this.konum >= this.sure) {
+    this.#dongu = true; // kullanıcı play'e bastı → durdurana dek tekrarla
+    if (this.sure > 0 && this.konum >= this.sure) {
       this.konumaGit(0);
     }
     for (const a of this.#animasyonlar) a.play();
@@ -105,13 +112,19 @@ export class WaapiPlayback implements Playback {
   #izle(): void {
     if (this.#rafKimligi) return;
     const tik = (): void => {
-      if (!this.#sonsuz && this.sure > 0 && this.konum >= this.sure) {
-        this.konumaGit(this.sure);
-        for (const a of this.#animasyonlar) a.pause();
-        this.#oynuyor = false;
-        this.#rafKimligi = 0;
-        this.#bildir();
-        return;
+      // Bir tur tamamlandığında: döngü kapalıysa dur, açıksa sürdür.
+      if (this.sure > 0 && this.konum >= this.sure) {
+        if (this.#dongu) {
+          // Sonlu animasyonu başa sar (sonsuz olan zaten kendi sarar).
+          if (!this.#sonsuz) this.konumaGit(0);
+        } else {
+          if (!this.#sonsuz) this.konumaGit(this.sure);
+          for (const a of this.#animasyonlar) a.pause();
+          this.#oynuyor = false;
+          this.#rafKimligi = 0;
+          this.#bildir();
+          return;
+        }
       }
       this.#bildir();
       this.#rafKimligi = requestAnimationFrame(tik);

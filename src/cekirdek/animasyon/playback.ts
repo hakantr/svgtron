@@ -16,6 +16,11 @@ export interface Playback {
   readonly oynuyor: boolean;
   /** Süresiz/döngülü animasyon mu? (zaman çizelgesi konumu modulo gösterir) */
   readonly sonsuz: boolean;
+  /**
+   * Döngü modu. Dosya açılışında `false` → animasyon bir tur oynayıp durur.
+   * Kullanıcı {@link oynat} (play) deyince `true` → durdurana dek tekrarlar.
+   */
+  readonly dongu: boolean;
 
   /** Oynatmayı başlatır/sürdürür. */
   oynat(): void;

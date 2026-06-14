@@ -79,15 +79,20 @@ function sureHesapla(svg: SVGSVGElement): { sure: number; sonsuz: boolean } {
 export class SmilPlayback implements Playback {
   readonly sure: number;
   readonly #sonsuz: boolean;
+  #dongu: boolean;
   #oynuyor = true; // SMIL varsayılan olarak oynar
   #rafKimligi = 0;
   readonly #dinleyiciler = new Set<() => void>();
 
-  constructor(private readonly svg: SVGSVGElement) {
+  constructor(
+    private readonly svg: SVGSVGElement,
+    dongu = false,
+  ) {
     const { sure, sonsuz } = sureHesapla(svg);
     this.sure = sure;
     this.#sonsuz = sonsuz;
-    this.#izle(); // baştan oynar; kullanıcı duraklatana kadar
+    this.#dongu = dongu;
+    this.#izle(); // baştan oynar; döngü kapalıysa bir tur sonra durur
   }
 
   get konum(): number {
@@ -102,10 +107,15 @@ export class SmilPlayback implements Playback {
     return this.#sonsuz;
   }
 
+  get dongu(): boolean {
+    return this.#dongu;
+  }
+
   oynat(): void {
     if (this.#oynuyor) return;
-    // Sonlu animasyon sonuna geldiyse baştan başlat.
-    if (!this.#sonsuz && this.sure > 0 && this.konum >= this.sure) {
+    this.#dongu = true; // kullanıcı play'e bastı → durdurana dek tekrarla
+    // Sona geldiyse baştan başlat (sonlu: konum sürede; sonsuz: kendi sarar).
+    if (this.sure > 0 && this.konum >= this.sure) {
       this.svg.setCurrentTime(0);
     }
     this.svg.unpauseAnimations();
@@ -144,14 +154,20 @@ export class SmilPlayback implements Playback {
   #izle(): void {
     if (this.#rafKimligi) return;
     const tik = (): void => {
-      // Sonlu animasyon bittiyse sonda dur.
-      if (!this.#sonsuz && this.sure > 0 && this.konum >= this.sure) {
-        this.svg.setCurrentTime(this.sure);
-        this.svg.pauseAnimations();
-        this.#oynuyor = false;
-        this.#rafKimligi = 0;
-        this.#bildir();
-        return;
+      // Bir tur tamamlandığında: döngü kapalıysa dur, açıksa sürdür.
+      if (this.sure > 0 && this.konum >= this.sure) {
+        if (this.#dongu) {
+          // Sonlu animasyonu başa sar (sonsuz olan zaten kendi sarar).
+          if (!this.#sonsuz) this.svg.setCurrentTime(0);
+        } else {
+          // Tek tur: sonlu animasyonu son karede tut, sonsuzu olduğu yerde durdur.
+          if (!this.#sonsuz) this.svg.setCurrentTime(this.sure);
+          this.svg.pauseAnimations();
+          this.#oynuyor = false;
+          this.#rafKimligi = 0;
+          this.#bildir();
+          return;
+        }
       }
       this.#bildir();
       this.#rafKimligi = requestAnimationFrame(tik);

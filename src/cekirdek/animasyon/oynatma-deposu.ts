@@ -38,10 +38,14 @@ export class OynatmaDeposu {
     return this.#aktif;
   }
 
-  /** Render edilen `<svg>` kökünü ayarlar; null ise oynatmayı kaldırır. */
+  /**
+   * Render edilen `<svg>` kökünü ayarlar; null ise oynatmayı kaldırır. Yeni dosya
+   * açılışı olduğundan döngü modu KAPALI başlar → animasyon bir tur oynayıp durur
+   * (kullanıcı play'e basınca döngüye girer; bkz. {@link Playback.dongu}).
+   */
   svgAyarla(svg: SVGSVGElement | null): void {
     this.#aktif?.serbestBirak();
-    this.#aktif = svg ? this.#playbackOlustur(svg) : null;
+    this.#aktif = svg ? this.#playbackOlustur(svg, false) : null;
     this.#bildir();
   }
 
@@ -56,8 +60,9 @@ export class OynatmaDeposu {
     if (!svg) return;
     const oynuyorEski = this.#aktif?.oynuyor ?? false;
     const konumEski = this.#aktif?.konum ?? 0;
+    const donguEski = this.#aktif?.dongu ?? false; // düzenlemede döngü modu korunur
     this.#aktif?.serbestBirak();
-    this.#aktif = this.#playbackOlustur(svg);
+    this.#aktif = this.#playbackOlustur(svg, donguEski);
     if (this.#aktif) {
       this.#aktif.konumaGit(konumEski);
       if (!oynuyorEski) this.#aktif.durakla();
@@ -66,18 +71,18 @@ export class OynatmaDeposu {
   }
 
   /** SVG'deki animasyon teknolojilerine göre uygun Playback'i kurar. */
-  #playbackOlustur(svg: SVGSVGElement): Playback | null {
+  #playbackOlustur(svg: SVGSVGElement, dongu: boolean): Playback | null {
     const waapi = waapiVarMi(svg);
     const smil = smilVarMi(svg);
     // İkisi birden varsa birlikte yönet (İlke 6) — getAnimations() SMIL'i
     // içermediğinden tek WaapiPlayback SMIL'i kontrol edemezdi.
     if (waapi && smil)
       return new BilesikPlayback([
-        new WaapiPlayback(svg),
-        new SmilPlayback(svg),
+        new WaapiPlayback(svg, dongu),
+        new SmilPlayback(svg, dongu),
       ]);
-    if (waapi) return new WaapiPlayback(svg);
-    if (smil) return new SmilPlayback(svg);
+    if (waapi) return new WaapiPlayback(svg, dongu);
+    if (smil) return new SmilPlayback(svg, dongu);
     return null;
   }
 

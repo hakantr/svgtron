@@ -41,6 +41,10 @@ export class BilesikPlayback implements Playback {
     return this.#parcalar.some((p) => p.sonsuz);
   }
 
+  get dongu(): boolean {
+    return this.#parcalar.some((p) => p.dongu);
+  }
+
   oynat(): void {
     for (const p of this.#parcalar) p.oynat();
   }
