@@ -3,7 +3,7 @@ import { aracKayitDefteri, type Arac, type TuvalNoktasi } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
 import { noktaBasitlestir } from "../../../cekirdek/belge/model/yol-duzenleme";
-import { say } from "../../tuval/donusum";
+import { dDizesi } from "../yol-dizesi";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -18,13 +18,6 @@ const VARSAYILAN: Record<string, string> = {
 let noktalar: TuvalNoktasi[] = [];
 let onizleme: SVGPathElement | null = null;
 
-function dDizesi(pts: readonly TuvalNoktasi[]): string {
-  if (pts.length === 0) return "";
-  const p: string[] = [`M ${say(pts[0]!.x)} ${say(pts[0]!.y)}`];
-  for (let i = 1; i < pts.length; i++)
-    p.push(`L ${say(pts[i]!.x)} ${say(pts[i]!.y)}`);
-  return p.join(" ");
-}
 
 function sifirla(): void {
   onizleme?.remove();

@@ -7,7 +7,7 @@ import {
 } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
-import { say } from "../../tuval/donusum";
+import { dDizesi } from "../yol-dizesi";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const KAPAT_ESIGI = 10; // px (başlangıç noktasına yakınlık)
@@ -25,19 +25,6 @@ let noktalar: TuvalNoktasi[] = [];
 let ilkEkran: { x: number; y: number } | null = null;
 let onizleme: SVGPathElement | null = null;
 
-function dDizesi(
-  nokta: readonly TuvalNoktasi[],
-  ipucu?: TuvalNoktasi,
-  kapali = false,
-): string {
-  if (nokta.length === 0) return "";
-  const parcalar = [`M ${say(nokta[0]!.x)} ${say(nokta[0]!.y)}`];
-  for (let i = 1; i < nokta.length; i++)
-    parcalar.push(`L ${say(nokta[i]!.x)} ${say(nokta[i]!.y)}`);
-  if (ipucu) parcalar.push(`L ${say(ipucu.x)} ${say(ipucu.y)}`);
-  if (kapali) parcalar.push("Z");
-  return parcalar.join(" ");
-}
 
 function onizlemeKur(baglam: AracBaglami): void {
   if (!baglam.kok || onizleme) return;

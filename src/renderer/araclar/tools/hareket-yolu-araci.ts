@@ -8,7 +8,7 @@ import {
 import type { Komut } from "../../../cekirdek/komutlar/komut";
 import { noktaBasitlestir } from "../../../cekirdek/belge/model/yol-duzenleme";
 import { hareketYoluDugumu } from "../../ozellikler/animasyon/hareket-yolu";
-import { say } from "../../tuval/donusum";
+import { dDizesi } from "../yol-dizesi";
 import { t } from "../../diller/dil";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -26,13 +26,6 @@ let noktalar: TuvalNoktasi[] = [];
 let onizleme: SVGPathElement | null = null;
 let hedef: Dugum | null = null; // çizim başında seçili olan animasyon hedefi
 
-function dDizesi(pts: readonly TuvalNoktasi[]): string {
-  if (pts.length === 0) return "";
-  const p: string[] = [`M ${say(pts[0]!.x)} ${say(pts[0]!.y)}`];
-  for (let i = 1; i < pts.length; i++)
-    p.push(`L ${say(pts[i]!.x)} ${say(pts[i]!.y)}`);
-  return p.join(" ");
-}
 
 function sifirla(): void {
   onizleme?.remove();
