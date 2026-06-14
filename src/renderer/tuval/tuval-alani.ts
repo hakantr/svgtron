@@ -557,9 +557,9 @@ export class TuvalAlani extends LitElement {
    * uygulanan ölçek oranı). Ankraj yoksa merkez etrafında (klavye/araç zoom'u).
    */
   #yakinlastir(faktor: number, ankraj?: { x: number; y: number }): void {
-    // Üst sınır 24× (önceki 64× aşırı yakınlaştırmada dev kompozit katman →
-    // "tile memory limits exceeded" uyarısı veriyordu).
-    const yeni = Math.min(24, Math.max(0.05, this.#olcek * faktor));
+    // Üst sınır 24× (aşırı yakınlaştırmada dev kompozit katman → tile memory
+    // uyarısı); alt sınır 0.75 (%75) — daha fazla küçültmeye izin verilmez.
+    const yeni = Math.min(24, Math.max(0.75, this.#olcek * faktor));
     const k = yeni / this.#olcek; // clamp sonrası gerçek oran
     if (ankraj && this.kaydir && k !== 1) {
       const r = this.kaydir.getBoundingClientRect();
