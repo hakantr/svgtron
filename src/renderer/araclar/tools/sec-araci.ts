@@ -53,10 +53,32 @@ let asillar: {
   ctm: DOMMatrix;
   konumAlani: readonly [string, string] | null;
   basKonum: { x: number; y: number } | null;
+  basNoktalar: number[] | null;
   ownCtm: DOMMatrix;
 }[] = [];
 
-/** Bir nesnenin ekran deltasına karşılık gelen öznitelik yazımları (x/y ya da transform). */
+/** `points` dizesini düz sayı dizisine okur (geçersiz/tek sayıda ise null). */
+function noktalariOku(ham: string | undefined): number[] | null {
+  if (!ham) return null;
+  const s = ham.trim().split(/[\s,]+/).map(Number);
+  if (s.length < 2 || s.length % 2 !== 0 || s.some((n) => !Number.isFinite(n)))
+    return null;
+  return s;
+}
+
+/** Başlangıç noktalarını (dx,dy) kaydırıp `points` dizesi üretir. */
+function noktalariKaydir(bas: number[], dx: number, dy: number): string {
+  const par: string[] = [];
+  for (let i = 0; i < bas.length; i += 2)
+    par.push(`${say(bas[i]! + dx)},${say(bas[i + 1]! + dy)}`);
+  return par.join(" ");
+}
+
+/**
+ * Bir nesnenin ekran deltasına karşılık gelen öznitelik yazımları (kullanıcı isteği,
+ * hibrit): x/y (cx/cy) olan şekil → gerçek konum; polyline/polygon → `points`
+ * koordinatları (kayıpsız kaydırma); diğerleri (path/line/grup) → transform translate.
+ */
 function tasimaYazimlari(
   a: (typeof asillar)[number],
   dx: number,
@@ -68,6 +90,10 @@ function tasimaYazimlari(
       { ad: a.konumAlani[0], deger: String(say(a.basKonum.x + ld.x)) },
       { ad: a.konumAlani[1], deger: String(say(a.basKonum.y + ld.y)) },
     ];
+  }
+  if (a.basNoktalar) {
+    const ld = ekranDeltaKullanici(a.ownCtm, dx, dy);
+    return [{ ad: "points", deger: noktalariKaydir(a.basNoktalar, ld.x, ld.y) }];
   }
   const d = ekranDeltaKullanici(a.ctm, dx, dy);
   return [{ ad: "transform", deger: transformTasi(a.transform, d.x, d.y) }];
@@ -135,15 +161,21 @@ function tasimaHazirla(baglam: AracBaglami, olay: PointerEvent): void {
       const k = kutuYap(el.getBoundingClientRect());
       birlesim = birlesim ? birlestir(birlesim, k) : k;
     }
-    // x/y (cx/cy) ile taşınabiliyorsa onu tercih et; değilse transform.
+    // x/y (cx/cy) ile taşınabiliyorsa onu; polyline/polygon → points; değilse transform.
     const konumAlani = konumAlanlari(dugum.etiket);
     const basKonum = konumAlani ? konumOku(dugum) : null;
+    const noktaSekli =
+      dugum.etiket === "polyline" || dugum.etiket === "polygon";
+    const basNoktalar = noktaSekli
+      ? noktalariOku(dugum.oznitelikler.get("points"))
+      : null;
     return {
       dugum,
       transform: dugum.oznitelikler.get("transform") ?? "",
       ctm,
       konumAlani,
       basKonum,
+      basNoktalar,
       ownCtm,
     };
   });
