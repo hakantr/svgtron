@@ -425,7 +425,8 @@ export class TuvalAlani extends LitElement {
     window.removeEventListener("pointerup", this.#ucBirak);
     this.kaydir?.removeEventListener("wheel", this.#tekerlek);
     this.kaydir?.removeEventListener("pointermove", this.#hover);
-    this.kaydir?.removeEventListener("pointerleave", this.#cetvelImlecCik);
+    this.removeEventListener("pointermove", this.#cetvelImlecIzle);
+    this.removeEventListener("pointerleave", this.#cetvelImlecCik);
     this.#izlemeyiDurdur();
     cizimErisimi.kaynakAyarla(null);
     super.disconnectedCallback();
@@ -434,7 +435,9 @@ export class TuvalAlani extends LitElement {
   override firstUpdated(): void {
     this.kaydir.addEventListener("wheel", this.#tekerlek, { passive: false });
     this.kaydir.addEventListener("pointermove", this.#hover);
-    this.kaydir.addEventListener("pointerleave", this.#cetvelImlecCik);
+    // Cetvel göstergesi HOST'ta dinlenir → tutamaç/boyutlandırma katmanları üstünde de çalışır.
+    this.addEventListener("pointermove", this.#cetvelImlecIzle);
+    this.addEventListener("pointerleave", this.#cetvelImlecCik);
     this.belgeyiGuncelle();
   }
 
@@ -643,15 +646,22 @@ export class TuvalAlani extends LitElement {
 
   // Tuş basılı DEĞİLken hareket (hover) → aktif araca (örn. kalem ipucu çizgisi).
   readonly #hover = (olay: PointerEvent): void => {
-    // Cetvel imleç göstergesi her harekette (sürükleme dâhil) güncellenir.
-    this.#sonImlecX = olay.clientX;
-    this.#sonImlecY = olay.clientY;
-    this.#cetvelImlecKonumla();
     if (olay.buttons !== 0) return;
     aracDeposu.aktif?.hareket?.(olay, this.#aracBaglami());
   };
 
-  /** Fare tuvalden çıkınca cetvel göstergesini gizle. */
+  /**
+   * Cetvel imleç göstergesini her harekette güncelle. HOST seviyesinde dinlenir
+   * (yalnız .kaydir değil) → boyutlandırma tutamaçları gibi ÜST katmanların
+   * üzerindeyken ve boyutlandırma/taşıma sürerken de gösterge kaybolmaz.
+   */
+  readonly #cetvelImlecIzle = (olay: PointerEvent): void => {
+    this.#sonImlecX = olay.clientX;
+    this.#sonImlecY = olay.clientY;
+    this.#cetvelImlecKonumla();
+  };
+
+  /** Fare tuval bileşeninden çıkınca cetvel göstergesini gizle. */
   readonly #cetvelImlecCik = (): void => {
     this.#sonImlecX = null;
     this.#sonImlecY = null;
@@ -835,7 +845,7 @@ export class TuvalAlani extends LitElement {
       const s1 = ekranAt(a1);
       const bant = document.createElementNS(NS, "rect");
       bant.setAttribute("fill", "var(--vurgu, #4a90e2)");
-      bant.setAttribute("opacity", "0.16");
+      bant.setAttribute("opacity", "0.3");
       if (eksen === "x") {
         bant.setAttribute("x", String(Math.min(s0, s1)));
         bant.setAttribute("width", String(Math.abs(s1 - s0)));
