@@ -298,6 +298,152 @@ export class OzellikDenetcisiPanel extends LitElement {
       font-size: 0.78rem;
       color: var(--metin-soluk);
     }
+
+    /* ——— Metin denetçisi (Karakter/Paragraf — Illustrator düzeyi) ——— */
+    .metin-bolum {
+      display: grid;
+      gap: 0.35rem;
+      padding: 0.1rem 0.75rem 0.4rem;
+    }
+    .metin-satir {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .metin-satir.iki {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .metin-satir.arasi {
+      justify-content: space-between;
+    }
+    .metin-eti {
+      font-size: 0.72rem;
+      color: var(--metin-soluk);
+      white-space: nowrap;
+    }
+    /* Yazı tipi girişi + ağırlık seçici */
+    .font-giris,
+    .agirlik-sec {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      font: inherit;
+      font-size: 0.8rem;
+      color: var(--metin);
+      background: var(--yuzey-2);
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      padding: 0.24rem 0.4rem;
+    }
+    .agirlik-sec {
+      flex: 1;
+      cursor: pointer;
+    }
+    /* İkonlu sayı kutusu */
+    .ikon-alan {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      min-width: 0;
+      padding: 0 0.35rem;
+      background: var(--yuzey-2);
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+    }
+    .ikon-alan:focus-within {
+      border-color: var(--vurgu, #4a90e2);
+    }
+    .ikon-alan .ikon {
+      display: grid;
+      place-items: center;
+      color: var(--metin-soluk);
+      flex: 0 0 auto;
+    }
+    .ikon-alan input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      background: transparent;
+      padding: 0.22rem 0;
+      font: inherit;
+      font-size: 0.8rem;
+      color: var(--metin);
+      outline: none;
+    }
+    .taban-grup {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+    .taban-grup .ikon-alan {
+      flex: 1;
+    }
+    /* Segmentli denetim (hizalama/büyük-küçük/yön) */
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .seg button {
+      display: grid;
+      place-items: center;
+      min-width: 28px;
+      height: 24px;
+      padding: 0 0.35rem;
+      font: inherit;
+      font-size: 0.78rem;
+      border: 0;
+      border-right: 1px solid var(--kenarlik);
+      background: var(--yuzey-2);
+      color: var(--metin-soluk);
+      cursor: pointer;
+    }
+    .seg button:last-child {
+      border-right: 0;
+    }
+    .seg button:hover:not(.sec) {
+      background: var(--yuzey-hover);
+      color: var(--metin);
+    }
+    .seg button.sec {
+      background: var(--vurgu);
+      color: var(--vurgu-metin);
+    }
+    .seg button svg {
+      display: block;
+    }
+    /* Açma/kapama düğmeleri (süsleme/küçük-büyük) */
+    .tgl-grup {
+      display: inline-flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+    .tgl {
+      display: grid;
+      place-items: center;
+      min-width: 26px;
+      height: 24px;
+      padding: 0 0.3rem;
+      font: inherit;
+      font-size: 0.82rem;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      background: var(--yuzey-2);
+      color: var(--metin-soluk);
+      cursor: pointer;
+    }
+    .tgl:hover:not(.sec) {
+      background: var(--yuzey-hover);
+      color: var(--metin);
+    }
+    .tgl.sec {
+      background: var(--vurgu);
+      color: var(--vurgu-metin);
+      border-color: transparent;
+    }
   `;
 
   /** Uygulama servisleri (panel oluşturulurken atanır). */
