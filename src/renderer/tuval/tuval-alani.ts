@@ -109,10 +109,10 @@ export class TuvalAlani extends LitElement {
       background: rgba(130, 175, 255, 0.12);
       border-radius: 1px;
     }
-    /* Izgara (TK-37 #2) — ekran-uzayı CSS arka planı; arka plan #izgaraCiz'de kurulur. */
+    /* Izgara (TK-37 #2) — ekran-uzayı CSS arka planı; #izgaraCiz hem arka planı
+       hem KONUMU/BOYUTU kök SVG çizim alanına kıstar (svg dışına taşmaz). */
     .izgara {
       position: absolute;
-      inset: 0;
       display: none;
       pointer-events: none;
     }
@@ -732,15 +732,26 @@ export class TuvalAlani extends LitElement {
       this.izgaraKat.style.display = "none"; // çok sık → moiré/performans
       return;
     }
+    // Izgarayı SVG çizim alanına kıstla → svg dışındaki zemine taşmaz (göz yormaz).
     const h = this.getBoundingClientRect();
+    const sr = svg.getBoundingClientRect();
+    if (sr.width === 0 && sr.height === 0) {
+      this.izgaraKat.style.display = "none";
+      return;
+    }
     const o = new DOMPoint(0, 0).matrixTransform(ctm);
-    const cizgi = "var(--izgara-cizgi, rgba(127, 127, 127, 0.2))";
+    const cizgi = "var(--izgara-cizgi, rgba(127, 127, 127, 0.32))";
     this.izgaraKat.style.display = "block";
+    this.izgaraKat.style.left = `${sr.left - h.left}px`;
+    this.izgaraKat.style.top = `${sr.top - h.top}px`;
+    this.izgaraKat.style.width = `${sr.width}px`;
+    this.izgaraKat.style.height = `${sr.height}px`;
     this.izgaraKat.style.backgroundImage =
       `linear-gradient(to right, ${cizgi} 1px, transparent 1px),` +
       `linear-gradient(to bottom, ${cizgi} 1px, transparent 1px)`;
     this.izgaraKat.style.backgroundSize = `${adimX}px ${adimY}px`;
-    this.izgaraKat.style.backgroundPosition = `${o.x - h.left}px ${o.y - h.top}px`;
+    // Arka plan konumu artık elemanın (SVG alanı) sol-üstüne göre.
+    this.izgaraKat.style.backgroundPosition = `${o.x - sr.left}px ${o.y - sr.top}px`;
   }
 
   /** Bir client koordinatını kullanıcı (SVG) koordinatına çevirir (kök CTM ters). */
@@ -778,6 +789,35 @@ export class TuvalAlani extends LitElement {
     const u1 = uAt(eksen === "x" ? r.left : r.top);
     const u2 = uAt(eksen === "x" ? r.right : r.bottom);
     const cocuklar: SVGElement[] = [];
+
+    // Sayfa (artboard) kapsam bandı — cetveli çalışma alanına BAĞLAR (kullanıcı isteği):
+    // kök SVG viewBox kapsamını ekran konumuna çevirip cetvelde vurgulu bant olarak göster.
+    const vb = this.#yansitici.kok?.viewBox?.baseVal;
+    if (vb && vb.width > 0 && vb.height > 0) {
+      const a0 = eksen === "x" ? vb.x : vb.y;
+      const a1 = eksen === "x" ? vb.x + vb.width : vb.y + vb.height;
+      const ekranAt = (u: number): number =>
+        eksen === "x"
+          ? new DOMPoint(u, 0).matrixTransform(ctm).x - r.left
+          : new DOMPoint(0, u).matrixTransform(ctm).y - r.top;
+      const s0 = ekranAt(a0);
+      const s1 = ekranAt(a1);
+      const bant = document.createElementNS(NS, "rect");
+      bant.setAttribute("fill", "var(--vurgu, #4a90e2)");
+      bant.setAttribute("opacity", "0.16");
+      if (eksen === "x") {
+        bant.setAttribute("x", String(Math.min(s0, s1)));
+        bant.setAttribute("width", String(Math.abs(s1 - s0)));
+        bant.setAttribute("y", "0");
+        bant.setAttribute("height", "20");
+      } else {
+        bant.setAttribute("y", String(Math.min(s0, s1)));
+        bant.setAttribute("height", String(Math.abs(s1 - s0)));
+        bant.setAttribute("x", "0");
+        bant.setAttribute("width", "20");
+      }
+      cocuklar.push(bant); // ticks bunun üstüne çizilsin
+    }
     for (const t of tickler(Math.min(u1, u2), Math.max(u1, u2), adim, 400)) {
       const sc =
         eksen === "x"
