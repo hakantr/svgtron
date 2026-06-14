@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import { html, nothing, type TemplateResult } from "lit";
 import {
   dugumOlustur,
@@ -26,10 +27,6 @@ import { kaynakGorunumKaydet, defsOnizleme } from "../kaynak-gorunum";
  * tutan" noktası tam da budur. Listele · uygula · oluştur (ok ucu) · sil; önizleme
  * ayrı iş değildir (komut belgeyi değiştirince Tuval canlı güncellenir, İlke 3).
  */
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
-}
 
 function markerDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok)) {

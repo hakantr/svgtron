@@ -1,3 +1,4 @@
+import { defsBul } from "../../cekirdek/belge/defs";
 import {
   dugumOlustur,
   gez,
@@ -40,10 +41,6 @@ export function gradyanBul(belge: Belge, id: string): Dugum | null {
     }
   }
   return null;
-}
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
 }
 
 /** Bir `fill` dizesini BoyaDegeri'ne çözer. */

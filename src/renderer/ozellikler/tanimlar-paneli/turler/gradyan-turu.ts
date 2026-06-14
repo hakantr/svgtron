@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import { html, nothing } from "lit";
 import {
   dugumOlustur,
@@ -84,10 +85,6 @@ function gradyanAciYaz(belge: Belge, grad: Dugum, derece: number): Komut {
  * gradyan ÜRETİMİNİ tamamlar: burada amaç var olanı tekrar kullanmaktır (§8 deseni).
  */
 const GRADYAN = new Set(["linearGradient", "radialGradient"]);
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
-}
 
 function gradyanDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok)) {

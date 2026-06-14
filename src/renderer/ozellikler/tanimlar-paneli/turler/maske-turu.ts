@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import {
   dugumOlustur,
   gez,
@@ -19,10 +20,6 @@ import { kaynakGorunumKaydet, defsOnizleme } from "../kaynak-gorunum";
  * mask (maske) kaynak türü (AGENTS.md Faz G+, §8.1, §10.6). Uygulama stratejisi
  * `mask="url(#id)"`. Listele · uygula · oluştur (dairesel maske: beyaz=görünür) · sil.
  */
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
-}
 function maskeDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok))
     if (d.etiket === "mask" && d.oznitelikler.get("id") === id) return d;

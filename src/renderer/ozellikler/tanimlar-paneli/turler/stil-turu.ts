@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import { html, nothing } from "lit";
 import {
   dugumOlustur,
@@ -35,10 +36,6 @@ function hexNorm(c: string): string {
 
 function stilDugumleri(belge: Belge): Dugum[] {
   return [...gez(belge.kok)].filter((d) => d.etiket === "style");
-}
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
 }
 
 /** CSS metninden sınıf adlarını (`.ad` seçicileri) çıkarır. */

@@ -1,3 +1,4 @@
+import { defsBul } from "../../cekirdek/belge/defs";
 import {
   dugumOlustur,
   gez,
@@ -41,10 +42,6 @@ function nesneStilSinifi(dugum: Dugum): string | null {
 function styleDugumu(belge: Belge): Dugum | null {
   for (const d of gez(belge.kok)) if (d.etiket === "style") return d;
   return null;
-}
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
 }
 
 function kacis(s: string): string {

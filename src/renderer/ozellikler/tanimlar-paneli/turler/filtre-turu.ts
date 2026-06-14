@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import { html, nothing } from "lit";
 import {
   dugumOlustur,
@@ -30,10 +31,6 @@ const SAYI_ALANLARI = ["stdDeviation", "dx", "dy"] as const;
  * uca kanıtı: listele · uygula (şekle `filter="url(#id)"`) · oluştur · sil.
  * Önizleme ayrı iş değildir: komut belgeyi değiştirince Tuval canlı güncellenir.
  */
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
-}
 
 function filtreDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok)) {

@@ -1,3 +1,4 @@
+import { defsBul } from "../../../../cekirdek/belge/defs";
 import { html, nothing } from "lit";
 import {
   dugumOlustur,
@@ -22,10 +23,6 @@ import { kaynakGorunumKaydet, defsOnizleme } from "../kaynak-gorunum";
  * registry kaydı" (İlke 5). Uygulama stratejisi gradyan gibi `fill="url(#id)"`tir.
  * Listele · uygula · oluştur (nokta deseni) · sil.
  */
-
-function defsBul(belge: Belge): Dugum | null {
-  return belge.kok.cocuklar.find((d) => d.etiket === "defs") ?? null;
-}
 function desenDugumu(belge: Belge, id: string): Dugum | null {
   for (const d of gez(belge.kok))
     if (d.etiket === "pattern" && d.oznitelikler.get("id") === id) return d;
