@@ -278,6 +278,7 @@ denetci.don.egme = Skew °
 denetci.don.cevir = Flip
 denetci.don.cevirYatay = Flip horizontal (left↔right)
 denetci.don.cevirDikey = Flip vertical (top↔bottom)
+denetci.refNokta = Reference point
 denetci.grup.metadata = Title and description
 denetci.meta.baslik = Title
 denetci.meta.aciklama = Description

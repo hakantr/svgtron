@@ -57,6 +57,46 @@ let olcekBagli = false;
 let konumOteModu = false;
 
 /**
+ * Referans (ankraj) noktası — ölçeklemenin SABİT kalacağı bbox noktası (kesir:
+ * 0=sol/üst, 0.5=merkez, 1=sağ/alt). Illustrator'ın 3×3 proxy'si. Görünüm durumu
+ * (undo'ya girmez). Varsayılan merkez. Şimdilik path/grup W/H ölçeğine bağlı.
+ */
+let refNoktaH = 0.5;
+let refNoktaV = 0.5;
+
+/** 3×3 referans-noktası seçici (proxy). Tıkla → ölçek pivotu o nokta olur. */
+function referansProxy(baglam: AlanSetiBaglami): TemplateResult {
+  const oranlar = [0, 0.5, 1] as const;
+  return html`
+    <div class="ref-satir">
+      <div
+        class="ref-proxy"
+        role="group"
+        aria-label=${t("denetci.refNokta")}
+        title=${t("denetci.refNokta")}
+      >
+        ${oranlar.flatMap((v) =>
+          oranlar.map(
+            (hx) => html`<button
+              type="button"
+              class="ref-nokta ${refNoktaH === hx && refNoktaV === v
+                ? "sec"
+                : ""}"
+              @click=${() => {
+                refNoktaH = hx;
+                refNoktaV = v;
+                baglam.tazele();
+              }}
+            ></button>`,
+          ),
+        )}
+      </div>
+      <span class="eti">${t("denetci.refNokta")}</span>
+    </div>
+  `;
+}
+
+/**
  * Bir girişi sayıya çözer. Düz sayı YA DA Illustrator-tarzı MATEMATİK ifadesi
  * (`+ - * /` ve parantez; örn. `200/3`, `12*1.5`, `(4+2)*10`). Güvenlik: yalnız
  * sayı/işleç/parantez/nokta/boşluk karakterlerine izin → kod enjeksiyonu yok.
@@ -467,17 +507,19 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
       return;
     }
     const s = hedef / mevcut;
-    // Ölçek pivotu EBEVEYN-uzayı sol-üst (p.minX/p.minY) — transform orada uygulanır.
+    // Ölçek pivotu EBEVEYN-uzayı REFERANS NOKTASI (3×3 proxy) — transform orada uygulanır.
+    const px = p.minX + p.w * refNoktaH;
+    const py = p.minY + p.h * refNoktaV;
     if (oranKilidi.acik) {
       onEkle(
-        `translate(${say(p.minX)}, ${say(p.minY)}) scale(${say(s)}, ${say(s)}) translate(${say(-p.minX)}, ${say(-p.minY)})`,
+        `translate(${say(px)}, ${say(py)}) scale(${say(s)}, ${say(s)}) translate(${say(-px)}, ${say(-py)})`,
       );
       return;
     }
     onEkle(
       eksen === "w"
-        ? `translate(${say(p.minX)}, ${say(p.minY)}) scale(${say(s)}, 1) translate(${say(-p.minX)}, ${say(-p.minY)})`
-        : `translate(${say(p.minX)}, ${say(p.minY)}) scale(1, ${say(s)}) translate(${say(-p.minX)}, ${say(-p.minY)})`,
+        ? `translate(${say(px)}, ${say(py)}) scale(${say(s)}, 1) translate(${say(-px)}, ${say(-py)})`
+        : `translate(${say(px)}, ${say(py)}) scale(1, ${say(s)}) translate(${say(-px)}, ${say(-py)})`,
     );
   };
   const kil = oranKilidi.acik;
@@ -488,6 +530,7 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
       ${alan("x", String(say(minX)), (n) => tasi("x", n))}
       ${alan("y", String(say(minY)), (n) => tasi("y", n))}
     </div>
+    ${referansProxy(baglam)}
     ${oranCiftSatiri(
       t("denetci.geo.gen"),
       String(say(w)),

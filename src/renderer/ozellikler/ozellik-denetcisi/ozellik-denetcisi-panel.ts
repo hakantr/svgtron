@@ -243,6 +243,39 @@ export class OzellikDenetcisiPanel extends LitElement {
     .cevir-dugme svg {
       display: block;
     }
+    /* 3×3 referans-noktası proxy'si (Illustrator Transform) — ölçek ankrajı. */
+    .ref-satir {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.75rem;
+    }
+    .ref-proxy {
+      display: grid;
+      grid-template-columns: repeat(3, 12px);
+      grid-auto-rows: 12px;
+      gap: 2px;
+    }
+    .ref-nokta {
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      border: 1px solid var(--kenarlik);
+      border-radius: 2px;
+      background: var(--yuzey-2);
+      cursor: pointer;
+    }
+    .ref-nokta:hover:not(.sec) {
+      border-color: var(--metin-soluk);
+    }
+    .ref-nokta.sec {
+      background: var(--vurgu, #4a90e2);
+      border-color: transparent;
+    }
+    .ref-satir .eti {
+      font-size: 0.72rem;
+      color: var(--metin-soluk);
+    }
     .kilit svg {
       display: block;
     }

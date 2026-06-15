@@ -278,6 +278,7 @@ denetci.don.egme = Eğ °
 denetci.don.cevir = Çevir
 denetci.don.cevirYatay = Yatay çevir (sol↔sağ)
 denetci.don.cevirDikey = Dikey çevir (üst↔alt)
+denetci.refNokta = Referans noktası
 denetci.grup.metadata = Başlık ve açıklama
 denetci.meta.baslik = Başlık
 denetci.meta.aciklama = Açıklama
