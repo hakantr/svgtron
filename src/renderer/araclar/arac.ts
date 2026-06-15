@@ -65,6 +65,12 @@ export interface AracBaglami {
    * versin diye (örn. Pipet'te hedef seçilmemiş). Varsayılan tür 'bilgi'.
    */
   bildir(mesaj: string, tur?: "bilgi" | "uyari" | "hata"): void;
+  /**
+   * Bir metin (`text`/`tspan`/`textPath`) düğümünü YERİNDE düzenleme moduna alır
+   * (üzerine bir giriş kutusu açar). Metin aracı yeni metni oluşturduktan sonra,
+   * Tuval çift-tıklamada bunu çağırır. İçerik değişimi Command'dır (İlke 2 → undo).
+   */
+  metinDuzenle(dugum: Dugum): void;
 }
 
 /** Bir araç. */

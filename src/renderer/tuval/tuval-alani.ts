@@ -18,6 +18,7 @@ import {
 } from "../araclar/arac";
 import { OznitelikDegistirKomutu } from "../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { BilesikKomut } from "../../cekirdek/komutlar/dugum-komutlari";
+import { MetinKomutu } from "../../cekirdek/komutlar/metin-komutu";
 import { say } from "./donusum";
 import type { Kilavuz } from "./yapisma";
 import { oranKilidi } from "./oran-kilidi";
@@ -111,6 +112,21 @@ export class TuvalAlani extends LitElement {
       border: 1px dashed rgba(130, 175, 255, 0.95);
       background: rgba(130, 175, 255, 0.12);
       border-radius: 1px;
+    }
+    /* Yerinde metin düzenleme kutusu (çift-tık / Metin aracı) — konum+font JS'te. */
+    .metin-giris {
+      position: absolute;
+      display: none;
+      z-index: 20;
+      margin: 0;
+      padding: 0 2px;
+      box-sizing: border-box;
+      border: 1px solid var(--vurgu, #4a90e2);
+      border-radius: 2px;
+      background: var(--yuzey, #fff);
+      color: var(--metin, #111);
+      outline: none;
+      line-height: 1.1;
     }
     /* Izgara (TK-37 #2) — ekran-uzayı CSS arka planı; #izgaraCiz hem arka planı
        hem KONUMU/BOYUTU kök SVG çizim alanına kıstar (svg dışına taşmaz). */
@@ -296,6 +312,9 @@ export class TuvalAlani extends LitElement {
   @query(".icerik") private icerik!: HTMLDivElement;
   @query(".secim-katman") private katman!: HTMLDivElement;
   @query(".kement") private kement!: HTMLDivElement;
+  @query(".metin-giris") private metinGiris?: HTMLInputElement;
+  /** Yerinde düzenlenen metin düğümü (yoksa null). */
+  #metinDugum: Dugum | null = null;
   @query(".izgara") private izgaraKat!: HTMLDivElement;
   @query(".cetvel-ust") private cetvelUst!: SVGSVGElement;
   @query(".cetvel-sol") private cetvelSol!: SVGSVGElement;
@@ -425,6 +444,7 @@ export class TuvalAlani extends LitElement {
     window.removeEventListener("pointerup", this.#ucBirak);
     this.kaydir?.removeEventListener("wheel", this.#tekerlek);
     this.kaydir?.removeEventListener("pointermove", this.#hover);
+    this.kaydir?.removeEventListener("dblclick", this.#cifttik);
     this.removeEventListener("pointermove", this.#cetvelImlecIzle);
     this.removeEventListener("pointerleave", this.#cetvelImlecCik);
     this.#izlemeyiDurdur();
@@ -435,6 +455,7 @@ export class TuvalAlani extends LitElement {
   override firstUpdated(): void {
     this.kaydir.addEventListener("wheel", this.#tekerlek, { passive: false });
     this.kaydir.addEventListener("pointermove", this.#hover);
+    this.kaydir.addEventListener("dblclick", this.#cifttik);
     // Cetvel göstergesi HOST'ta dinlenir → tutamaç/boyutlandırma katmanları üstünde de çalışır.
     this.addEventListener("pointermove", this.#cetvelImlecIzle);
     this.addEventListener("pointerleave", this.#cetvelImlecCik);
@@ -539,8 +560,80 @@ export class TuvalAlani extends LitElement {
       kilavuzCiz: (k) => this.#kilavuzCiz(k),
       aracKatmani: () => this.aracKat,
       bildir: (mesaj, tur) => bildirimServisi.bildir(mesaj, tur),
+      metinDuzenle: (d) => this.#metinDuzenleBasla(d),
     };
   }
+
+  // --- Yerinde metin düzenleme ---
+  /** Metin düğümünün üzerine bir giriş kutusu açar (çift-tık ya da Metin aracı). */
+  #metinDuzenleBasla(dugum: Dugum): void {
+    this.#metinDugum = dugum;
+    // Yeni oluşturulan metin için render+yerleşim hazır olsun → bir kare bekle.
+    requestAnimationFrame(() => {
+      const giris = this.metinGiris;
+      const el = this.#yansitici.elemanGetir(dugum.kimlik);
+      if (!giris || !(el instanceof SVGGraphicsElement) || this.#metinDugum !== dugum)
+        return;
+      const r = el.getBoundingClientRect();
+      const h = this.getBoundingClientRect();
+      const ctm = el.getScreenCTM();
+      const olcek = ctm ? Math.abs(ctm.a) : 1;
+      const k = getComputedStyle(el);
+      const px = (parseFloat(k.fontSize) || 16) * olcek;
+      giris.value = dugum.metin ?? el.textContent ?? "";
+      giris.style.display = "block";
+      giris.style.left = `${r.left - h.left}px`;
+      giris.style.top = `${r.top - h.top}px`;
+      giris.style.minWidth = `${Math.max(r.width + 6, 28)}px`;
+      giris.style.height = `${Math.max(r.height, px * 1.25)}px`;
+      giris.style.font = `${k.fontStyle} ${k.fontWeight} ${px}px ${k.fontFamily}`;
+      giris.focus();
+      giris.select();
+    });
+  }
+
+  /** Düzenlemeyi bitirir; iptal değilse içerik değişimini Command ile yazar (İlke 2). */
+  #metinDuzenleBitir(iptal: boolean): void {
+    const dugum = this.#metinDugum;
+    if (!dugum) return;
+    this.#metinDugum = null;
+    const giris = this.metinGiris;
+    const yeni = giris?.value ?? "";
+    if (giris) giris.style.display = "none";
+    if (iptal) return;
+    const belge = this.depo.belge;
+    if (belge && yeni !== (dugum.metin ?? ""))
+      this.gecmis.calistir(new MetinKomutu(belge, dugum, yeni));
+  }
+
+  /** Düzenleme kutusu klavyesi: Enter onaylar, Esc iptal (araç kısayolları tetiklenmez). */
+  readonly #metinGirisTus = (olay: KeyboardEvent): void => {
+    olay.stopPropagation();
+    if (olay.key === "Enter") {
+      olay.preventDefault();
+      this.#metinDuzenleBitir(false);
+    } else if (olay.key === "Escape") {
+      olay.preventDefault();
+      this.#metinDuzenleBitir(true);
+    }
+  };
+
+  /** Çift tık: bir metin düğümü ise yerinde düzenlemeye gir. */
+  readonly #cifttik = (olay: MouseEvent): void => {
+    const hedef = olay.target;
+    if (!(hedef instanceof Element)) return;
+    const kimlik = hedef.closest("[data-kimlik]")?.getAttribute("data-kimlik");
+    const dugum = kimlik ? this.depo.belge?.dugumBul(kimlik) : null;
+    if (
+      dugum &&
+      (dugum.etiket === "text" ||
+        dugum.etiket === "tspan" ||
+        dugum.etiket === "textPath")
+    ) {
+      olay.preventDefault();
+      this.#metinDuzenleBasla(dugum);
+    }
+  };
 
   // --- Görünüm (yakınlaştırma/kaydırma) ---
   #transformUygula(): void {
@@ -1447,6 +1540,13 @@ export class TuvalAlani extends LitElement {
         @pointerdown=${(e: PointerEvent) => this.#cetveldenKilavuz("dikey", e)}
       ></svg>
       <div class="cetvel-kose"></div>
+      <input
+        class="metin-giris"
+        type="text"
+        spellcheck="false"
+        @keydown=${this.#metinGirisTus}
+        @blur=${() => this.#metinDuzenleBitir(false)}
+      />
     `;
   }
 }

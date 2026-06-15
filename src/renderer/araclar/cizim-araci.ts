@@ -92,6 +92,8 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
       );
       baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
       baglam.secim.sec(dugum);
+      // Metin aracı: oluşturduktan hemen sonra yerinde düzenlemeye gir.
+      if (tanim.metin !== undefined) baglam.metinDuzenle(dugum);
     },
   };
 }
