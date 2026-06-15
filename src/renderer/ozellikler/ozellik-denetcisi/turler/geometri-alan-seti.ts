@@ -64,34 +64,35 @@ let konumOteModu = false;
 let refNoktaH = 0.5;
 let refNoktaV = 0.5;
 
-/** 3×3 referans-noktası seçici (proxy). Tıkla → ölçek pivotu o nokta olur. */
-function referansProxy(baglam: AlanSetiBaglami): TemplateResult {
+/**
+ * 3×3 referans-noktası seçici (proxy) — yazısız, kompakt; X/Y'nin SOLUNDA durur.
+ * Tıkla → konum/ölçek ankrajı o nokta olur. `pasif` ise (Öte modu) gizlenmez,
+ * devre dışı görünür.
+ */
+function referansProxy(baglam: AlanSetiBaglami, pasif = false): TemplateResult {
   const oranlar = [0, 0.5, 1] as const;
   return html`
-    <div class="ref-satir">
-      <div
-        class="ref-proxy"
-        role="group"
-        aria-label=${t("denetci.refNokta")}
-        title=${t("denetci.refNokta")}
-      >
-        ${oranlar.flatMap((v) =>
-          oranlar.map(
-            (hx) => html`<button
-              type="button"
-              class="ref-nokta ${refNoktaH === hx && refNoktaV === v
-                ? "sec"
-                : ""}"
-              @click=${() => {
-                refNoktaH = hx;
-                refNoktaV = v;
-                baglam.tazele();
-              }}
-            ></button>`,
-          ),
-        )}
-      </div>
-      <span class="eti">${t("denetci.refNokta")}</span>
+    <div
+      class="ref-proxy ${pasif ? "pasif" : ""}"
+      role="group"
+      aria-label=${t("denetci.refNokta")}
+      title=${t("denetci.refNokta")}
+    >
+      ${oranlar.flatMap((v) =>
+        oranlar.map(
+          (hx) => html`<button
+            type="button"
+            class="ref-nokta ${refNoktaH === hx && refNoktaV === v ? "sec" : ""}"
+            ?disabled=${pasif}
+            @click=${() => {
+              if (pasif) return;
+              refNoktaH = hx;
+              refNoktaV = v;
+              baglam.tazele();
+            }}
+          ></button>`,
+        ),
+      )}
     </div>
   `;
 }
@@ -378,21 +379,23 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
         ${t("denetci.konum.ote")}
       </label>
     </div>
-    ${ote ? "" : referansProxy(baglam)}
-    <div class="izgara">
-      ${ote
-        ? html`
-            ${alan("tx", String(say(tx)), (n) =>
-              yaz(xa, String(say(temel.sx + n))),
-            )}
-            ${alan("ty", String(say(ty)), (n) =>
-              yaz(ya, String(say(temel.sy + n))),
-            )}
-          `
-        : html`
-            ${alan("x", String(say(refX)), uyX)}
-            ${alan("y", String(say(refY)), uyY)}
-          `}
+    <div class="konum-satir">
+      ${referansProxy(baglam, ote)}
+      <div class="konum-alanlar">
+        ${ote
+          ? html`
+              ${alan("tx", String(say(tx)), (n) =>
+                yaz(xa, String(say(temel.sx + n))),
+              )}
+              ${alan("ty", String(say(ty)), (n) =>
+                yaz(ya, String(say(temel.sy + n))),
+              )}
+            `
+          : html`
+              ${alan("x", String(say(refX)), uyX)}
+              ${alan("y", String(say(refY)), uyY)}
+            `}
+      </div>
     </div>
   `;
 }
@@ -575,10 +578,12 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
 
   return html`
     <div class="alt-baslik">${t("denetci.altbaslik.konum")}</div>
-    ${referansProxy(baglam)}
-    <div class="izgara">
-      ${alan("x", String(say(refXr)), (n) => tasi("x", n))}
-      ${alan("y", String(say(refYr)), (n) => tasi("y", n))}
+    <div class="konum-satir">
+      ${referansProxy(baglam)}
+      <div class="konum-alanlar">
+        ${alan("x", String(say(refXr)), (n) => tasi("x", n))}
+        ${alan("y", String(say(refYr)), (n) => tasi("y", n))}
+      </div>
     </div>
     ${oranCiftSatiri(
       t("denetci.geo.gen"),

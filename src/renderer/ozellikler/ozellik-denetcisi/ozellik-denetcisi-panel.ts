@@ -277,38 +277,55 @@ export class OzellikDenetcisiPanel extends LitElement {
     .cevir-dugme svg {
       display: block;
     }
-    /* 3×3 referans-noktası proxy'si (Illustrator Transform) — ölçek ankrajı. */
-    .ref-satir {
+    /* Konum satırı: 3×3 referans proxy'si SOLDA, X/Y kutuları YANINDA (Illustrator). */
+    .konum-satir {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       padding: 0.3rem 0.75rem;
     }
+    .konum-alanlar {
+      flex: 1;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: auto 1fr auto 1fr;
+      align-items: center;
+      gap: 0.3rem 0.5rem;
+    }
+    .konum-alanlar label {
+      font-size: 0.75rem;
+      color: var(--metin-soluk);
+      font-family: ui-monospace, monospace;
+    }
+    /* 3×3 referans-noktası proxy'si — kompakt, yazısız. */
     .ref-proxy {
       display: grid;
-      grid-template-columns: repeat(3, 12px);
-      grid-auto-rows: 12px;
-      gap: 2px;
+      grid-template-columns: repeat(3, 9px);
+      grid-auto-rows: 9px;
+      gap: 1.5px;
+      flex: 0 0 auto;
+    }
+    .ref-proxy.pasif {
+      opacity: 0.4;
     }
     .ref-nokta {
-      width: 12px;
-      height: 12px;
+      width: 9px;
+      height: 9px;
       padding: 0;
       border: 1px solid var(--kenarlik);
       border-radius: 2px;
       background: var(--yuzey-2);
       cursor: pointer;
     }
-    .ref-nokta:hover:not(.sec) {
+    .ref-proxy.pasif .ref-nokta {
+      cursor: default;
+    }
+    .ref-nokta:hover:not(.sec):not(:disabled) {
       border-color: var(--metin-soluk);
     }
     .ref-nokta.sec {
       background: var(--vurgu, #4a90e2);
       border-color: transparent;
-    }
-    .ref-satir .eti {
-      font-size: 0.72rem;
-      color: var(--metin-soluk);
     }
     /* Hızlı Eylemler şeridi (Illustrator Quick Actions) — en altta, bağlam-duyarlı. */
     .hizli {
