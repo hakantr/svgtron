@@ -47,12 +47,18 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
   - **Seçim:** Seç aracı gibi PRESS anında (`bas`) seçer; release'te yeniden
     `isabet` ETMEZ (`basHedef`) — beliren çapaların üstüne düşüp seçimi silen tuzak
     giderildi. Artık nesneye/başka nesneye tek tıkla geçilir (Seç aracı gerekmez).
-  - **Kavis kapsamı + imleç:** kavis (Ctrl+sürükle Bézier) yalnız **`path`**'te
-    (line/polyline/polygon düz). Ctrl basılıyken kavis verilemeyen nesne seçiliyse
+  - **Kavis kapsamı + imleç:** Ctrl basılıyken kavis verilemeyen nesne seçiliyse
     imleç her yerde `not-allowed`; seçim yoksa imleç altındaki nesneye göre. Yeni
     `Arac.imlecIcin`; tuval Ctrl/Meta tuş değişiminde imleci son konumda tazeler.
-  - **AÇIK:** line/polyline/polygon'u **path'e çevirip** kavislemek (Ctrl+sürükle)
-    henüz YOK — kullanıcıya soruldu/sunulacak (element etiketi değişimi = ayrı iş).
+- **Düğüm aracı: line/polyline/polygon → Ctrl+sürükle = path'e çevir + kavisle**
+  (979e512). Artık TÜM düzenlenebilir şekiller kavislenebilir (yukarıdaki "AÇIK"
+  kapandı). NON-path çapada Ctrl+sürükle "çevir" modu: eşik aşılınca orijinal
+  GİZLENİR, aynı stilde geçici `path` önizlemesinde kavis canlı görünür; bırakınca
+  **tek** `SekliPathaCevirKomutu` (YERİNDE dönüşüm, kimlik korunur → seçim/referans
+  bayatlamaz). Yansıtıcı artık etiket değişince (polygon→path) elemanı yeniden kurar
+  (yoksa `<polygon>`'a `d` yazılır, render olmaz). `kavisliMi` = DUZENLENEBILIR →
+  "stop" imleci yalnız gerçekten düzenlenemeyen şekillerde (rect/circle/text…).
+  *Gözle teyit: poly/line vertex'ini Ctrl+sürükle → kavis + path'e dönüşüm; tek Ctrl+Z geri.*
 
 ## 0b. Önceki oturum — devir (2026-06-13)
 
