@@ -26,6 +26,14 @@ export function cokNoktaAraci(tanim: CokNoktaTanimi): Arac {
   let noktalar: TuvalNoktasi[] = [];
   let ilkEkran: { x: number; y: number } | null = null;
   let onizleme: SVGElement | null = null;
+  let sonBaglam: AracBaglami | null = null;
+  // "Bitirme adımı": çizim biter bitmez Ctrl+Z bunu geri alıp çizime döndürür.
+  // Yeni etkileşim (yeni çizim / araç değişimi) olunca temizlenir → normal akış.
+  let sonBitirme: {
+    kimlik: string;
+    noktalar: TuvalNoktasi[];
+    ekran: { x: number; y: number } | null;
+  } | null = null;
 
   const dizge = (ipucu?: TuvalNoktasi): string =>
     (ipucu ? [...noktalar, ipucu] : noktalar)
@@ -58,8 +66,39 @@ export function cokNoktaAraci(tanim: CokNoktaTanimi): Arac {
       });
       baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
       baglam.secim.sec(dugum);
+      // Bitirme adımını hatırla → Ctrl+Z çizime geri dönsün (kullanıcı isteği).
+      sonBitirme = {
+        kimlik: dugum.kimlik,
+        noktalar: noktalar.slice(),
+        ekran: ilkEkran,
+      };
     }
     sifirla();
+  };
+
+  /** Ctrl+Z'yi "bitirme adımı"na özel yakala: şekli kaldır, çizime geri dön. */
+  const geriAc = (): boolean => {
+    if (!sonBitirme || !sonBaglam) return false;
+    const { kimlik, noktalar: pts, ekran } = sonBitirme;
+    sonBitirme = null;
+    const belge = sonBaglam.depo.belge;
+    // Şekli geri al. `secim.sec` araya bir "bırakma" seçim adımı yazmış olabilir
+    // (çizimden önce çoklu seçim vardıysa) → şekil kalkana dek geri al (en çok
+    // birkaç adım: edit + olası seçim adımı).
+    let guvenlik = 4;
+    while (
+      belge?.dugumBul(kimlik) &&
+      sonBaglam.gecmis.geriAlinabilir &&
+      guvenlik-- > 0
+    )
+      sonBaglam.gecmis.geriAl();
+    sonBaglam.secim.temizle();
+    // Çizimi yeniden aç (kaldığı noktalarla).
+    noktalar = pts.slice();
+    ilkEkran = ekran;
+    onizlemeKur(sonBaglam);
+    onizlemeYenile();
+    return true;
   };
 
   return {
@@ -70,6 +109,8 @@ export function cokNoktaAraci(tanim: CokNoktaTanimi): Arac {
     sira: tanim.sira,
 
     bas(olay, baglam) {
+      sonBaglam = baglam;
+      sonBitirme = null; // yeni etkileşim → eski bitirme normal geri-al akışına geçer
       const nokta = baglam.svgKonum(olay);
       if (
         noktalar.length >= 2 &&
@@ -88,11 +129,13 @@ export function cokNoktaAraci(tanim: CokNoktaTanimi): Arac {
     },
 
     hareket(olay, baglam) {
+      sonBaglam = baglam;
       if (noktalar.length > 0 && onizleme)
         onizlemeYenile(baglam.svgKonum(olay));
     },
 
     tus(olay, baglam) {
+      sonBaglam = baglam;
       if (olay.key === "Enter") {
         olay.preventDefault();
         bitir(baglam);
@@ -102,7 +145,19 @@ export function cokNoktaAraci(tanim: CokNoktaTanimi): Arac {
       }
     },
 
+    sagTik(baglam) {
+      sonBaglam = baglam;
+      if (noktalar.length === 0) return false;
+      bitir(baglam); // sağ tık = Enter (çizimi bitir)
+      return true;
+    },
+
+    geriAlYakala() {
+      return geriAc();
+    },
+
     pasiflesti() {
+      sonBitirme = null;
       sifirla();
     },
   };

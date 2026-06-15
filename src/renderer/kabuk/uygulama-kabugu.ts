@@ -28,6 +28,7 @@ import {
   yapistir,
 } from "../ozellikler/duzen/duzenleme";
 import { sonDosyalar } from "../ozellikler/dosya/son-dosyalar";
+import { aracDeposu } from "../araclar/arac";
 import { disaAktarSor } from "../ozellikler/dosya/disa-aktar-sor";
 import {
   yoldanYukle,
@@ -754,7 +755,9 @@ export class UygulamaKabugu extends LitElement {
     const harf = olay.key.toLowerCase();
     if (harf === "z" && !olay.shiftKey) {
       olay.preventDefault();
-      this.#gecmis.geriAl();
+      // Aktif araç Ctrl+Z'yi yakalayabilir (çok-noktalı çizim: yalnız "bitirme
+      // adımı"nı geri al, çizime dön — İlke 5). Yakalanmazsa normal geri-al.
+      if (!aracDeposu.aktif?.geriAlYakala?.()) this.#gecmis.geriAl();
     } else if ((harf === "z" && olay.shiftKey) || harf === "y") {
       olay.preventDefault();
       this.#gecmis.ileriAl();

@@ -245,6 +245,11 @@ export class TuvalAlani extends LitElement {
       inset: 0;
       pointer-events: none;
     }
+    /* Boşluk-pan modunda tüm bindirme/tutamaçlar tıklamayı geçirsin → her yerde
+       basış geçici kaydırmayı başlatır (düğüm/boyut tutamacı yakalamasın). */
+    :host(.bos-pan) .secim-katman * {
+      pointer-events: none !important;
+    }
     /* Boyut/döndürme tutamaçları (tek seçim) */
     .tutamaclar {
       position: absolute;
@@ -404,6 +409,10 @@ export class TuvalAlani extends LitElement {
   #basNokta: { x: number; y: number } | null = null;
   #suruklendi = false;
   #ortaPan: { x: number; y: number } | null = null;
+  // Boşluk çubuğu basılıyken geçici El (kaydır): aktif araç beklemeye alınır;
+  // boşluk bırakılınca araç kaldığı yerden sürer (görünüm durumu, İlke 9).
+  #bosBasili = false;
+  #bosPan: { x: number; y: number } | null = null;
   // Görünüm dönüşümü (yakınlaştırma/kaydırma) — görünüm durumu (İlke 9).
   #olcek = 1;
   #panX = 0;
@@ -432,6 +441,8 @@ export class TuvalAlani extends LitElement {
     window.addEventListener("resize", this.#konumla);
     window.addEventListener("keydown", this.#zoomKlavye);
     window.addEventListener("keydown", this.#aracTus);
+    window.addEventListener("keyup", this.#tusBirak);
+    window.addEventListener("blur", this.#pencereBulanik);
     // Hizalama referans modu değişince (§9.6a) referans işaretini tazele.
     this.#hizalaCoz = hizalaReferans.dinle(() => this.#konumla());
     // Izgara tercihi değişince (TK-37 #2) ızgarayı yeniden çiz.
@@ -456,6 +467,7 @@ export class TuvalAlani extends LitElement {
     window.removeEventListener("resize", this.#konumla);
     window.removeEventListener("keydown", this.#zoomKlavye);
     window.removeEventListener("keydown", this.#aracTus);
+    window.removeEventListener("keyup", this.#tusBirak);
     window.removeEventListener("pointermove", this.#tutamacHareket);
     window.removeEventListener("pointerup", this.#tutamacBirak);
     window.removeEventListener("pointermove", this.#ucHareket);
@@ -463,6 +475,8 @@ export class TuvalAlani extends LitElement {
     this.kaydir?.removeEventListener("wheel", this.#tekerlek);
     this.kaydir?.removeEventListener("pointermove", this.#hover);
     this.kaydir?.removeEventListener("dblclick", this.#cifttik);
+    this.kaydir?.removeEventListener("contextmenu", this.#sagTik);
+    window.removeEventListener("blur", this.#pencereBulanik);
     this.removeEventListener("pointermove", this.#cetvelImlecIzle);
     this.removeEventListener("pointerleave", this.#cetvelImlecCik);
     this.#izlemeyiDurdur();
@@ -474,6 +488,7 @@ export class TuvalAlani extends LitElement {
     this.kaydir.addEventListener("wheel", this.#tekerlek, { passive: false });
     this.kaydir.addEventListener("pointermove", this.#hover);
     this.kaydir.addEventListener("dblclick", this.#cifttik);
+    this.kaydir.addEventListener("contextmenu", this.#sagTik);
     // Cetvel göstergesi HOST'ta dinlenir → tutamaç/boyutlandırma katmanları üstünde de çalışır.
     this.addEventListener("pointermove", this.#cetvelImlecIzle);
     this.addEventListener("pointerleave", this.#cetvelImlecCik);
@@ -787,6 +802,15 @@ export class TuvalAlani extends LitElement {
   // İşaretçi olaylarını aktif araca devret (§9.2). Sürükleme eşiği ile
   // tıklama/sürükleme ayrımı yapılır (§9.7).
   readonly #bas = (olay: PointerEvent): void => {
+    // Boşluk çubuğu basılı: bu basış aktif araca GİTMEZ; geçici kaydırmayı başlatır.
+    if (this.#bosBasili && olay.button === 0) {
+      olay.preventDefault();
+      this.#bosPan = { x: olay.clientX, y: olay.clientY };
+      if (this.kaydir) this.kaydir.style.cursor = "grabbing";
+      window.addEventListener("pointermove", this.#hareket);
+      window.addEventListener("pointerup", this.#birak);
+      return;
+    }
     // Orta fare: aktif araçtan bağımsız kaydırma (görünüm durumu).
     if (olay.button === 1) {
       olay.preventDefault();
@@ -804,6 +828,11 @@ export class TuvalAlani extends LitElement {
   };
 
   readonly #hareket = (olay: PointerEvent): void => {
+    if (this.#bosPan) {
+      this.#kaydir(olay.clientX - this.#bosPan.x, olay.clientY - this.#bosPan.y);
+      this.#bosPan = { x: olay.clientX, y: olay.clientY };
+      return;
+    }
     if (this.#ortaPan) {
       this.#kaydir(
         olay.clientX - this.#ortaPan.x,
@@ -822,6 +851,8 @@ export class TuvalAlani extends LitElement {
 
   // Tuş basılı DEĞİLken hareket (hover) → aktif araca (örn. kalem ipucu çizgisi).
   readonly #hover = (olay: PointerEvent): void => {
+    // Boşluk-pan modunda araç beklemede: imleci (grab/grabbing) ve hover'ı dondur.
+    if (this.#bosBasili) return;
     const arac = aracDeposu.aktif;
     // İmleci aracın konuma-duyarlı tercihine göre güncelle (örn. Metin → "text").
     if (arac && this.kaydir)
@@ -852,15 +883,64 @@ export class TuvalAlani extends LitElement {
   // Araç etkinken klavye (Enter/Esc gibi) → aktif araca (giriş alanında değilken).
   readonly #aracTus = (olay: KeyboardEvent): void => {
     const hedef = olay.composedPath()[0];
+    // Giriş/odaklanmış kontrol (buton/seçim/bağlantı) → tuşu o yönetsin; araç/pan'a
+    // verme (boşlukla buton aktivasyonu, ok tuşlarıyla kaydırma vs. bozulmasın).
     if (
       hedef instanceof HTMLElement &&
       (hedef.tagName === "INPUT" ||
         hedef.tagName === "TEXTAREA" ||
-        hedef.isContentEditable)
+        hedef.isContentEditable ||
+        hedef.closest(
+          "button, select, a, [role='button'], [role='tab'], [role='checkbox'], [role='menuitem']",
+        ) != null)
     ) {
       return;
     }
+    // Boşluk çubuğu → geçici El (kaydır): aktif aracı beklemeye al (İlke 9).
+    // Sürükleme #bas/#hareket/#birak'ta yürür; tuş yalnız modu "armağan" eder.
+    if (olay.code === "Space") {
+      olay.preventDefault(); // sayfa kaymasını/buton tetiğini engelle
+      if (!this.#bosBasili) {
+        this.#bosBasili = true;
+        this.classList.add("bos-pan"); // bindirme/tutamaçları tıklama-geçirgen yap
+        if (this.kaydir) this.kaydir.style.cursor = "grab";
+      }
+      return;
+    }
     aracDeposu.aktif?.tus?.(olay, this.#aracBaglami());
+  };
+
+  /** Boşluk çubuğu bırakılınca geçici kaydırma biter, araç kaldığı yerden sürer. */
+  readonly #tusBirak = (olay: KeyboardEvent): void => {
+    if (olay.code !== "Space" || !this.#bosBasili) return;
+    this.#bosBasili = false;
+    this.classList.remove("bos-pan");
+    if (this.#bosPan) {
+      // Sürükleme ortasında bırakıldı → pan'ı temiz kapat.
+      this.#bosPan = null;
+      window.removeEventListener("pointermove", this.#hareket);
+      window.removeEventListener("pointerup", this.#birak);
+    }
+    // İmleci aktif aracın tercihine döndür (sonraki hover yine inceltir).
+    if (this.kaydir)
+      this.kaydir.style.cursor = aracDeposu.aktif?.imlec ?? "default";
+  };
+
+  /** Pencere odağı kaybolursa boşluk-pan modunu sıfırla (takılı kalmasın). */
+  readonly #pencereBulanik = (): void => {
+    if (!this.#bosBasili && !this.#bosPan) return;
+    this.#bosBasili = false;
+    this.#bosPan = null;
+    this.classList.remove("bos-pan");
+    window.removeEventListener("pointermove", this.#hareket);
+    window.removeEventListener("pointerup", this.#birak);
+    if (this.kaydir)
+      this.kaydir.style.cursor = aracDeposu.aktif?.imlec ?? "default";
+  };
+
+  /** Tuvalde sağ tık → aktif araca sun (çizim araçları çizimi bitirir, İlke 5). */
+  readonly #sagTik = (olay: MouseEvent): void => {
+    if (aracDeposu.aktif?.sagTik?.(this.#aracBaglami())) olay.preventDefault();
   };
 
   readonly #birak = (olay: PointerEvent): void => {
@@ -868,6 +948,13 @@ export class TuvalAlani extends LitElement {
       window.removeEventListener("pointermove", this.#hareket);
       window.removeEventListener("pointerup", this.#birak);
     };
+    if (this.#bosPan) {
+      this.#bosPan = null;
+      // Boşluk hâlâ basılıysa "hazır" (grab) imlecine dön; değilse #tusBirak ayarlar.
+      if (this.#bosBasili && this.kaydir) this.kaydir.style.cursor = "grab";
+      dinleyiciKaldir();
+      return;
+    }
     if (this.#ortaPan) {
       this.#ortaPan = null;
       dinleyiciKaldir();

@@ -117,6 +117,18 @@ export interface Arac {
   konumla?(baglam: AracBaglami): void;
   /** Araç etkinken klavye (Enter/Esc gibi; giriş alanında değilken). */
   tus?(olay: KeyboardEvent, baglam: AracBaglami): void;
+  /**
+   * Tuvalde sağ tık. Çok-noktalı çizim araçlarında (kalem/çokgen…) çizimi
+   * bitirir (Enter gibi). `true` döndürürse tarayıcı bağlam menüsü bastırılır.
+   */
+  sagTik?(baglam: AracBaglami): boolean;
+  /**
+   * Ctrl+Z'yi araca önce sunar (İlke 5 — kabuk aracı bilmez). Çok-noktalı çizim
+   * bittikten HEMEN sonra çağrılırsa yalnız "bitirme adımı"nı geri alıp çizime
+   * döner; `true` döndürünce kabuk normal geri-al'ı atlar. Aksi halde `false`.
+   * Argümansız: araç en son aldığı bağlamı (canlı kök/geçmiş) kendi saklar.
+   */
+  geriAlYakala?(): boolean;
   /** Araç etkinleştiğinde / pasifleştiğinde (durum kurulumu/temizliği). */
   etkinlesti?(baglam: AracBaglami): void;
   pasiflesti?(baglam: AracBaglami): void;

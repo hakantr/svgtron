@@ -24,6 +24,13 @@ const VARSAYILAN: Record<string, string> = {
 let noktalar: TuvalNoktasi[] = [];
 let ilkEkran: { x: number; y: number } | null = null;
 let onizleme: SVGPathElement | null = null;
+let sonBaglam: AracBaglami | null = null;
+// "Bitirme adımı": çizim biter bitmez Ctrl+Z bunu geri alıp çizime döndürür.
+let sonBitirme: {
+  kimlik: string;
+  noktalar: TuvalNoktasi[];
+  ekran: { x: number; y: number } | null;
+} | null = null;
 
 
 function onizlemeKur(baglam: AracBaglami): void {
@@ -56,8 +63,37 @@ function bitir(baglam: AracBaglami, kapali: boolean): void {
     });
     baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
     baglam.secim.sec(dugum);
+    // Bitirme adımını hatırla → Ctrl+Z çizime geri dönsün (kullanıcı isteği).
+    sonBitirme = {
+      kimlik: dugum.kimlik,
+      noktalar: noktalar.slice(),
+      ekran: ilkEkran,
+    };
   }
   sifirla();
+}
+
+/** Ctrl+Z'yi "bitirme adımı"na özel yakala: şekli kaldır, çizime geri dön. */
+function geriAc(): boolean {
+  if (!sonBitirme || !sonBaglam) return false;
+  const { kimlik, noktalar: pts, ekran } = sonBitirme;
+  sonBitirme = null;
+  const belge = sonBaglam.depo.belge;
+  // Şekli geri al. `secim.sec` araya bir "bırakma" seçim adımı yazmış olabilir
+  // (çizimden önce çoklu seçim vardıysa) → şekil kalkana dek geri al.
+  let guvenlik = 4;
+  while (
+    belge?.dugumBul(kimlik) &&
+    sonBaglam.gecmis.geriAlinabilir &&
+    guvenlik-- > 0
+  )
+    sonBaglam.gecmis.geriAl();
+  sonBaglam.secim.temizle();
+  noktalar = pts.slice();
+  ilkEkran = ekran;
+  onizlemeKur(sonBaglam);
+  onizlemeYenile();
+  return true;
 }
 
 /**
@@ -74,6 +110,8 @@ const kalemAraci: Arac = {
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M11.5 1.8l2.7 2.7-7.1 7.1-3.4.7.7-3.4 7.1-7.1Z" stroke="currentColor" stroke-width="0.6" fill="none"/><path d="M11.5 1.8l2.7 2.7-1.3 1.3-2.7-2.7Z"/></svg>`,
 
   bas(olay, baglam) {
+    sonBaglam = baglam;
+    sonBitirme = null; // yeni etkileşim → eski bitirme normal geri-al akışına geçer
     const nokta = baglam.svgKonum(olay);
     if (
       noktalar.length >= 2 &&
@@ -91,11 +129,13 @@ const kalemAraci: Arac = {
   },
 
   hareket(olay, baglam) {
+    sonBaglam = baglam;
     // Son noktadan imlece uzanan ipucu çizgisi (rubber-band).
     if (noktalar.length > 0 && onizleme) onizlemeYenile(baglam.svgKonum(olay));
   },
 
   tus(olay, baglam) {
+    sonBaglam = baglam;
     if (olay.key === "Enter") {
       olay.preventDefault();
       bitir(baglam, false);
@@ -105,7 +145,19 @@ const kalemAraci: Arac = {
     }
   },
 
+  sagTik(baglam) {
+    sonBaglam = baglam;
+    if (noktalar.length === 0) return false;
+    bitir(baglam, false); // sağ tık = Enter (açık bitir)
+    return true;
+  },
+
+  geriAlYakala() {
+    return geriAc();
+  },
+
   pasiflesti() {
+    sonBitirme = null;
     sifirla();
   },
 };
