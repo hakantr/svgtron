@@ -99,6 +99,14 @@ export class Yansitici {
     let i = 0;
     for (const md of modelCocuklar) {
       let el = mevcut.get(md.kimlik);
+      // Etiket değiştiyse (örn. polygon→path, kavis için) yamalamak yetmez —
+      // eski elemanı at, yenisini kur (aynı kimlik korunur).
+      if (el && el.tagName.toLowerCase() !== md.etiket.toLowerCase()) {
+        this.#unutAgac(el);
+        el.remove();
+        mevcut.delete(md.kimlik);
+        el = undefined;
+      }
       if (el) {
         this.#uyumlaEleman(el, md, ns);
         mevcut.delete(md.kimlik);

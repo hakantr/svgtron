@@ -2,7 +2,10 @@ import { svg } from "lit";
 import { aracKayitDefteri, type Arac, type AracBaglami } from "../arac";
 import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
-import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
+import {
+  BilesikKomut,
+  SekliPathaCevirKomutu,
+} from "../../../cekirdek/komutlar/dugum-komutlari";
 import {
   yoluAyristir,
   yoluYaz,
@@ -43,9 +46,13 @@ let seciliNokta: Ref | null = null;
  */
 let basHedef: Dugum | null = null;
 
-/** Kavis (Ctrl+sürükle Bézier) yalnız `path`'te mümkün; diğerleri düz segment. */
+/**
+ * Kavis (Ctrl+sürükle Bézier) verilebilir mi: `path` doğrudan; line/polyline/
+ * polygon Ctrl+sürüklenince path'e ÇEVRİLİR (DUZENLENEBILIR kümesi). Düzenlenemeyen
+ * şekiller (rect/circle/text…) kavislenemez → "stop" imleci.
+ */
 function kavisliMi(dugum: Dugum | null): boolean {
-  return dugum?.etiket === "path";
+  return dugum != null && DUZENLENEBILIR.has(dugum.etiket);
 }
 
 interface Im {
@@ -69,6 +76,10 @@ let surukle: {
   basEkran: { x: number; y: number };
   /** Ctrl basılı + path çapası → eğrilik (Bézier kolu) düzenleme modu. */
   egri: boolean;
+  /** Ctrl basılı + NON-path (line/polyline/polygon) çapası → path'e çevir + kavis. */
+  cevir: boolean;
+  /** Çevir modunda geçici kavis önizleme path'i (orijinal gizlenir). */
+  onizlemeEl: SVGPathElement | null;
   /** Eşik aşıldı mı (tık ↔ sürükleme ayrımı). */
   tasindi: boolean;
 } | null = null;
@@ -396,15 +407,46 @@ function yerlestir(): void {
 
 // --- Sürükleme (canlı önizleme; bırakınca tek Command) ---
 
+/**
+ * Çevir modu önizlemesi: orijinal şekli (line/poly) GİZLER ve aynı ebeveynde,
+ * aynı sunum stilinde geçici bir `path` koyar (kavis canlı görünsün). Orijinal
+ * gizli kalır ama DOM'da → CTM geçerli → çapa/tutamaçlar yerinde durur.
+ */
+function cevirOnizlemeKur(el: SVGGraphicsElement): SVGPathElement | null {
+  const ebeveyn = el.parentNode;
+  if (!ebeveyn) return null;
+  const p = document.createElementNS(SVG_NS, "path") as SVGPathElement;
+  for (const a of Array.from(el.attributes)) {
+    if (
+      a.name === "data-kimlik" ||
+      a.name === "points" ||
+      a.name === "d" ||
+      a.name === "x1" ||
+      a.name === "y1" ||
+      a.name === "x2" ||
+      a.name === "y2"
+    )
+      continue;
+    p.setAttribute(a.name, a.value); // fill/stroke/transform/class… kopyala
+  }
+  ebeveyn.insertBefore(p, el.nextSibling);
+  el.style.visibility = "hidden";
+  return p;
+}
+
 function surukleBasla(ref: Ref, olay: PointerEvent): void {
   if (!model) return;
   olay.preventDefault();
   olay.stopPropagation();
+  const kavisIstek = (olay.ctrlKey || olay.metaKey) && ref.alan === "p";
   surukle = {
     ref,
     basSegs: klon(model.segs),
     basEkran: { x: olay.clientX, y: olay.clientY },
-    egri: olay.ctrlKey && ref.alan === "p" && model.tip === "path",
+    egri: kavisIstek && model.tip === "path",
+    // NON-path düzenlenebilir (line/polyline/polygon) → path'e çevirip kavisle.
+    cevir: kavisIstek && model.tip !== "path",
+    onizlemeEl: null,
     tasindi: false,
   };
   window.addEventListener("pointermove", surukleHareket);
@@ -420,16 +462,25 @@ function surukleHareket(olay: PointerEvent): void {
   const ekrDx = olay.clientX - surukle.basEkran.x;
   const ekrDy = olay.clientY - surukle.basEkran.y;
   if (Math.hypot(ekrDx, ekrDy) > 3) surukle.tasindi = true;
+  // Çevir modu: eşik aşılana dek hiçbir şey yapma (erken çevirme/titreme olmasın).
+  if (surukle.cevir && !surukle.tasindi) return;
   const du = ekranDeltaKullanici(ctm, ekrDx, ekrDy);
   const segs = klon(surukle.basSegs);
-  if (surukle.egri) egriUygula(segs, surukle.ref, du);
+  if (surukle.egri || surukle.cevir) egriUygula(segs, surukle.ref, du);
   else uygulaDelta(segs, surukle.ref, du.x, du.y);
   model.segs = segs;
-  for (const [ad, deger] of Object.entries(modelOznitelikleri(model)))
-    el.setAttribute(ad, deger);
-  // Eğri modu L→C çevirip yeni kollar ekleyebilir → şekilleri yeniden kur.
-  if (surukle.egri) imleriKur();
-  else yerlestir();
+  if (surukle.cevir) {
+    // Orijinali gizle; kavisi geçici path önizlemesinde göster (segs zaten path).
+    if (!surukle.onizlemeEl) surukle.onizlemeEl = cevirOnizlemeKur(el);
+    surukle.onizlemeEl?.setAttribute("d", yoluYaz(segs));
+    imleriKur();
+  } else {
+    for (const [ad, deger] of Object.entries(modelOznitelikleri(model)))
+      el.setAttribute(ad, deger);
+    // Eğri modu L→C çevirip yeni kollar ekleyebilir → şekilleri yeniden kur.
+    if (surukle.egri) imleriKur();
+    else yerlestir();
+  }
 }
 
 function surukleBirak(): void {
@@ -438,6 +489,12 @@ function surukleBirak(): void {
   const s = surukle;
   surukle = null;
   if (!s || !model || !seciliDugum || !baglamRef) return;
+  // Çevir önizlemesini temizle (varsa) → orijinali geri göster.
+  if (s.onizlemeEl) {
+    s.onizlemeEl.remove();
+    const el0 = baglamRef.eleman(seciliDugum.kimlik);
+    if (el0 instanceof SVGElement) el0.style.visibility = "";
+  }
   // Çapayla her etkileşim (tık/taşıma/eğri) o düğümü seçili (vurgulu) tutar.
   if (s.ref.alan === "p") seciliNokta = s.ref;
   // Hareketsiz tık → yalnız seçim vurgusu, commit etme.
@@ -447,12 +504,19 @@ function surukleBirak(): void {
   }
   const belge = baglamRef.depo.belge;
   if (belge) {
-    const oz = modelOznitelikleri(model);
-    const komutlar = Object.entries(oz).map(
-      ([ad, deger]) =>
-        new OznitelikDegistirKomutu(belge, seciliDugum!, ad, deger),
-    );
-    baglamRef.gecmis.calistir(new BilesikKomut("düğüm düzenle", komutlar));
+    if (s.cevir) {
+      // line/polyline/polygon → tek Command'da path'e çevir + kavisli d yaz.
+      baglamRef.gecmis.calistir(
+        new SekliPathaCevirKomutu(belge, seciliDugum, yoluYaz(model.segs)),
+      );
+    } else {
+      const oz = modelOznitelikleri(model);
+      const komutlar = Object.entries(oz).map(
+        ([ad, deger]) =>
+          new OznitelikDegistirKomutu(belge, seciliDugum!, ad, deger),
+      );
+      baglamRef.gecmis.calistir(new BilesikKomut("düğüm düzenle", komutlar));
+    }
   }
   yenidenKur(); // commit sonrası kanonik durumdan yeniden kur
 }
@@ -551,6 +615,12 @@ const dugumAraci: Arac = {
     depoCoz = null;
     window.removeEventListener("pointermove", surukleHareket);
     window.removeEventListener("pointerup", surukleBirak);
+    // Yarım kalan çevir-önizlemesini temizle (orijinali geri göster).
+    if (surukle?.onizlemeEl) {
+      surukle.onizlemeEl.remove();
+      const el0 = seciliDugum && baglamRef?.eleman(seciliDugum.kimlik);
+      if (el0 instanceof SVGElement) el0.style.visibility = "";
+    }
     surukle = null;
     imleriTemizle();
     kat?.remove();

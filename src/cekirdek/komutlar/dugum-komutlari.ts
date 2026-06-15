@@ -122,6 +122,44 @@ export class SiraKomutu implements Komut {
   }
 }
 
+/**
+ * Bir şekli (line/polyline/polygon) YERİNDE `path`'e çevirir — kimlik KORUNUR
+ * (seçim/referans bayatlamaz; Yansıtıcı etiket değişince elemanı yeniden kurar).
+ * Düğüm aracında Ctrl+sürükle kavis için: şekle özgü geometri öznitelikleri
+ * (points / x1,y1,x2,y2) kaldırılır, yerine kavisli `d` yazılır (İlke 2).
+ */
+export class SekliPathaCevirKomutu implements Komut {
+  readonly etiket = "path'e çevir";
+  static readonly #SEKIL_OZN = ["points", "x1", "y1", "x2", "y2"];
+  readonly #eskiEtiket: string;
+  readonly #eskiOzn: [string, string][];
+
+  constructor(
+    private readonly belge: Belge,
+    private readonly dugum: Dugum,
+    private readonly yeniD: string,
+  ) {
+    this.#eskiEtiket = dugum.etiket;
+    this.#eskiOzn = [...dugum.oznitelikler]; // tam anlık görüntü (sıra dahil)
+  }
+
+  uygula(): void {
+    this.dugum.etiket = "path";
+    const o = this.dugum.oznitelikler;
+    for (const ad of SekliPathaCevirKomutu.#SEKIL_OZN) o.delete(ad);
+    o.set("d", this.yeniD);
+    this.belge.bildir();
+  }
+
+  geriAl(): void {
+    this.dugum.etiket = this.#eskiEtiket;
+    const o = this.dugum.oznitelikler;
+    o.clear();
+    for (const [ad, deger] of this.#eskiOzn) o.set(ad, deger);
+    this.belge.bildir();
+  }
+}
+
 /** Birden çok komutu tek bir geri-al adımı olarak gruplar. */
 export class BilesikKomut implements Komut {
   constructor(
