@@ -85,16 +85,23 @@ export class OzellikDenetcisiPanel extends LitElement {
     .eleman code {
       font-family: ui-monospace, monospace;
     }
+    /* Bölüm (Illustrator Properties deseni): ince ayraç + soluk küçük başlık,
+       kart değil düz; gruplar dikey boşlukla ayrılır. */
     .grup {
       border-bottom: 1px solid var(--kenarlik);
-      padding-bottom: 0.4rem;
+      padding-bottom: 0.45rem;
+    }
+    .grup:last-of-type {
+      border-bottom: 0;
     }
     .grup-baslik {
-      padding: 0.45rem 0.75rem 0.25rem;
-      font-size: 0.66rem;
-      letter-spacing: 0.07em;
+      padding: 0.5rem 0.75rem 0.2rem;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--metin-soluk);
+      opacity: 0.85;
     }
     .alan {
       display: grid;
@@ -193,6 +200,10 @@ export class OzellikDenetcisiPanel extends LitElement {
       color: var(--metin-soluk);
       cursor: pointer;
     }
+    .kilit:hover:not([aria-pressed="true"]) {
+      border-color: var(--metin-soluk);
+      color: var(--metin);
+    }
     .kilit[aria-pressed="true"] {
       color: var(--vurgu-metin);
       background: var(--vurgu);
@@ -221,14 +232,29 @@ export class OzellikDenetcisiPanel extends LitElement {
       flex: 1;
       min-width: 0;
       width: 100%;
+      min-height: 1.6rem;
       box-sizing: border-box;
       font: inherit;
       font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
       color: var(--metin);
       background: var(--yuzey-2);
       border: 1px solid var(--kenarlik);
       border-radius: 5px;
-      padding: 0.22rem 0.4rem;
+      padding: 0.2rem 0.4rem;
+    }
+    /* Alan etkileşim durumları (Illustrator: odakta accent kenarlık). */
+    input[type="text"]:hover,
+    input[type="number"]:hover,
+    .alan select:hover {
+      border-color: var(--metin-soluk);
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    .alan select:focus,
+    .stil-modu select:focus {
+      border-color: var(--vurgu, #4a90e2);
+      outline: none;
     }
     input[type="color"] {
       width: 28px;
@@ -244,6 +270,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       flex: 1;
       min-width: 0;
       width: 100%;
+      min-height: 1.6rem;
       box-sizing: border-box;
       font: inherit;
       font-size: 0.8rem;
@@ -251,7 +278,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       background: var(--yuzey-2);
       border: 1px solid var(--kenarlik);
       border-radius: 5px;
-      padding: 0.22rem 0.4rem;
+      padding: 0.2rem 0.4rem;
       cursor: pointer;
     }
     /* Stil sınıfı çipleri (tıkla = ata/kaldır toggle). */

@@ -93,6 +93,15 @@ export class MetinPaneli extends LitElement {
       flex: 1;
       cursor: pointer;
     }
+    .font-giris:hover,
+    .agirlik-sec:hover {
+      border-color: var(--metin-soluk);
+    }
+    .font-giris:focus,
+    .agirlik-sec:focus {
+      border-color: var(--vurgu, #4a90e2);
+      outline: none;
+    }
     .ikon-alan {
       display: flex;
       align-items: center;
