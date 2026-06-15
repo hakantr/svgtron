@@ -1,6 +1,6 @@
 import type { TemplateResult } from "lit";
 import type { Arac, TuvalNoktasi } from "./arac";
-import { dugumOlustur } from "../../cekirdek/belge/model/dugum";
+import { dugumOlustur, type Dugum } from "../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../cekirdek/komutlar/dugum-komutlari";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -32,9 +32,13 @@ export interface CizimTanimi {
  * yeni nesne üretir. Sürükleme sırasında geçici DOM önizlemesi (görünüm durumu);
  * bırakınca tek Command (İlke 2/§9.4). Üretilen şekil seçilir.
  */
+/** Metin etiketleri — Metin aracı mevcut metne tıklarsa onu düzenler. */
+const METIN_ETIKETLERI = new Set(["text", "tspan", "textPath"]);
+
 export function cizimAraci(tanim: CizimTanimi): Arac {
   let bas: TuvalNoktasi | null = null;
   let onizleme: SVGElement | null = null;
+  let metinDuzenleHedef: Dugum | null = null;
 
   const oznitelikleriUygula = (
     el: SVGElement,
@@ -52,6 +56,14 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
     sira: tanim.sira,
 
     bas(olay, baglam) {
+      // Metin aracı: tıklanan yerde metin varsa YENİ oluşturma, var olanı düzenle.
+      if (tanim.metin !== undefined) {
+        const hit = baglam.isabet(olay);
+        if (hit && METIN_ETIKETLERI.has(hit.etiket)) {
+          metinDuzenleHedef = hit;
+          return;
+        }
+      }
       bas = baglam.svgKonum(olay);
       if (baglam.kok) {
         onizleme = document.createElementNS(SVG_NS, tanim.svgEtiket);
@@ -62,6 +74,7 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
     },
 
     surukle(olay, baglam) {
+      if (metinDuzenleHedef) return;
       if (!bas || !onizleme) return;
       oznitelikleriUygula(
         onizleme,
@@ -70,6 +83,14 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
     },
 
     birak(olay, baglam) {
+      // Mevcut metne tıklanmıştı → onu seç + yerinde düzenle (yeni oluşturma yok).
+      if (metinDuzenleHedef) {
+        const d = metinDuzenleHedef;
+        metinDuzenleHedef = null;
+        baglam.secim.sec(d);
+        baglam.metinDuzenle(d);
+        return;
+      }
       onizleme?.remove();
       onizleme = null;
       const belge = baglam.depo.belge;

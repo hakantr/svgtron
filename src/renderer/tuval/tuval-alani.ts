@@ -58,6 +58,10 @@ export class TuvalAlani extends LitElement {
       position: absolute;
       inset: 0;
       overflow: hidden;
+      /* Tuval içeriği (SVG metni dâhil) yerel olarak SEÇİLMESİN → çift-tıkta
+         "gri seçim" oluşmaz (düzenleme overlay input ile yapılır). */
+      user-select: none;
+      -webkit-user-select: none;
       background: repeating-conic-gradient(
           var(--tuval-1) 0% 25%,
           var(--tuval-2) 0% 50%
@@ -568,6 +572,8 @@ export class TuvalAlani extends LitElement {
   /** Metin düğümünün üzerine bir giriş kutusu açar (çift-tık ya da Metin aracı). */
   #metinDuzenleBasla(dugum: Dugum): void {
     this.#metinDugum = dugum;
+    window.getSelection()?.removeAllRanges(); // yerel "gri seçim" kalıntısını temizle
+    this.#konumla(); // seçim çerçevesini gizle (düzenleme overlay'i ile çakışmasın)
     // Yeni oluşturulan metin için render+yerleşim hazır olsun → bir kare bekle.
     requestAnimationFrame(() => {
       const giris = this.metinGiris;
@@ -600,6 +606,8 @@ export class TuvalAlani extends LitElement {
     const giris = this.metinGiris;
     const yeni = giris?.value ?? "";
     if (giris) giris.style.display = "none";
+    window.getSelection()?.removeAllRanges();
+    this.#konumla(); // seçim çerçevesini geri getir
     if (iptal) return;
     const belge = this.depo.belge;
     if (belge && yeni !== (dugum.metin ?? ""))
@@ -1157,9 +1165,10 @@ export class TuvalAlani extends LitElement {
     this.#kullaniciKilavuzCiz();
     // Artboard çerçevesi seçimden bağımsızdır → taşıma korumasından ÖNCE çiz.
     this.#sayfaCercevesiKonumla();
-    // Nesne taşınırken (gövde sürüklemesi) seçim çerçevesi/tutamaçları gizle;
-    // fare bırakılınca (sürükleme biter) tekrar görünür olur (§ kullanıcı isteği).
-    if (this.#basNokta && this.#suruklendi) {
+    // Nesne taşınırken (gövde sürüklemesi) YA DA metin yerinde düzenlenirken
+    // seçim çerçevesi/tutamaçları gizle (düzenleme overlay'iyle çakışmasın);
+    // bittiğinde tekrar görünür olur.
+    if ((this.#basNokta && this.#suruklendi) || this.#metinDugum) {
       for (const c of this.#cerceveler.values()) c.style.display = "none";
       if (this.tutamaclar) this.tutamaclar.style.display = "none";
       if (this.ucTutamaclar) this.ucTutamaclar.style.display = "none";
