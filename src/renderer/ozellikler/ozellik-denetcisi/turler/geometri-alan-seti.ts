@@ -154,6 +154,68 @@ function kilitDugmesi(
   `;
 }
 
+// Çevir (flip) ikonları: kesik ayna ekseni + iki yöne üçgen.
+const IK_CEVIR_YATAY = svg`<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M8 2v12" stroke-dasharray="1.6 1.6"/><path d="M6 5 3 8l3 3z" fill="currentColor" stroke="none"/><path d="M10 5l3 3-3 3z" fill="currentColor" stroke="none"/></svg>`;
+const IK_CEVIR_DIKEY = svg`<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M2 8h12" stroke-dasharray="1.6 1.6"/><path d="M5 6 8 3l3 3z" fill="currentColor" stroke="none"/><path d="M5 10l3 3 3-3z" fill="currentColor" stroke="none"/></svg>`;
+
+/**
+ * Nesneyi görsel sınır kutusu MERKEZİ etrafında çevirir (yansıtır): transform'un
+ * başına `translate(c) scale(±1) translate(-c)` ekler — tek Command (İlke 2). yatay=
+ * dikey eksen etrafında (sol↔sağ), değilse yatay eksen (üst↔alt).
+ */
+function cevir(
+  baglam: AlanSetiBaglami,
+  el: SVGGraphicsElement,
+  yatay: boolean,
+): void {
+  let bbox: DOMRect;
+  try {
+    bbox = el.getBBox();
+  } catch {
+    return;
+  }
+  const m = el.transform.baseVal.consolidate()?.matrix ?? new DOMMatrix();
+  const c = new DOMPoint(
+    bbox.x + bbox.width / 2,
+    bbox.y + bbox.height / 2,
+  ).matrixTransform(m);
+  const sx = yatay ? -1 : 1;
+  const sy = yatay ? 1 : -1;
+  const eskiT = baglam.dugum.oznitelikler.get("transform") ?? "";
+  const T = `translate(${say(c.x)}, ${say(c.y)}) scale(${sx}, ${sy}) translate(${say(-c.x)}, ${say(-c.y)})`;
+  baglam.yaz("transform", `${T}${eskiT ? " " + eskiT : ""}`);
+}
+
+/** "Çevir" satırı: yatay/dikey flip düğmeleri (Illustrator Transform). */
+function cevirSatiri(
+  baglam: AlanSetiBaglami,
+  el: SVGGraphicsElement,
+): TemplateResult {
+  return html`
+    <div class="cevir-satir">
+      <span class="eti">${t("denetci.don.cevir")}</span>
+      <button
+        type="button"
+        class="cevir-dugme"
+        title=${t("denetci.don.cevirYatay")}
+        aria-label=${t("denetci.don.cevirYatay")}
+        @click=${() => cevir(baglam, el, true)}
+      >
+        ${IK_CEVIR_YATAY}
+      </button>
+      <button
+        type="button"
+        class="cevir-dugme"
+        title=${t("denetci.don.cevirDikey")}
+        aria-label=${t("denetci.don.cevirDikey")}
+        @click=${() => cevir(baglam, el, false)}
+      >
+        ${IK_CEVIR_DIKEY}
+      </button>
+    </div>
+  `;
+}
+
 /** İki özniteliği TEK Command'da yazar (oranlı çift için → tek geri-al adımı). */
 function ciftYaz(
   baglam: AlanSetiBaglami,
@@ -441,6 +503,7 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
         tazele();
       },
     )}
+    ${cevirSatiri(baglam, el)}
   `;
 }
 
@@ -525,6 +588,7 @@ function donusumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
         tazele();
       },
     )}
+    ${cevirSatiri(baglam, el)}
   `;
 }
 

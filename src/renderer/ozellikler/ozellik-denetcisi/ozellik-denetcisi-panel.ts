@@ -213,6 +213,36 @@ export class OzellikDenetcisiPanel extends LitElement {
       width: 22px;
       height: 20px;
     }
+    /* Çevir (flip) satırı — Illustrator Transform: yatay/dikey yansıt düğmeleri. */
+    .cevir-satir {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.75rem;
+    }
+    .cevir-satir .eti {
+      flex: 1;
+      font-size: 0.72rem;
+      color: var(--metin-soluk);
+    }
+    .cevir-dugme {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 22px;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      background: var(--yuzey-2);
+      color: var(--metin-soluk);
+      cursor: pointer;
+    }
+    .cevir-dugme:hover {
+      border-color: var(--metin-soluk);
+      color: var(--metin);
+    }
+    .cevir-dugme svg {
+      display: block;
+    }
     .kilit svg {
       display: block;
     }
