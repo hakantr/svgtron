@@ -40,6 +40,11 @@ const FONTLAR: readonly string[] = [
   "Brush Script MT",
 ];
 
+/** Yazı tipi önerileri datalist'i (statik → her render'da yeniden üretilmez). */
+const FONT_DATALIST = html`<datalist id="metin-font-listesi">
+  ${FONTLAR.map((f) => html`<option value=${f}></option>`)}
+</datalist>`;
+
 /** Ağırlık seçenekleri (sayısal değer · ad). */
 const AGIRLIKLAR: readonly (readonly [string, string])[] = [
   ["100", "Thin 100"],
@@ -78,12 +83,6 @@ const IK_SAG = ikonHiza([
   [6, 14],
   [3, 14],
   [8, 14],
-]);
-const IK_YASLA = ikonHiza([
-  [2, 14],
-  [2, 14],
-  [2, 14],
-  [2, 11],
 ]);
 const IK_BOYUT = svg`<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.2h7M6 4.2V12" /><path d="M12.4 5.4v5.2M10.9 7l1.5-1.6L13.9 7M10.9 9l1.5 1.6 1.5-1.6" /></svg>`;
 const IK_IZLEME = svg`<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5 2.5 12M5 3.5 7.5 12M11 3.5 8.5 12M11 3.5 13.5 12" opacity="0.85"/><path d="M1.5 14h13M1.5 14l1.4-1M14.5 14l-1.4-1"/></svg>`;
@@ -254,8 +253,6 @@ const metinAlanSeti: AlanSeti = {
       (efektif(h, dugum, "font-variant-caps") ||
         efektif(h, dugum, "font-variant")) === "small-caps";
     const anchor = efektif(h, dugum, "text-anchor") || "start";
-    const align = efektif(h, dugum, "text-align");
-    const yaslaMi = align === "justify";
     const dbaseline = efektif(h, dugum, "dominant-baseline") || "auto";
 
     // —— Süsleme aç/kapa: mevcut kümeyi değiştirip text-decoration-line yaz ——
@@ -271,36 +268,13 @@ const metinAlanSeti: AlanSeti = {
       );
     };
 
-    // —— Hizalama: text-anchor + (sarılı modda) text-align birlikte yazılır ——
-    const hizala = (deger: "start" | "middle" | "end"): void => {
-      const cssHiza =
-        deger === "start" ? "left" : deger === "middle" ? "center" : "right";
+    // —— Hizalama: SVG metninde hizalamayı YALNIZ text-anchor belirler. (text-align/
+    //    justify sadece SARILI metne etkir; Blink SVG metin sarmayı render etmiyor —
+    //    crbug 366553 — bu yüzden "yasla" sunulmaz, §10.) Tek yazım → tek undo adımı.
+    const hizala = (deger: "start" | "middle" | "end"): void =>
       stilYaz("text-anchor", deger);
-      stilYaz("text-align", cssHiza);
-    };
-    // —— Yasla: sarma (inline-size) gerekir → yoksa görsel sınır kutusu genişliğine kur ——
-    const yasla = (): void => {
-      stilYaz("text-align", "justify");
-      const mevcutInline = efektif(h, dugum, "inline-size");
-      if (!mevcutInline || mevcutInline === "auto" || mevcutInline === "none") {
-        let g = 0;
-        if (el instanceof SVGGraphicsElement) {
-          try {
-            g = el.getBBox().width;
-          } catch {
-            g = 0;
-          }
-        }
-        if (g > 0) stilYaz("inline-size", `${Math.round(g)}px`);
-      }
-    };
-    const hizaSecili = yaslaMi
-      ? "justify"
-      : anchor === "middle"
-        ? "middle"
-        : anchor === "end"
-          ? "end"
-          : "start";
+    const hizaSecili =
+      anchor === "middle" ? "middle" : anchor === "end" ? "end" : "start";
 
     return html`
       <div class="alt-baslik">${t("denetci.metin.karakter")}</div>
@@ -316,9 +290,7 @@ const metinAlanSeti: AlanSeti = {
           @change=${(e: Event) =>
             stilYaz("font-family", (e.target as HTMLInputElement).value.trim())}
         />
-        <datalist id="metin-font-listesi">
-          ${FONTLAR.map((f) => html`<option value=${f}></option>`)}
-        </datalist>
+        ${FONT_DATALIST}
 
         <div class="metin-satir">
           <select
@@ -442,9 +414,8 @@ const metinAlanSeti: AlanSeti = {
               { deger: "start", icerik: IK_SOL, baslik: t("denetci.metin.hiza.sol") },
               { deger: "middle", icerik: IK_ORTA, baslik: t("denetci.metin.hiza.orta") },
               { deger: "end", icerik: IK_SAG, baslik: t("denetci.metin.hiza.sag") },
-              { deger: "justify", icerik: IK_YASLA, baslik: t("denetci.metin.yasla") },
             ],
-            (v) => (v === "justify" ? yasla() : hizala(v as "start" | "middle" | "end")),
+            (v) => hizala(v as "start" | "middle" | "end"),
           )}
         </div>
 
