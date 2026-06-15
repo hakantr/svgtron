@@ -107,7 +107,9 @@ function sayiCoz(ham: string): number | null {
   if (s === "") return null;
   const n = Number(s);
   if (Number.isFinite(n)) return n;
-  if (/^[-+*/().\d\s]+$/.test(s)) {
+  // Yalnız + - * / (ve parantez); `**` (üs) sözleşme dışı → reddet (yazım hatası
+  // sessizce üs almasın, eski değere dönsün).
+  if (/^[-+*/().\d\s]+$/.test(s) && !/\*\*/.test(s)) {
     try {
       const v = Function(`"use strict";return (${s})`)() as unknown;
       if (typeof v === "number" && Number.isFinite(v)) return v;
