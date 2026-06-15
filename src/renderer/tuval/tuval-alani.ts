@@ -883,22 +883,29 @@ export class TuvalAlani extends LitElement {
   // Araç etkinken klavye (Enter/Esc gibi) → aktif araca (giriş alanında değilken).
   readonly #aracTus = (olay: KeyboardEvent): void => {
     const hedef = olay.composedPath()[0];
-    // Giriş/odaklanmış kontrol (buton/seçim/bağlantı) → tuşu o yönetsin; araç/pan'a
-    // verme (boşlukla buton aktivasyonu, ok tuşlarıyla kaydırma vs. bozulmasın).
+    // Giriş alanı → tüm tuşlarda araca verme (yerel metin düzenleme bozulmasın).
     if (
       hedef instanceof HTMLElement &&
       (hedef.tagName === "INPUT" ||
         hedef.tagName === "TEXTAREA" ||
-        hedef.isContentEditable ||
-        hedef.closest(
-          "button, select, a, [role='button'], [role='tab'], [role='checkbox'], [role='menuitem']",
-        ) != null)
+        hedef.isContentEditable)
     ) {
       return;
     }
     // Boşluk çubuğu → geçici El (kaydır): aktif aracı beklemeye al (İlke 9).
     // Sürükleme #bas/#hareket/#birak'ta yürür; tuş yalnız modu "armağan" eder.
     if (olay.code === "Space") {
+      // Odakta bir kontrol (buton/seçim/bağlantı) varsa boşluk ONU aktive etsin →
+      // pan'a alma. (Enter/Esc gibi tuşlar bu durumda yine araca gider — araç
+      // butonu odaktayken çizimi Enter ile bitirme kullanıcı senaryosu korunur.)
+      if (
+        hedef instanceof HTMLElement &&
+        hedef.closest(
+          "button, select, a, [role='button'], [role='tab'], [role='checkbox'], [role='menuitem']",
+        ) != null
+      ) {
+        return;
+      }
       olay.preventDefault(); // sayfa kaymasını/buton tetiğini engelle
       if (!this.#bosBasili) {
         this.#bosBasili = true;
