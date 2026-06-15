@@ -56,21 +56,71 @@ let olcekBagli = false;
  */
 let konumOteModu = false;
 
-/** Sayısal giriş: boş/geçersiz değer YAZILMAZ (eski değere döner). */
+/**
+ * Bir girişi sayıya çözer. Düz sayı YA DA Illustrator-tarzı MATEMATİK ifadesi
+ * (`+ - * /` ve parantez; örn. `200/3`, `12*1.5`, `(4+2)*10`). Güvenlik: yalnız
+ * sayı/işleç/parantez/nokta/boşluk karakterlerine izin → kod enjeksiyonu yok.
+ * Geçersizse null.
+ */
+function sayiCoz(ham: string): number | null {
+  const s = ham.trim();
+  if (s === "") return null;
+  const n = Number(s);
+  if (Number.isFinite(n)) return n;
+  if (/^[-+*/().\d\s]+$/.test(s)) {
+    try {
+      const v = Function(`"use strict";return (${s})`)() as unknown;
+      if (typeof v === "number" && Number.isFinite(v)) return v;
+    } catch {
+      /* geçersiz ifade */
+    }
+  }
+  return null;
+}
+
+/** Sayısal giriş change: boş/geçersiz YAZILMAZ (eski değere döner); matematik kabul. */
 function sayiDegisti(
   mevcut: string,
   uygula: (n: number) => void,
 ): (olay: Event) => void {
   return (olay) => {
     const el = olay.target as HTMLInputElement;
-    const ham = el.value.trim();
-    const n = Number(ham);
-    if (ham === "" || !Number.isFinite(n)) {
-      el.value = mevcut; // null/boş giriş engeli
+    const n = sayiCoz(el.value);
+    if (n === null) {
+      el.value = mevcut; // null/boş/geçersiz giriş engeli
       return;
     }
     uygula(n);
   };
+}
+
+/**
+ * Sayısal giriş kutusu (metin) — matematik ifadesi + ok-tuşu adımı (Illustrator):
+ * ↑/↓ ±1, Shift ±10, Alt ±0.1. `type=text` çünkü `number` `*`/`/` kabul etmez.
+ */
+function sayiGiris(
+  mevcut: string,
+  uygula: (n: number) => void,
+  saltOkunur = false,
+): TemplateResult {
+  const tus = (e: KeyboardEvent): void => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    e.preventDefault();
+    const taban =
+      sayiCoz((e.target as HTMLInputElement).value) ?? (Number(mevcut) || 0);
+    const adim = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+    uygula(say(taban + (e.key === "ArrowUp" ? adim : -adim)));
+  };
+  return html`
+    <input
+      type="text"
+      inputmode="decimal"
+      .value=${mevcut}
+      ?disabled=${saltOkunur}
+      @change=${sayiDegisti(mevcut, uygula)}
+      @keydown=${tus}
+    />
+  `;
 }
 
 /** Tek bir sayısal alan (etiket + giriş). */
@@ -80,16 +130,8 @@ function alan(
   uygula: (n: number) => void,
   saltOkunur = false,
 ): TemplateResult {
-  return html`
-    <label>${etiket}</label>
-    <input
-      type="number"
-      step="any"
-      .value=${mevcut}
-      ?disabled=${saltOkunur}
-      @change=${sayiDegisti(mevcut, uygula)}
-    />
-  `;
+  return html` <label>${etiket}</label>
+    ${sayiGiris(mevcut, uygula, saltOkunur)}`;
 }
 
 /** Küçük inline oran/bağ kilidi düğmesi (etiketli satıra değil, kutuların yanına). */
@@ -148,21 +190,9 @@ function oranCiftSatiri(
   return html`
     <div class="oran-cift">
       <label>${et1}</label>
-      <input
-        type="number"
-        step="any"
-        .value=${mev1}
-        ?disabled=${salt1}
-        @change=${sayiDegisti(mev1, uy1)}
-      />
+      ${sayiGiris(mev1, uy1, salt1)}
       <label>${et2}</label>
-      <input
-        type="number"
-        step="any"
-        .value=${mev2}
-        ?disabled=${salt2}
-        @change=${sayiDegisti(mev2, uy2)}
-      />
+      ${sayiGiris(mev2, uy2, salt2)}
       ${kilitDugmesi(
         kilitli,
         kilitDegistir,
@@ -273,19 +303,9 @@ function dikdortgenBolumu(baglam: AlanSetiBaglami): TemplateResult {
     <div class="oran-cift onlu">
       <span class="on">${t("denetci.altbaslik.kose")}</span>
       <label>rx</label>
-      <input
-        type="number"
-        step="any"
-        .value=${etkinRx}
-        @change=${sayiDegisti(etkinRx, (n) => koseYaz(n, "rx"))}
-      />
+      ${sayiGiris(etkinRx, (n) => koseYaz(n, "rx"))}
       <label>ry</label>
-      <input
-        type="number"
-        step="any"
-        .value=${etkinRy}
-        @change=${sayiDegisti(etkinRy, (n) => koseYaz(n, "ry"))}
-      />
+      ${sayiGiris(etkinRy, (n) => koseYaz(n, "ry"))}
       ${kilitDugmesi(
         koselerBagli,
         () => {
