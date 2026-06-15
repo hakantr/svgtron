@@ -863,6 +863,27 @@ export class TuvalAlani extends LitElement {
   };
 
   /**
+   * Ctrl/Meta durumu değişince imleci SON konumda yeniden değerlendir (fare hareket
+   * etmese bile) — örn. Düğüm aracında kavis verilemeyen nesnede "stop" imleci anında
+   * görünsün/kalksın (kullanıcı isteği). Sentetik olay: `target` ekran-noktasından.
+   */
+  readonly #imleciTazele = (ctrl: boolean, meta: boolean): void => {
+    if (this.#bosBasili || !this.kaydir) return;
+    const arac = aracDeposu.aktif;
+    if (!arac?.imlecIcin) return;
+    if (this.#sonImlecX == null || this.#sonImlecY == null) return;
+    const sahte = {
+      clientX: this.#sonImlecX,
+      clientY: this.#sonImlecY,
+      target: document.elementFromPoint(this.#sonImlecX, this.#sonImlecY),
+      ctrlKey: ctrl,
+      metaKey: meta,
+    } as unknown as PointerEvent;
+    this.kaydir.style.cursor =
+      arac.imlecIcin(sahte, this.#aracBaglami()) ?? arac.imlec ?? "default";
+  };
+
+  /**
    * Cetvel imleç göstergesini her harekette güncelle. HOST seviyesinde dinlenir
    * (yalnız .kaydir değil) → boyutlandırma tutamaçları gibi ÜST katmanların
    * üzerindeyken ve boyutlandırma/taşıma sürerken de gösterge kaybolmaz.
@@ -914,11 +935,17 @@ export class TuvalAlani extends LitElement {
       }
       return;
     }
+    // Ctrl/Meta basıldı → imleci tazele (Düğüm aracı kavis "stop" göstergesi anında).
+    if (olay.key === "Control" || olay.key === "Meta")
+      this.#imleciTazele(olay.ctrlKey, olay.metaKey);
     aracDeposu.aktif?.tus?.(olay, this.#aracBaglami());
   };
 
-  /** Boşluk çubuğu bırakılınca geçici kaydırma biter, araç kaldığı yerden sürer. */
+  /** Boşluk çubuğu / Ctrl bırakılınca: pan biter ya da kavis imleci eski hâline döner. */
   readonly #tusBirak = (olay: KeyboardEvent): void => {
+    // Ctrl/Meta bırakıldı → imleci normale döndür (stop kalksın).
+    if (olay.key === "Control" || olay.key === "Meta")
+      this.#imleciTazele(olay.ctrlKey, olay.metaKey);
     if (olay.code !== "Space" || !this.#bosBasili) return;
     this.#bosBasili = false;
     this.classList.remove("bos-pan");

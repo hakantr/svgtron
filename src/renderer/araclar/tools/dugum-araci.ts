@@ -37,6 +37,16 @@ let seciliDugum: Dugum | null = null;
 let model: Model | null = null;
 /** Seçili (vurgulanan) düğüm — tıklayınca seçilir; Ctrl+sürükle eğri verir. */
 let seciliNokta: Ref | null = null;
+/**
+ * Press anındaki isabet (Seç aracı gibi) — tıklama çözümü bunu kullanır; release'te
+ * YENİDEN isabet etmek, seçimle beliren çapa/tutamaçların üstüne düşüp seçimi siler.
+ */
+let basHedef: Dugum | null = null;
+
+/** Kavis (Ctrl+sürükle Bézier) yalnız `path`'te mümkün; diğerleri düz segment. */
+function kavisliMi(dugum: Dugum | null): boolean {
+  return dugum?.etiket === "path";
+}
 
 interface Im {
   ref: Ref;
@@ -504,11 +514,34 @@ const dugumAraci: Arac = {
     if (model) yerlestir();
   },
 
-  tikla(olay, baglam) {
-    // Çapa/tutamaç dışına tıklama: altındaki şekli seç (düğümleri göster) / boşta bırak.
+  bas(olay, baglam) {
+    // Press anındaki şekli HEMEN seç (Seç aracı gibi güvenilir seçim/geçiş) —
+    // böylece yeni nesneye geçmek için Seç aracına dönmek gerekmez. Çapa/tutamaç
+    // basışı kendi pointerdown'ında (surukleBasla) işlenir; bu yola gelmez.
+    basHedef = baglam.isabet(olay);
+    if (basHedef && !baglam.secim.icindeMi(basHedef)) baglam.secim.sec(basHedef);
+  },
+
+  tikla(_olay, baglam) {
+    // Boşluğa tıklama (press de boşta) → seçimi bırak. Nesneye tıklama bas()'ta
+    // zaten seçildi → release'te yeniden isabet ETME (tutamaçların üstüne düşüp
+    // seçimi silebilir; Seç aracındaki aynı tuzak).
+    if (!basHedef) baglam.secim.temizle();
+    basHedef = null;
+  },
+
+  // Ctrl basılıyken kavis verilemeyen nesnede "yasak" (stop) imleci (kullanıcı isteği).
+  imlecIcin(olay, baglam) {
+    if (!olay.ctrlKey && !olay.metaKey) return undefined; // normal: crosshair/move
+    const sec = baglam.secim;
+    const tek = sec.secililer.length === 1 ? sec.secili : null;
+    // Bir nesne seçiliyse onun kavislenebilirliği belirler — imleç NEREDE olursa
+    // olsun (kullanıcı: "imleç farklı bir yerde de olsa stop çıksın").
+    if (tek) return kavisliMi(tek) ? undefined : "not-allowed";
+    // Seçim yok/çoklu → imlecin altındaki nesneye bak (üzerine gelince stop).
     const hedef = baglam.isabet(olay);
-    if (hedef) baglam.secim.sec(hedef);
-    else baglam.secim.temizle();
+    if (!hedef) return undefined; // boşluk → normal
+    return kavisliMi(hedef) ? undefined : "not-allowed";
   },
 
   pasiflesti() {
@@ -523,6 +556,8 @@ const dugumAraci: Arac = {
     kat?.remove();
     kat = null;
     seciliDugum = null;
+    seciliNokta = null;
+    basHedef = null;
     model = null;
     baglamRef = null;
   },
