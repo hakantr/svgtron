@@ -217,6 +217,12 @@ const sekilOlusturucu: Arac = {
     }
   },
 
+  sagTik() {
+    if (operandlar.length < 2) return false;
+    uygula(); // sağ tık = Enter (şekil oluştur sonucunu uygula)
+    return true;
+  },
+
   pasiflesti() {
     secimCoz?.();
     secimCoz = null;
