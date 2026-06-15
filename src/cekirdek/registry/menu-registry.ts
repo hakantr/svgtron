@@ -45,6 +45,11 @@ class MenuKayitDefteri {
     this.#ogeler.push(oge);
   }
 
+  /** Bir menü ögesini id ile bulur (örn. Hızlı Eylemler şeridi için). */
+  bul(id: string): MenuOgesi | undefined {
+    return this.#ogeler.find((o) => o.id === id);
+  }
+
   /** Ögeleri gruplara böler; grup sırası ilk-görülme, öge sırası `sira`'ya göre. */
   gruplar(): { grup: string; ogeler: MenuOgesi[] }[] {
     const sira: string[] = [];

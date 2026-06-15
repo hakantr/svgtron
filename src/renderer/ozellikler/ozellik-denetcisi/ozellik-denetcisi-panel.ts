@@ -6,6 +6,11 @@ import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
 import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { panelKayitDefteri } from "../../../cekirdek/registry/panel-registry";
+import {
+  menuKayitDefteri,
+  type MenuBaglami,
+} from "../../../cekirdek/registry/menu-registry";
+import { bildirimServisi } from "../../kabuk/bildirim-servisi";
 import { dilYonetici, t } from "../../diller/dil";
 import { stilYazimModu, type StilModu } from "../../boya/stil-yazim-modu";
 import { alanSetiKayitDefteri } from "./turler/alan-seti-registry";
@@ -17,13 +22,19 @@ import "./turler/marker-alan-seti";
 import "./turler/tanim-alan-seti";
 import "./turler/tuval-ayarlari-alan-seti";
 
+// Hızlı Eylemler ikonları (Illustrator Quick Actions deseni).
+const IK_GRUPLA = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="7" y="7" width="6" height="6" rx="1"/></svg>`;
+const IK_COZ = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="2 1.4"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="7.5" y="7.5" width="5.5" height="5.5" rx="1"/></svg>`;
+const IK_COGALT = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="7" height="7" rx="1"/><path d="M6 12.5h6.5a.5.5 0 0 0 .5-.5V6"/></svg>`;
+const IK_SIL = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M3.5 4.5h9M6 4.5V3.2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V4.5M5 4.5l.6 8a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.6-8"/></svg>`;
+
 /**
  * Özellik Denetçisi paneli (AGENTS.md §5.4, §9.3) — seçime DUYARLI.
  *
  * Seçili düğümün türüne uygun alan setlerini (registry'den) gösterir; yeni nesne
  * türü = yeni alan seti kaydı (kabuk/panel değişmez). Her değişiklik DAİMA
  * Command ile (İlke 2) geçmişe yazılır → undo/redo; Tuval canlı güncellenir
- * (İlke 3).
+ * (İlke 3). Altta seçime göre değişen Hızlı Eylemler şeridi (Illustrator deseni).
  */
 @customElement("ozellik-denetcisi-panel")
 export class OzellikDenetcisiPanel extends LitElement {
@@ -276,6 +287,32 @@ export class OzellikDenetcisiPanel extends LitElement {
       font-size: 0.72rem;
       color: var(--metin-soluk);
     }
+    /* Hızlı Eylemler şeridi (Illustrator Quick Actions) — en altta, bağlam-duyarlı. */
+    .hizli {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid var(--kenarlik);
+    }
+    .hizli-dugme {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 26px;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      background: var(--yuzey-2);
+      color: var(--metin-soluk);
+      cursor: pointer;
+    }
+    .hizli-dugme:hover {
+      border-color: var(--vurgu, #4a90e2);
+      color: var(--metin);
+    }
+    .hizli-dugme svg {
+      display: block;
+    }
     .kilit svg {
       display: block;
     }
@@ -517,6 +554,50 @@ export class OzellikDenetcisiPanel extends LitElement {
               </div>
             `,
           )}
+      ${this.#hizliEylemler()}
+    `;
+  }
+
+  /**
+   * Hızlı Eylemler şeridi (Illustrator Quick Actions) — seçime göre değişen,
+   * en alttaki eylem düğmeleri. Eylemler menü kayıt defterinden gelir (İlke 5):
+   * yeni eylem = yeni menü ögesi; bu panel değişmez. Her biri kendi Command'ını
+   * üretir (İlke 9: şerit görünüm durumu, eylem belge durumudur).
+   */
+  #hizliEylemler() {
+    const menuBaglami: MenuBaglami = {
+      depo: this.depo,
+      secim: this.secim,
+      gecmis: this.gecmis,
+      hataBildir: (m) => bildirimServisi.bildir(m, "hata"),
+    };
+    const cok = this.secim.secililer.length >= 2;
+    const grupMu = this.secim.secili?.etiket === "g";
+    const adaylar: { id: string; ikon: typeof IK_SIL; goster: boolean }[] = [
+      { id: "duzen.grupla", ikon: IK_GRUPLA, goster: cok },
+      { id: "duzen.coz", ikon: IK_COZ, goster: grupMu },
+      { id: "duzen.cogalt", ikon: IK_COGALT, goster: true },
+      { id: "duzen.sil", ikon: IK_SIL, goster: true },
+    ];
+    const gorunur = adaylar.filter(
+      (a) => a.goster && menuKayitDefteri.bul(a.id),
+    );
+    if (gorunur.length === 0) return "";
+    return html`
+      <div class="hizli">
+        ${gorunur.map((a) => {
+          const oge = menuKayitDefteri.bul(a.id)!;
+          return html`<button
+            type="button"
+            class="hizli-dugme"
+            title=${t(oge.etiketAnahtari)}
+            aria-label=${t(oge.etiketAnahtari)}
+            @click=${() => void oge.calistir(menuBaglami)}
+          >
+            ${a.ikon}
+          </button>`;
+        })}
+      </div>
     `;
   }
 }
