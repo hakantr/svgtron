@@ -35,6 +35,8 @@ let depoCoz: (() => void) | null = null;
 let kat: SVGSVGElement | null = null; // ekran-koordinatlı bindirme svg'i
 let seciliDugum: Dugum | null = null;
 let model: Model | null = null;
+/** Seçili (vurgulanan) düğüm — tıklayınca seçilir; Ctrl+sürükle eğri verir. */
+let seciliNokta: Ref | null = null;
 
 interface Im {
   ref: Ref;
@@ -55,6 +57,10 @@ let surukle: {
   ref: Ref;
   basSegs: Segment[];
   basEkran: { x: number; y: number };
+  /** Ctrl basılı + path çapası → eğrilik (Bézier kolu) düzenleme modu. */
+  egri: boolean;
+  /** Eşik aşıldı mı (tık ↔ sürükleme ayrımı). */
+  tasindi: boolean;
 } | null = null;
 
 // --- Geometri yardımcıları ---
@@ -126,6 +132,48 @@ function uygulaDelta(segs: Segment[], ref: Ref, dx: number, dy: number): void {
     noktaYaz(segs, { segIdx: ref.segIdx + 1, alan: "c1" }, tasi(next.c1));
   else if (next?.tip === "Q")
     noktaYaz(segs, { segIdx: ref.segIdx + 1, alan: "c" }, tasi(next.c));
+}
+
+/**
+ * Ctrl+sürükle: bir çapadan simetrik Bézier kolları çıkarır/ayarlar (yalnız path).
+ * Köşe (L) segmentleri C'ye çevrilir; d = çapadan sürükleme vektörü (kullanıcı uzayı).
+ * Giden kol (seg i+1) çapanın ileri yönüne, gelen kol (seg i) geri yönüne gider —
+ * böylece düğüm "yumuşak" (simetrik) olur ve eğrilik göstergesi (kollar) belirir.
+ */
+function egriUygula(segs: Segment[], ref: Ref, d: Nokta): void {
+  if (ref.alan !== "p") return;
+  const i = ref.segIdx;
+  const anchor = noktaAl(segs, ref);
+  if (!anchor) return;
+  const ileri: Nokta = { x: anchor.x + d.x, y: anchor.y + d.y };
+  const geri: Nokta = { x: anchor.x - d.x, y: anchor.y - d.y };
+  // Giden eğri (seg i+1): çapadan çıkan kol → c1 = ileri.
+  const next = segs[i + 1];
+  if (next) {
+    if (next.tip === "L")
+      segs[i + 1] = {
+        tip: "C",
+        c1: { ...ileri },
+        c2: { ...next.p },
+        p: { ...next.p },
+      };
+    else if (next.tip === "C") next.c1 = { ...ileri };
+    else if (next.tip === "Q") next.c = { ...ileri };
+  }
+  // Gelen eğri (seg i): çapaya giren kol → c2 = geri.
+  const cur = segs[i];
+  if (cur) {
+    if (cur.tip === "C") cur.c2 = { ...geri };
+    else if (cur.tip === "L") {
+      const onceki = noktaAl(segs, { segIdx: i - 1, alan: "p" }) ?? anchor;
+      segs[i] = {
+        tip: "C",
+        c1: { ...onceki },
+        c2: { ...geri },
+        p: { ...anchor },
+      };
+    }
+  }
 }
 
 function sayilar(s: string): number[] {
@@ -228,13 +276,24 @@ function tutamacEkle(ref: Ref): void {
 
 function anchorEkle(ref: Ref): void {
   if (!kat) return;
+  const secili =
+    seciliNokta != null &&
+    seciliNokta.segIdx === ref.segIdx &&
+    seciliNokta.alan === ref.alan;
   const r = document.createElementNS(SVG_NS, "rect");
   r.setAttribute("width", "8");
   r.setAttribute("height", "8");
   r.setAttribute("rx", "1.5");
-  r.style.fill = ACCENT;
-  r.setAttribute("stroke", "#fff");
-  r.setAttribute("stroke-width", "1.5");
+  // Seçili çapa ters renkle (beyaz dolgu + vurgu çerçeve) belirgin gösterilir.
+  if (secili) {
+    r.style.fill = "#fff";
+    r.style.stroke = ACCENT;
+    r.setAttribute("stroke-width", "2");
+  } else {
+    r.style.fill = ACCENT;
+    r.setAttribute("stroke", "#fff");
+    r.setAttribute("stroke-width", "1.5");
+  }
   r.style.pointerEvents = "auto";
   r.style.cursor = "move";
   r.addEventListener("pointerdown", (o) => surukleBasla(ref, o));
@@ -335,6 +394,8 @@ function surukleBasla(ref: Ref, olay: PointerEvent): void {
     ref,
     basSegs: klon(model.segs),
     basEkran: { x: olay.clientX, y: olay.clientY },
+    egri: olay.ctrlKey && ref.alan === "p" && model.tip === "path",
+    tasindi: false,
   };
   window.addEventListener("pointermove", surukleHareket);
   window.addEventListener("pointerup", surukleBirak);
@@ -346,17 +407,19 @@ function surukleHareket(olay: PointerEvent): void {
   if (!(el instanceof SVGGraphicsElement)) return;
   const ctm = el.getScreenCTM();
   if (!ctm) return;
-  const du = ekranDeltaKullanici(
-    ctm,
-    olay.clientX - surukle.basEkran.x,
-    olay.clientY - surukle.basEkran.y,
-  );
+  const ekrDx = olay.clientX - surukle.basEkran.x;
+  const ekrDy = olay.clientY - surukle.basEkran.y;
+  if (Math.hypot(ekrDx, ekrDy) > 3) surukle.tasindi = true;
+  const du = ekranDeltaKullanici(ctm, ekrDx, ekrDy);
   const segs = klon(surukle.basSegs);
-  uygulaDelta(segs, surukle.ref, du.x, du.y);
+  if (surukle.egri) egriUygula(segs, surukle.ref, du);
+  else uygulaDelta(segs, surukle.ref, du.x, du.y);
   model.segs = segs;
   for (const [ad, deger] of Object.entries(modelOznitelikleri(model)))
     el.setAttribute(ad, deger);
-  yerlestir();
+  // Eğri modu L→C çevirip yeni kollar ekleyebilir → şekilleri yeniden kur.
+  if (surukle.egri) imleriKur();
+  else yerlestir();
 }
 
 function surukleBirak(): void {
@@ -365,6 +428,13 @@ function surukleBirak(): void {
   const s = surukle;
   surukle = null;
   if (!s || !model || !seciliDugum || !baglamRef) return;
+  // Çapayla her etkileşim (tık/taşıma/eğri) o düğümü seçili (vurgulu) tutar.
+  if (s.ref.alan === "p") seciliNokta = s.ref;
+  // Hareketsiz tık → yalnız seçim vurgusu, commit etme.
+  if (!s.tasindi) {
+    imleriKur();
+    return;
+  }
   const belge = baglamRef.depo.belge;
   if (belge) {
     const oz = modelOznitelikleri(model);
@@ -383,8 +453,11 @@ function yenidenKur(): void {
   if (surukle) return; // sürükleme sırasında dış değişiklikten yeniden kurma
   const sec = baglamRef.secim;
   const tek = sec.secililer.length === 1 ? sec.secili : null;
+  const oncekiDugum = seciliDugum;
   seciliDugum =
     tek && !tek.kilitli && DUZENLENEBILIR.has(tek.etiket) ? tek : null;
+  // Farklı nesneye geçildiyse düğüm vurgusu artık geçersiz → sıfırla.
+  if (seciliDugum !== oncekiDugum) seciliNokta = null;
   if (!seciliDugum) {
     model = null;
     imleriTemizle();
@@ -408,7 +481,7 @@ function yenidenKur(): void {
 const dugumAraci: Arac = {
   id: "dugum",
   etiketAnahtari: "arac.dugum",
-  imlec: "default",
+  imlec: "crosshair",
   sira: 1,
   tutamacGizle: true,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.2">
