@@ -43,6 +43,16 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
     canvas-içi mod). Bindirme/tutamaçlar o sırada tıklama-geçirgen (`:host(.bos-pan)
     .secim-katman * { pointer-events:none }`) → düğüm/boyut tutamacı pan'ı çalmaz.
     Pencere odağı kaybında (`blur`) sıfırlanır.
+- **Düğüm aracı: güvenilir seçim/geçiş + kavis "stop" imleci** (87306de).
+  - **Seçim:** Seç aracı gibi PRESS anında (`bas`) seçer; release'te yeniden
+    `isabet` ETMEZ (`basHedef`) — beliren çapaların üstüne düşüp seçimi silen tuzak
+    giderildi. Artık nesneye/başka nesneye tek tıkla geçilir (Seç aracı gerekmez).
+  - **Kavis kapsamı + imleç:** kavis (Ctrl+sürükle Bézier) yalnız **`path`**'te
+    (line/polyline/polygon düz). Ctrl basılıyken kavis verilemeyen nesne seçiliyse
+    imleç her yerde `not-allowed`; seçim yoksa imleç altındaki nesneye göre. Yeni
+    `Arac.imlecIcin`; tuval Ctrl/Meta tuş değişiminde imleci son konumda tazeler.
+  - **AÇIK:** line/polyline/polygon'u **path'e çevirip** kavislemek (Ctrl+sürükle)
+    henüz YOK — kullanıcıya soruldu/sunulacak (element etiketi değişimi = ayrı iş).
 
 ## 0b. Önceki oturum — devir (2026-06-13)
 
