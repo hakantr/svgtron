@@ -307,7 +307,39 @@ function oranCiftSatiri(
   `;
 }
 
-/** Konum bölümü (§9.8): x/y (canlı) · sx/sy (baseline) · tx/ty (ofset). */
+/** Elemanın EBEVEYN-uzayı sınır kutusu (getBBox × kendi transform'u). */
+function parentBbox(
+  el: SVGGraphicsElement,
+): { minX: number; minY: number; w: number; h: number } | null {
+  let bbox: DOMRect;
+  try {
+    bbox = el.getBBox();
+  } catch {
+    return null;
+  }
+  const m = el.transform.baseVal.consolidate()?.matrix ?? new DOMMatrix();
+  const pts = (
+    [
+      [bbox.x, bbox.y],
+      [bbox.x + bbox.width, bbox.y],
+      [bbox.x + bbox.width, bbox.y + bbox.height],
+      [bbox.x, bbox.y + bbox.height],
+    ] as const
+  ).map(([x, y]) => new DOMPoint(x, y).matrixTransform(m));
+  const xs = pts.map((p) => p.x);
+  const ys = pts.map((p) => p.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return { minX, minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+}
+
+/**
+ * Konum bölümü — X/Y artık REFERANS NOKTASININ (3×3 proxy) konumunu gösterir
+ * (Illustrator): referans değişince X/Y değişir; bir değeri yazınca nesne o
+ * noktayı hedefe taşıyacak kadar kaydırılır (öznitelik = pos + (hedef − ref)).
+ * Öte modunda (checkbox) §9.8 tx/ty (baseline ofseti) gösterilir — referanstan
+ * bağımsızdır. cx/cy gibi merkez-öznitelikli şekillerde de doğru çalışır.
+ */
 function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   const { dugum, belge, yaz, tazele } = baglam;
   const alanlar = konumAlanlari(dugum.etiket);
@@ -319,6 +351,17 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   const tx = pos.x - temel.sx;
   const ty = pos.y - temel.sy;
   const ote = konumOteModu;
+
+  // Referans noktası (parent-uzayı bbox). Hareket = öznitelik + (hedef − ref);
+  // delta nesneyi (ve referans noktasını) kaydırır → referans noktası hedefe oturur.
+  const el = cizimErisimi.eleman(dugum.kimlik);
+  const bb = el instanceof SVGGraphicsElement ? parentBbox(el) : null;
+  const refX = bb ? bb.minX + bb.w * refNoktaH : pos.x;
+  const refY = bb ? bb.minY + bb.h * refNoktaV : pos.y;
+  const uyX = (hedef: number): void =>
+    yaz(xa, String(say(pos.x + (hedef - refX))));
+  const uyY = (hedef: number): void =>
+    yaz(ya, String(say(pos.y + (hedef - refY))));
 
   return html`
     <div class="alt-baslik kose">
@@ -335,6 +378,7 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
         ${t("denetci.konum.ote")}
       </label>
     </div>
+    ${ote ? "" : referansProxy(baglam)}
     <div class="izgara">
       ${ote
         ? html`
@@ -346,8 +390,8 @@ function konumBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
             )}
           `
         : html`
-            ${alan("x", String(pos.x), (n) => yaz(xa, String(n)))}
-            ${alan("y", String(pos.y), (n) => yaz(ya, String(n)))}
+            ${alan("x", String(say(refX)), uyX)}
+            ${alan("y", String(say(refY)), uyY)}
           `}
     </div>
   `;
@@ -491,10 +535,13 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
   const onEkle = (T: string): void =>
     yaz("transform", `${T}${eskiT ? " " + eskiT : ""}`);
 
+  // Kök-uzayı REFERANS NOKTASI (X/Y bunu gösterir; düzenleme bunu hedefe taşır).
+  const refXr = minX + w * refNoktaH;
+  const refYr = minY + h * refNoktaV;
   const tasi = (eksen: "x" | "y", hedef: number): void => {
-    // Kök-uzayı hedef → ebeveyn-uzayı translate (ebeveyn ölçek/öteleme hesaba katılır).
-    const drx = eksen === "x" ? hedef - minX : 0;
-    const dry = eksen === "y" ? hedef - minY : 0;
+    // Kök-uzayı hedef (referans noktası) → ebeveyn-uzayı translate.
+    const drx = eksen === "x" ? hedef - refXr : 0;
+    const dry = eksen === "y" ? hedef - refYr : 0;
     const pd = ekranDeltaKullanici(parentToRoot, drx, dry);
     if (Math.abs(pd.x) < EPS && Math.abs(pd.y) < EPS) {
       tazele();
@@ -528,11 +575,11 @@ function donusumGeometriBolumu(baglam: AlanSetiBaglami): TemplateResult | "" {
 
   return html`
     <div class="alt-baslik">${t("denetci.altbaslik.konum")}</div>
-    <div class="izgara">
-      ${alan("x", String(say(minX)), (n) => tasi("x", n))}
-      ${alan("y", String(say(minY)), (n) => tasi("y", n))}
-    </div>
     ${referansProxy(baglam)}
+    <div class="izgara">
+      ${alan("x", String(say(refXr)), (n) => tasi("x", n))}
+      ${alan("y", String(say(refYr)), (n) => tasi("y", n))}
+    </div>
     ${oranCiftSatiri(
       t("denetci.geo.gen"),
       String(say(w)),
