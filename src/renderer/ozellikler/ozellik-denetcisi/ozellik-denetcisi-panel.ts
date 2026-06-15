@@ -28,6 +28,9 @@ const IK_COZ = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" s
 const IK_COGALT = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="3" width="7" height="7" rx="1"/><path d="M6 12.5h6.5a.5.5 0 0 0 .5-.5V6"/></svg>`;
 const IK_SIL = svg`<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M3.5 4.5h9M6 4.5V3.2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V4.5M5 4.5l.6 8a1 1 0 0 0 1 .9h2.8a1 1 0 0 0 1-.9l.6-8"/></svg>`;
 
+/** Katlanmış bölüm id'leri (yoğunluk modeli; oturum görünüm durumu, undo'ya girmez). */
+const kapaliGruplar = new Set<string>();
+
 /**
  * Özellik Denetçisi paneli (AGENTS.md §5.4, §9.3) — seçime DUYARLI.
  *
@@ -105,14 +108,34 @@ export class OzellikDenetcisiPanel extends LitElement {
     .grup:last-of-type {
       border-bottom: 0;
     }
+    /* Katlanabilir bölüm başlığı (yoğunluk modeli): tıkla → aç/kapa. */
     .grup-baslik {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: 100%;
+      box-sizing: border-box;
       padding: 0.5rem 0.75rem 0.2rem;
+      font: inherit;
       font-size: 0.64rem;
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--metin-soluk);
       opacity: 0.85;
+      background: none;
+      border: 0;
+      text-align: left;
+      cursor: pointer;
+    }
+    .grup-baslik:hover {
+      color: var(--metin);
+      opacity: 1;
+    }
+    .grup-baslik .ok {
+      font-size: 0.7rem;
+      width: 0.7rem;
+      opacity: 0.75;
     }
     .alan {
       display: grid;
@@ -513,14 +536,7 @@ export class OzellikDenetcisiPanel extends LitElement {
         <span class="etiket">${t("denetci.belge")}:</span>
         <code>&lt;svg&gt;</code>
       </div>
-      ${setler.map(
-        (set) => html`
-          <div class="grup">
-            <div class="grup-baslik">${t(set.baslikAnahtari)}</div>
-            ${set.render(baglam)}
-          </div>
-        `,
-      )}
+      ${setler.map((set) => this.#grupCiz(set, baglam))}
     `;
   }
 
@@ -546,15 +562,34 @@ export class OzellikDenetcisiPanel extends LitElement {
       </div>
       ${setler.length === 0
         ? html`<div class="bos">${t("denetci.alanYok")}</div>`
-        : setler.map(
-            (set) => html`
-              <div class="grup">
-                <div class="grup-baslik">${t(set.baslikAnahtari)}</div>
-                ${set.render(baglam)}
-              </div>
-            `,
-          )}
+        : setler.map((set) => this.#grupCiz(set, baglam))}
       ${this.#hizliEylemler()}
+    `;
+  }
+
+  /** Katlanabilir bölüm (Illustrator yoğunluk modeli): başlığa tıkla → aç/kapa. */
+  #grupCiz(
+    set: { id: string; baslikAnahtari: string; render: (b: never) => unknown },
+    baglam: unknown,
+  ) {
+    const kapali = kapaliGruplar.has(set.id);
+    return html`
+      <div class="grup ${kapali ? "kapali" : ""}">
+        <button
+          type="button"
+          class="grup-baslik"
+          aria-expanded=${!kapali}
+          @click=${() => {
+            if (kapali) kapaliGruplar.delete(set.id);
+            else kapaliGruplar.add(set.id);
+            this.requestUpdate();
+          }}
+        >
+          <span class="ok" aria-hidden="true">${kapali ? "▸" : "▾"}</span>
+          ${t(set.baslikAnahtari)}
+        </button>
+        ${kapali ? "" : set.render(baglam as never)}
+      </div>
     `;
   }
 
