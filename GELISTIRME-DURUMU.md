@@ -12,7 +12,39 @@ UI, commit mesajları). Electron isimleri (`main`/`preload`/`renderer`) İngiliz
 
 ---
 
-## 0. Son oturum — devir (2026-06-13)
+## 0. Son oturum — devir (2026-06-15)
+
+> Bu oturum tümüyle **araç/tuval etkileşimi** iyileştirmeleri (kullanıcı geri
+> bildirimiyle). typecheck/build/smoke geçti; **etkileşim gözle teyit bekliyor (§5).**
+> Bu oturumdan önceki birkaç oturum (kod paneli temaları, cetvel/ızgara, Metin
+> paneli, denetçi Illustrator-düzeni, referans proxy) bu dosyaya GERİYE
+> İŞLENMEDİ — ayrıntı git geçmişinde (yakın commit'ler).
+
+**Bu oturumda tamamlananlar (commit'li, sırayla):**
+- **Düğüm aracı — imleç + düğüm seçimi + Ctrl+sürükle eğri** (a9e752c). İmleç
+  artık `crosshair` (+). Çapaya **hareketsiz tıklama** o düğümü SEÇER (beyaz
+  dolgu + vurgu çerçeve; artık no-op komut üretmez). Kavis verilebilen (path)
+  çapalarda **Ctrl+sol-sürükle** simetrik Bézier kolları çıkarır/ayarlar (köşe
+  `L`→`C`); eğrilik göstergesi canlı belirir, bırakınca tek Command (İlke 2).
+  *Not: nesne seçimi `tikla`→`isabet` ile zaten çalışıyordu (path fill=none ise
+  yalnız konturdan isabet doğal kısıt); eklenen şey düğüm seçimi vurgusu.*
+- **Çizim & tuval etkileşimleri: sağ-tık bitir · Ctrl+Z geri-aç · boşluk-pan**
+  (6f4320f). Üç ilişkili etkileşim (paylaşılan dosyalar → tek commit):
+  - **Sağ tık = Enter:** çok-noktalı araçlar (kalem/çoklu-çizgi/çokgen) çizimi
+    bitirir. Tuval `contextmenu` → yeni `Arac.sagTik` (İlke 5); menü bastırılır.
+  - **Ctrl+Z bitirme-adımı geri-aç:** çizim biter bitmez Ctrl+Z tüm şekli değil
+    yalnız **bitirme adımını** geri alıp çizime döndürür (kaldığı noktalarla);
+    sonra başka araç/etkileşim olunca normal geri-al sürer. Yeni `Arac.geriAlYakala`
+    kabuğun Ctrl+Z'sine kancalı. **Sağlamlık:** `secim.sec` araya bir "bırakma"
+    seçim adımı yazabildiğinden (çizimden önce çoklu seçim vardıysa), geri-al
+    **şekil kalkana dek** döner (en çok birkaç adım; `dugumBul` ile teyit).
+  - **Boşluk çubuğu → geçici El (kaydır):** basılıyken aktif araç beklemeye alınır,
+    bırakılınca **kaldığı yerden** sürer (görünüm durumu, İlke 9; tool swap YOK —
+    canvas-içi mod). Bindirme/tutamaçlar o sırada tıklama-geçirgen (`:host(.bos-pan)
+    .secim-katman * { pointer-events:none }`) → düğüm/boyut tutamacı pan'ı çalmaz.
+    Pencere odağı kaybında (`blur`) sıfırlanır.
+
+## 0b. Önceki oturum — devir (2026-06-13)
 
 **Bu oturumda tamamlananlar (commit'li, sırayla):**
 - **TK-37 #10 — Dışa aktarım profilleri görünür seçim** (commit 9353704). "Dosya ›
@@ -95,7 +127,7 @@ gözle teyit gerektiren parçalar ve bilinçli v1-dışı bırakılanlar kaldı:
 
 ---
 
-## 0b. Önceki oturum — devir (2026-06-12)
+## 0c. Önceki oturum — devir (2026-06-12)
 
 > **Başka makineye geçiş:** Bu oturumdaki tüm iş `main` üzerinde **yerel commit**;
 > push otomatik modda engelli. Devretmek için bu makinede `git push origin main`,
