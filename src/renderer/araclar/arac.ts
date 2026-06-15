@@ -83,6 +83,13 @@ export interface Arac {
   readonly ikon: TemplateResult;
   /** Tuval imleci (CSS cursor). */
   readonly imlec?: string;
+  /**
+   * Hover sırasında imleci konuma göre özelleştirir (İlke 5 — Tuval aracı bilmez,
+   * yalnız bunu çağırır). Örn. Metin aracı, bir metnin ÜSTÜNDE "text" (düzenle)
+   * imleci döndürür → kullanıcı tıklayınca içine gireceğini anlar. Döndürülen CSS
+   * cursor; `undefined` ise {@link imlec} kullanılır.
+   */
+  imlecIcin?(olay: PointerEvent, baglam: AracBaglami): string | undefined;
   /** Çubuktaki sıralama (küçük önce). */
   readonly sira?: number;
   /**

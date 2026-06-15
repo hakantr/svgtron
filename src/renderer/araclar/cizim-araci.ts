@@ -55,6 +55,14 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
     imlec: "crosshair",
     sira: tanim.sira,
 
+    // Metin aracı: bir metnin üstündeyken "text" (düzenle) imleci → tıklayınca
+    // yeni eklemeyeceği, içine gireceği anlaşılır.
+    imlecIcin(olay, baglam) {
+      if (tanim.metin === undefined) return undefined;
+      const hit = baglam.isabet(olay);
+      return hit && METIN_ETIKETLERI.has(hit.etiket) ? "text" : undefined;
+    },
+
     bas(olay, baglam) {
       // Metin aracı: tıklanan yerde metin varsa YENİ oluşturma, var olanı düzenle.
       if (tanim.metin !== undefined) {

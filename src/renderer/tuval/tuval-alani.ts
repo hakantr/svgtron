@@ -822,8 +822,13 @@ export class TuvalAlani extends LitElement {
 
   // Tuş basılı DEĞİLken hareket (hover) → aktif araca (örn. kalem ipucu çizgisi).
   readonly #hover = (olay: PointerEvent): void => {
+    const arac = aracDeposu.aktif;
+    // İmleci aracın konuma-duyarlı tercihine göre güncelle (örn. Metin → "text").
+    if (arac && this.kaydir)
+      this.kaydir.style.cursor =
+        arac.imlecIcin?.(olay, this.#aracBaglami()) ?? arac.imlec ?? "default";
     if (olay.buttons !== 0) return;
-    aracDeposu.aktif?.hareket?.(olay, this.#aracBaglami());
+    arac?.hareket?.(olay, this.#aracBaglami());
   };
 
   /**
