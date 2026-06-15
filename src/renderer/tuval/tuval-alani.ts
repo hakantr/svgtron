@@ -117,20 +117,22 @@ export class TuvalAlani extends LitElement {
       background: rgba(130, 175, 255, 0.12);
       border-radius: 1px;
     }
-    /* Yerinde metin düzenleme kutusu (çift-tık / Metin aracı) — konum+font JS'te. */
+    /* Yerinde metin düzenleme kutusu (çift-tık / Metin aracı) — konum/font/genişlik
+       JS'te. ŞEFFAF zemin + çerçeve YOK → canlı metin gizlenir, düzenleme yerinde
+       görünür. Genişlik içeriğe göre büyür (#metinBoyutla); hizaya göre konumlanır. */
     .metin-giris {
       position: absolute;
       display: none;
       z-index: 20;
       margin: 0;
-      padding: 0 2px;
-      box-sizing: border-box;
-      border: 1px solid var(--vurgu, #4a90e2);
-      border-radius: 2px;
-      background: var(--yuzey, #fff);
-      color: var(--metin, #111);
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--metin);
+      caret-color: var(--vurgu, #4a90e2);
       outline: none;
-      line-height: 1.1;
+      white-space: pre;
+      line-height: 1;
     }
     /* Izgara (TK-37 #2) — ekran-uzayı CSS arka planı; #izgaraCiz hem arka planı
        hem KONUMU/BOYUTU kök SVG çizim alanına kıstar (svg dışına taşmaz). */
@@ -319,6 +321,18 @@ export class TuvalAlani extends LitElement {
   @query(".metin-giris") private metinGiris?: HTMLInputElement;
   /** Yerinde düzenlenen metin düğümü (yoksa null). */
   #metinDugum: Dugum | null = null;
+  /** Düzenlenen elemanın canlı DOM'u (düzenleme süresince gizlenir). */
+  #metinEl: SVGGraphicsElement | null = null;
+  /** Hizalama ankrajı: tip (start/middle/end), sabit ankraj X'i, üst, yükseklik, font. */
+  #metinAnchor: {
+    tip: string;
+    x: number;
+    top: number;
+    yukseklik: number;
+    font: string;
+  } | null = null;
+  /** Metin genişliği ölçer (auto-grow için). */
+  readonly #olcer = document.createElement("canvas").getContext("2d");
   @query(".izgara") private izgaraKat!: HTMLDivElement;
   @query(".cetvel-ust") private cetvelUst!: SVGSVGElement;
   @query(".cetvel-sol") private cetvelSol!: SVGSVGElement;
@@ -586,17 +600,51 @@ export class TuvalAlani extends LitElement {
       const olcek = ctm ? Math.abs(ctm.a) : 1;
       const k = getComputedStyle(el);
       const px = (parseFloat(k.fontSize) || 16) * olcek;
+      // Hizalama ankrajı: text-anchor'a göre SABİT nokta (start=sol, middle=orta, end=sağ).
+      const tip = k.getPropertyValue("text-anchor").trim() || "start";
+      const sol = r.left - h.left;
+      const sag = r.right - h.left;
+      const x = tip === "middle" ? (sol + sag) / 2 : tip === "end" ? sag : sol;
+      const font = `${k.fontStyle} ${k.fontWeight} ${px}px ${k.fontFamily}`;
+      const renk = k.fill && k.fill !== "none" ? k.fill : "var(--metin)";
+      this.#metinAnchor = {
+        tip,
+        x,
+        top: r.top - h.top,
+        yukseklik: Math.max(r.height, px * 1.3),
+        font,
+      };
+      this.#metinEl = el;
+      el.style.visibility = "hidden"; // canlı metni gizle (overlay ŞEFFAF; çift metin olmasın)
       giris.value = dugum.metin ?? el.textContent ?? "";
       giris.style.display = "block";
-      giris.style.left = `${r.left - h.left}px`;
+      giris.style.font = font;
+      giris.style.color = renk;
       giris.style.top = `${r.top - h.top}px`;
-      giris.style.minWidth = `${Math.max(r.width + 6, 28)}px`;
-      giris.style.height = `${Math.max(r.height, px * 1.25)}px`;
-      giris.style.font = `${k.fontStyle} ${k.fontWeight} ${px}px ${k.fontFamily}`;
+      giris.style.height = `${this.#metinAnchor.yukseklik}px`;
+      giris.style.textAlign =
+        tip === "middle" ? "center" : tip === "end" ? "right" : "left";
+      this.#metinBoyutla(); // genişlik + hizaya göre konum
       giris.focus();
       giris.select();
     });
   }
+
+  /** Giriş kutusunu içeriğe göre büyütür ve ankraja (hizaya) göre konumlandırır. */
+  #metinBoyutla(): void {
+    const giris = this.metinGiris;
+    const a = this.#metinAnchor;
+    if (!giris || !a || !this.#olcer) return;
+    this.#olcer.font = a.font;
+    const w = this.#olcer.measureText(giris.value || " ").width + 3;
+    giris.style.width = `${Math.max(w, 6)}px`;
+    // start: sol sabit (sağa büyür) · middle: orta sabit (iki yana) · end: sağ sabit (sola).
+    const left = a.tip === "middle" ? a.x - w / 2 : a.tip === "end" ? a.x - w : a.x;
+    giris.style.left = `${left}px`;
+  }
+
+  /** Yazdıkça boyutu/konumu güncelle (auto-grow). */
+  readonly #metinGirisGirdi = (): void => this.#metinBoyutla();
 
   /** Düzenlemeyi bitirir; iptal değilse içerik değişimini Command ile yazar (İlke 2). */
   #metinDuzenleBitir(iptal: boolean): void {
@@ -606,6 +654,11 @@ export class TuvalAlani extends LitElement {
     const giris = this.metinGiris;
     const yeni = giris?.value ?? "";
     if (giris) giris.style.display = "none";
+    if (this.#metinEl) {
+      this.#metinEl.style.visibility = ""; // canlı metni geri göster
+      this.#metinEl = null;
+    }
+    this.#metinAnchor = null;
     window.getSelection()?.removeAllRanges();
     this.#konumla(); // seçim çerçevesini geri getir
     if (iptal) return;
@@ -1553,6 +1606,7 @@ export class TuvalAlani extends LitElement {
         class="metin-giris"
         type="text"
         spellcheck="false"
+        @input=${this.#metinGirisGirdi}
         @keydown=${this.#metinGirisTus}
         @blur=${() => this.#metinDuzenleBitir(false)}
       />
