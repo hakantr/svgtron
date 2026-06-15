@@ -244,6 +244,7 @@ denetci.metin.dhiza.taban = Taban
 denetci.metin.dhiza.orta = Orta
 denetci.metin.dhiza.ust = Üst
 denetci.metin.dhiza.alt = Alt
+metin.bosSecim = Düzenlemek için bir metin nesnesi seçin
 denetci.grup.marker = Uç işaretleri
 denetci.marker.start = Başlangıç
 denetci.marker.mid = Orta

@@ -649,6 +649,9 @@ export class UygulamaKabugu extends LitElement {
 
   #depoCoz?: () => void;
   #dilCoz?: () => void;
+  #secimSagCoz?: () => void;
+  /** Metin paneli otomatik öne gelmeden önceki sağ panel (geri dönmek için). */
+  #sagMetinOncesi: string | null = null;
 
   /** Menü eylemlerine geçirilen bağlam (servisler + hata bildirimi). */
   readonly #menuBaglami: MenuBaglami = {
@@ -938,6 +941,9 @@ export class UygulamaKabugu extends LitElement {
       requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
     });
     window.addEventListener("keydown", this.#klavye);
+    // Metin nesnesi seçilince Metin panelini otomatik öne getir (ayrı grup; metin
+    // çıkınca önceki panele dön). Görünüm durumu (İlke 9) — undo'ya girmez.
+    this.#secimSagCoz = this.#secim.dinle(() => this.#metinPaneliOtomatik());
 
     void this.surumYukle();
   }
@@ -945,6 +951,7 @@ export class UygulamaKabugu extends LitElement {
   override disconnectedCallback(): void {
     this.#depoCoz?.();
     this.#dilCoz?.();
+    this.#secimSagCoz?.();
     this.#bildirimCoz?.();
     this.#degisiklikCoz?.();
     this.#disaAktarCoz?.();
@@ -1055,7 +1062,30 @@ export class UygulamaKabugu extends LitElement {
   /** Ray simgesine tıklama: paneli aç / zaten açıksa kapat (katla). */
   private sagSec(id: string): void {
     this.aktifSag = this.aktifSag === id ? null : id;
+    // Kullanıcı elle panel değiştirdiyse otomatik geri-dönüş hedefini sıfırla.
+    this.#sagMetinOncesi = null;
     this.#sagGorunurluk();
+  }
+
+  /**
+   * Seçim metin nesnesiyse Metin panelini öne getirir; metinden çıkınca önceki
+   * panele döner. (Görünüm durumu, İlke 9 → undo'ya girmez.)
+   */
+  #metinPaneliOtomatik(): void {
+    if (!this.#sagPanelleri.has("metin")) return;
+    const d = this.#secim.secili;
+    const metinMi =
+      !!d &&
+      (d.etiket === "text" || d.etiket === "tspan" || d.etiket === "textPath");
+    if (metinMi && this.aktifSag !== "metin") {
+      this.#sagMetinOncesi = this.aktifSag;
+      this.aktifSag = "metin";
+      this.#sagGorunurluk();
+    } else if (!metinMi && this.aktifSag === "metin") {
+      this.aktifSag = this.#sagMetinOncesi; // önceki panele (ya da kapalıya) dön
+      this.#sagMetinOncesi = null;
+      this.#sagGorunurluk();
+    }
   }
 
   /** Sağ içerik genişliğini tutamaçla yeniden boyutlandırır. */

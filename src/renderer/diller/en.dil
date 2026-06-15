@@ -244,6 +244,7 @@ denetci.metin.dhiza.taban = Baseline
 denetci.metin.dhiza.orta = Middle
 denetci.metin.dhiza.ust = Top
 denetci.metin.dhiza.alt = Bottom
+metin.bosSecim = Select a text object to edit
 denetci.grup.marker = Markers
 denetci.marker.start = Start
 denetci.marker.mid = Mid
