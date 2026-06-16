@@ -172,3 +172,46 @@ export function gradyanKomutu(
 
   return new BilesikKomut("gradyan uygula", komutlar);
 }
+
+/**
+ * Tuval üstünde sürüklenen başlangıç/bitiş noktalarıyla doğrusal gradyan yazar.
+ * Noktalar objectBoundingBox koordinatlarıdır (0..1 tipik aralık, dışına taşabilir);
+ * bu sayede kullanıcı sürüklediği doğrultuyu doğrudan gradyan vektörü yapar.
+ */
+export function dogrusalGradyanCizgiKomutu(
+  belge: Belge,
+  dugum: Dugum,
+  eskiFill: string,
+  p1: { readonly x: number; readonly y: number },
+  p2: { readonly x: number; readonly y: number },
+  duraklar: readonly GradyanDurak[],
+  ozellik: "fill" | "stroke" = "fill",
+): Komut {
+  const komutlar: Komut[] = [];
+
+  let defs = defsBul(belge);
+  if (!defs) {
+    defs = dugumOlustur("defs");
+    komutlar.push(new DugumEkleKomutu(belge, belge.kok, defs, 0));
+  }
+
+  const id = benzersizId(belge.kok, ONEK);
+  const g = dugumOlustur(
+    "linearGradient",
+    {
+      id,
+      x1: p1.x.toFixed(4),
+      y1: p1.y.toFixed(4),
+      x2: p2.x.toFixed(4),
+      y2: p2.y.toFixed(4),
+    },
+    duraklar.map(durakDugumu),
+  );
+  komutlar.push(new DugumEkleKomutu(belge, defs, g));
+  komutlar.push(stilUygulaKomutu(belge, dugum, ozellik, `url(#${id})`));
+
+  const temizle = eskiGradyanTemizle(belge, eskiFill);
+  if (temizle) komutlar.push(temizle);
+
+  return new BilesikKomut("gradyan çiz", komutlar);
+}

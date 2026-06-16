@@ -14,7 +14,7 @@ const pipetAraci: Arac = {
   id: "pipet",
   etiketAnahtari: "arac.pipet",
   imlec: "crosshair",
-  sira: 20,
+  sira: 21,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M10.5 2.5 a1.6 1.6 0 0 1 3 3 L7 12 L3.5 12.5 L4 9 Z"/><path d="M8.5 5.5 L11 8"/></svg>`,
 
   tikla(olay, baglam) {

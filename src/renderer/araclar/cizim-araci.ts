@@ -2,6 +2,7 @@ import type { TemplateResult } from "lit";
 import type { Arac, TuvalNoktasi } from "./arac";
 import { dugumOlustur, type Dugum } from "../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../cekirdek/secim/secim-kayit-bastir";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -119,8 +120,10 @@ export function cizimAraci(tanim: CizimTanimi): Arac {
         [],
         tanim.metin,
       );
-      baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
-      baglam.secim.sec(dugum);
+      secimKaydiBastir(() => {
+        baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
+        baglam.secim.sec(dugum);
+      });
       // Metin aracı: oluşturduktan hemen sonra yerinde düzenlemeye gir.
       if (tanim.metin !== undefined) baglam.metinDuzenle(dugum);
     },

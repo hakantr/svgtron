@@ -2,6 +2,7 @@ import { svg } from "lit";
 import { aracKayitDefteri, type Arac } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { say } from "../../tuval/donusum";
 import { t } from "../../diller/dil";
 
@@ -48,8 +49,10 @@ const foreignObjectAraci: Arac = {
       },
       [div],
     );
-    baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, fo));
-    baglam.secim.sec(fo);
+    secimKaydiBastir(() => {
+      baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, fo));
+      baglam.secim.sec(fo);
+    });
     baglam.bildir(t("foreignObject.uyari"), "uyari");
   },
 };

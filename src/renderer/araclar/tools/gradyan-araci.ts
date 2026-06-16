@@ -1,10 +1,24 @@
 import { svg } from "lit";
-import { aracKayitDefteri, type Arac, type AracBaglami } from "../arac";
+import {
+  aracKayitDefteri,
+  SURUKLEME_ESIGI,
+  type Arac,
+  type AracBaglami,
+} from "../arac";
 import type { Dugum } from "../../../cekirdek/belge/model/dugum";
+import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { say } from "../../tuval/donusum";
-import { urlId, gradyanBul } from "../../boya/gradyan-model";
+import {
+  dogrusalGradyanCizgiKomutu,
+  urlId,
+  gradyanBul,
+} from "../../boya/gradyan-model";
 import { noktaOfset, ofsetNokta, type Nokta } from "../../boya/gradyan-geometri";
+import { sonRenkler } from "../../boya/son-renkler";
+import { ayristir, metin } from "../../boya/renk";
+import type { GradyanDurak } from "../../boya/boya-degeri";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ACCENT = "var(--vurgu, #4a90e2)";
@@ -35,10 +49,19 @@ interface Tutamac {
   el: SVGElement;
 }
 let cizgi: SVGLineElement | null = null;
+let cizimCizgi: SVGLineElement | null = null;
 let tutamaclar: Tutamac[] = [];
 
 // Sürükleme durumu (mutlak — birikme yok).
 let surukle: { tip: "p1" | "p2" | number } | null = null;
+let cizim: {
+  hedef: Dugum;
+  basEkran: Nokta;
+  basObb: Nokta;
+  eskiFill: string;
+  aktif: boolean;
+} | null = null;
+let sonGecisDuraklari: GradyanDurak[] | null = null;
 
 // --- Gradyan okuma ---
 
@@ -65,6 +88,27 @@ function uclar(g: Dugum): { p1: Nokta; p2: Nokta } {
 
 function duraklar(g: Dugum): Dugum[] {
   return g.cocuklar.filter((c) => c.etiket === "stop");
+}
+
+function gradyanDuraklari(g: Dugum): GradyanDurak[] {
+  const ds = duraklar(g).map((s) => {
+    const renkHam = s.oznitelikler.get("stop-color") ?? "#000000";
+    const op = Number(s.oznitelikler.get("stop-opacity") ?? "1");
+    const rgba = ayristir(renkHam);
+    return {
+      offset: durakOfset(s),
+      renk:
+        rgba && Number.isFinite(op) && op < 1
+          ? metin({ ...rgba, a: Math.max(0, Math.min(1, op)) })
+          : renkHam,
+    };
+  });
+  return ds.length >= 2
+    ? ds
+    : [
+        { offset: 0, renk: "rgb(74, 144, 226)" },
+        { offset: 1, renk: "rgb(255, 255, 255)" },
+      ];
 }
 
 function durakOfset(s: Dugum): number {
@@ -139,6 +183,26 @@ function ekranGrad(sx: number, sy: number, e: Esleme): Nokta {
   };
 }
 
+function hedefEsleme(dugum: Dugum, baglam: AracBaglami): Esleme | null {
+  if (!kat) return null;
+  const el = baglam.eleman(dugum.kimlik);
+  if (!(el instanceof SVGGraphicsElement)) return null;
+  const ctm = el.getScreenCTM();
+  if (!ctm) return null;
+  return {
+    ctm,
+    bbox: el.getBBox(),
+    obb: true,
+    orijin: kat.getBoundingClientRect(),
+  };
+}
+
+function olayObb(olay: PointerEvent, dugum: Dugum, baglam: AracBaglami): Nokta | null {
+  const e = hedefEsleme(dugum, baglam);
+  if (!e || e.bbox.width === 0 || e.bbox.height === 0) return null;
+  return ekranGrad(olay.clientX - e.orijin.left, olay.clientY - e.orijin.top, e);
+}
+
 // --- Overlay ---
 
 function katmaniKur(baglam: AracBaglami): void {
@@ -157,6 +221,7 @@ function katmaniKur(baglam: AracBaglami): void {
 function imleriKur(): void {
   kat?.replaceChildren();
   cizgi = null;
+  cizimCizgi = null;
   tutamaclar = [];
   if (!kat || !aktifGradyan) return;
 
@@ -196,6 +261,66 @@ function imleriKur(): void {
     tutamaclar.push({ tip: i, el: c });
   });
   yerlestir();
+}
+
+function cizimCizgisiGoster(bas: Nokta, simdi: Nokta): void {
+  if (!kat) return;
+  if (!cizimCizgi) {
+    cizimCizgi = document.createElementNS(SVG_NS, "line");
+    cizimCizgi.style.stroke = ACCENT;
+    cizimCizgi.setAttribute("stroke-width", "2");
+    cizimCizgi.setAttribute("stroke-dasharray", "5 4");
+    cizimCizgi.style.pointerEvents = "none";
+    kat.appendChild(cizimCizgi);
+  }
+  const r = kat.getBoundingClientRect();
+  cizimCizgi.setAttribute("x1", String(bas.x - r.left));
+  cizimCizgi.setAttribute("y1", String(bas.y - r.top));
+  cizimCizgi.setAttribute("x2", String(simdi.x - r.left));
+  cizimCizgi.setAttribute("y2", String(simdi.y - r.top));
+}
+
+function cizimCizgisiGizle(): void {
+  cizimCizgi?.remove();
+  cizimCizgi = null;
+}
+
+function duzRenk(renk: string | null | undefined): string | null {
+  if (!renk || renk.trim() === "none" || urlId(renk)) return null;
+  const rgba = ayristir(renk);
+  return rgba && rgba.a > 0 ? metin(rgba) : null;
+}
+
+function varsayilanDuraklar(hedef: Dugum, baglam: AracBaglami): GradyanDurak[] {
+  if (aktifGradyan) {
+    const ds = gradyanDuraklari(aktifGradyan);
+    sonGecisDuraklari = ds.map((d) => ({ ...d }));
+    return ds;
+  }
+  if (sonGecisDuraklari) return sonGecisDuraklari.map((d) => ({ ...d }));
+
+  const renkler = sonRenkler.renkler.filter((r) => duzRenk(r) != null);
+  if (renkler.length >= 2)
+    return [
+      { offset: 0, renk: renkler[0]! },
+      { offset: 1, renk: renkler[1]! },
+    ];
+  if (renkler.length === 1)
+    return [
+      { offset: 0, renk: renkler[0]! },
+      { offset: 1, renk: "rgb(255, 255, 255)" },
+    ];
+
+  const el = baglam.eleman(hedef.kimlik);
+  const fill =
+    (el instanceof SVGElement ? getComputedStyle(el).fill : "") ||
+    hedef.oznitelikler.get("fill") ||
+    "";
+  const mevcut = duzRenk(fill);
+  return [
+    { offset: 0, renk: mevcut ?? "rgb(74, 144, 226)" },
+    { offset: 1, renk: "rgb(255, 255, 255)" },
+  ];
 }
 
 function yerlestir(): void {
@@ -284,10 +409,20 @@ function surukleBirak(olay: PointerEvent): void {
     const g = ekranGrad(sx, sy, e);
     const ek = s.tip === "p1" ? "1" : "2";
     baglamRef.gecmis.calistir(
-      new OznitelikDegistirKomutu(belge, aktifGradyan, `x${ek}`, String(say(g.x))),
-    );
-    baglamRef.gecmis.calistir(
-      new OznitelikDegistirKomutu(belge, aktifGradyan, `y${ek}`, String(say(g.y))),
+      new BilesikKomut("gradyan ucu taşı", [
+        new OznitelikDegistirKomutu(
+          belge,
+          aktifGradyan,
+          `x${ek}`,
+          String(say(g.x)),
+        ),
+        new OznitelikDegistirKomutu(
+          belge,
+          aktifGradyan,
+          `y${ek}`,
+          String(say(g.y)),
+        ),
+      ]),
     );
   } else {
     const { p1, p2 } = uclar(aktifGradyan);
@@ -307,6 +442,8 @@ function senkronla(): void {
   const bulgu = aktifGradyaniBul(baglamRef);
   aktifNesne = bulgu?.nesne ?? null;
   aktifGradyan = bulgu?.gradyan ?? null;
+  if (aktifGradyan)
+    sonGecisDuraklari = gradyanDuraklari(aktifGradyan).map((d) => ({ ...d }));
   imleriKur();
 }
 
@@ -314,9 +451,70 @@ const gradyanAraci: Arac = {
   id: "gradyan",
   etiketAnahtari: "arac.gradyan",
   imlec: "default",
-  sira: 17,
+  sira: 20,
   tutamacGizle: true,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16"><defs><linearGradient id="gi" x1="0" x2="1"><stop offset="0" stop-color="currentColor" stop-opacity="0.2"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs><rect x="2" y="3" width="12" height="10" rx="1.5" fill="url(#gi)" stroke="currentColor" stroke-width="0.8"/></svg>`,
+
+  bas(olay, baglam) {
+    const hedef = baglam.isabet(olay);
+    if (!hedef) {
+      cizim = null;
+      return;
+    }
+    const basObb = olayObb(olay, hedef, baglam);
+    if (!basObb) {
+      cizim = null;
+      return;
+    }
+    if (baglam.secim.secili !== hedef || baglam.secim.secililer.length !== 1)
+      baglam.secim.sec(hedef);
+    const el = baglam.eleman(hedef.kimlik);
+    const eskiFill =
+      (el instanceof SVGElement ? getComputedStyle(el).fill : "") ||
+      hedef.oznitelikler.get("fill") ||
+      "";
+    cizim = {
+      hedef,
+      basEkran: { x: olay.clientX, y: olay.clientY },
+      basObb,
+      eskiFill,
+      aktif: false,
+    };
+  },
+
+  surukle(olay) {
+    if (!cizim) return;
+    const dx = olay.clientX - cizim.basEkran.x;
+    const dy = olay.clientY - cizim.basEkran.y;
+    if (!cizim.aktif && Math.hypot(dx, dy) <= SURUKLEME_ESIGI) return;
+    cizim.aktif = true;
+    cizimCizgisiGoster(cizim.basEkran, { x: olay.clientX, y: olay.clientY });
+  },
+
+  birak(olay, baglam) {
+    const c = cizim;
+    cizim = null;
+    cizimCizgisiGizle();
+    if (!c?.aktif) return;
+    const belge = baglam.depo.belge;
+    const bitis = olayObb(olay, c.hedef, baglam);
+    if (!belge || !bitis) return;
+    const duraklar = varsayilanDuraklar(c.hedef, baglam);
+    sonGecisDuraklari = duraklar.map((d) => ({ ...d }));
+    secimKaydiBastir(() => {
+      baglam.gecmis.calistir(
+        dogrusalGradyanCizgiKomutu(
+          belge,
+          c.hedef,
+          c.eskiFill,
+          c.basObb,
+          bitis,
+          duraklar,
+        ),
+      );
+      baglam.secim.sec(c.hedef);
+    });
+  },
 
   etkinlesti(baglam) {
     baglamRef = baglam;
@@ -340,10 +538,12 @@ const gradyanAraci: Arac = {
     kat?.remove();
     kat = null;
     cizgi = null;
+    cizimCizgi = null;
     tutamaclar = [];
     aktifNesne = null;
     aktifGradyan = null;
     surukle = null;
+    cizim = null;
     baglamRef = null;
   },
 };

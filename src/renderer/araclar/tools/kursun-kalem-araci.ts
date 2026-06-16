@@ -2,6 +2,7 @@ import { svg } from "lit";
 import { aracKayitDefteri, type Arac, type TuvalNoktasi } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { noktaBasitlestir } from "../../../cekirdek/belge/model/yol-duzenleme";
 import { dDizesi } from "../yol-dizesi";
 
@@ -57,8 +58,10 @@ const kursunKalem: Arac = {
     if (belge && noktalar.length >= 2) {
       const sade = noktaBasitlestir(noktalar, 1.5);
       const dugum = dugumOlustur("path", { ...VARSAYILAN, d: dDizesi(sade) });
-      baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
-      baglam.secim.sec(dugum);
+      secimKaydiBastir(() => {
+        baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
+        baglam.secim.sec(dugum);
+      });
     }
     sifirla();
   },

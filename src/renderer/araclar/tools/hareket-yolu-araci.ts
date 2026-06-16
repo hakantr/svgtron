@@ -5,6 +5,7 @@ import {
   BilesikKomut,
   DugumEkleKomutu,
 } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import type { Komut } from "../../../cekirdek/komutlar/komut";
 import { noktaBasitlestir } from "../../../cekirdek/belge/model/yol-duzenleme";
 import { hareketYoluDugumu } from "../../ozellikler/animasyon/hareket-yolu";
@@ -46,7 +47,7 @@ const hareketYoluAraci: Arac = {
   id: "hareket-yolu",
   etiketAnahtari: "arac.hareketYolu",
   imlec: "crosshair",
-  sira: 20,
+  sira: 30,
   ikon: svg`<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 12 C 4 4, 12 12, 14 4" stroke-dasharray="3 2"/><circle cx="2" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>`,
 
   bas(olay, baglam) {
@@ -87,8 +88,10 @@ const hareketYoluAraci: Arac = {
       } else {
         baglam.bildir(t("animasyon.hareketYoluHedefYok"), "uyari");
       }
-      baglam.gecmis.calistir(new BilesikKomut("hareket yolu çiz", komutlar));
-      baglam.secim.sec(yol);
+      secimKaydiBastir(() => {
+        baglam.gecmis.calistir(new BilesikKomut("hareket yolu çiz", komutlar));
+        baglam.secim.sec(yol);
+      });
     }
     sifirla();
   },

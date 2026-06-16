@@ -7,6 +7,7 @@ import {
 } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { dDizesi } from "../yol-dizesi";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -61,8 +62,10 @@ function bitir(baglam: AracBaglami, kapali: boolean): void {
       ...VARSAYILAN,
       d: dDizesi(noktalar, undefined, kapali),
     });
-    baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
-    baglam.secim.sec(dugum);
+    secimKaydiBastir(() => {
+      baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
+      baglam.secim.sec(dugum);
+    });
     // Bitirme adımını hatırla → Ctrl+Z çizime geri dönsün (kullanıcı isteği).
     sonBitirme = {
       kimlik: dugum.kimlik,

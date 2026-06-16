@@ -4,6 +4,7 @@ import type { Dugum } from "../../../cekirdek/belge/model/dugum";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import type { Komut } from "../../../cekirdek/komutlar/komut";
 import type { SecimDeposu } from "../../../cekirdek/secim/secim-deposu";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import type { KomutGecmisi } from "../../../cekirdek/komutlar/komut-gecmisi";
 import {
   DugumCikarKomutu,
@@ -292,8 +293,10 @@ export function sonucuYaz(
     (op) => new DugumCikarKomutu(belge, belge.ebeveyn(op) ?? belge.kok, op),
   );
   komutlar.push(new DugumEkleKomutu(belge, belge.kok, yeni));
-  gecmis.calistir(new BilesikKomut(etiket, komutlar));
-  secim.sec(yeni);
+  secimKaydiBastir(() => {
+    gecmis.calistir(new BilesikKomut(etiket, komutlar));
+    secim.sec(yeni);
+  });
 }
 
 /** Atomik yüz hesabında işlenebilecek en fazla operand (2^N patlamasını önler). */

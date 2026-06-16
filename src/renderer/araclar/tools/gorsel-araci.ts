@@ -2,6 +2,7 @@ import { svg } from "lit";
 import { aracKayitDefteri, type Arac } from "../arac";
 import { dugumOlustur } from "../../../cekirdek/belge/model/dugum";
 import { DugumEkleKomutu } from "../../../cekirdek/komutlar/dugum-komutlari";
+import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { say } from "../../tuval/donusum";
 import { t } from "../../diller/dil";
 
@@ -37,8 +38,12 @@ const gorselAraci: Arac = {
             height: String(h),
             href: sonuc.dataUri,
           });
-          baglam.gecmis.calistir(new DugumEkleKomutu(belge, belge.kok, dugum));
-          baglam.secim.sec(dugum);
+          secimKaydiBastir(() => {
+            baglam.gecmis.calistir(
+              new DugumEkleKomutu(belge, belge.kok, dugum),
+            );
+            baglam.secim.sec(dugum);
+          });
         };
         // Çözülemeyen/desteklenmeyen veride 'load' yerine 'error' tetiklenir;
         // sessizce hiçbir şey eklenmesin diye kullanıcıya bildirilir (düğüm üretilmez).

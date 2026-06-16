@@ -219,6 +219,21 @@ test("Bug A — düzenleme yan etkisi seçim, ayrı geçmiş adımı YAZMAZ (bas
   assert.equal(k.at(-1)!.tur, "duzenleme");
 });
 
+test("Bug A2 — düzenleme sonrası yeni tek seçim, ayrı seçim adımı YAZMAZ", () => {
+  const { secim, gecmis, n } = kur(["a", "b", "yeni"]);
+  secim.sec(n("a"));
+  secim.ekle(n("b")); // {a,b}: çoklu seçim geçmişte
+
+  secimKaydiBastir(() => {
+    gecmis.calistir(sahteKomut("çiz"));
+    secim.sec(n("yeni")); // çizim araçlarının komut sonrası yeni nesneyi seçmesi
+  });
+
+  assert.deepEqual(etiketler(gecmis), ["a seçildi", "b seçildi", "çiz"]);
+  gecmis.geriAl();
+  assert.equal(gecmis.girisler().at(-1)!.etiket, "çiz");
+});
+
 test("Bug B — undo sonrası yeni TEK seçim, bayat redo dalını atar (§9.6 g)", () => {
   const { secim, gecmis, n } = kur(["a", "b", "c"]);
   secim.sec(n("a"));
