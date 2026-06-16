@@ -30,7 +30,12 @@ import "../../boya/boya-secici";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ACCENT = "var(--vurgu, #4a90e2)";
-const DURAK_SILME_ESIGI = 20;
+const DURAK_SILME_ESIGI = 80;
+const DURAK_NORMAL_IMLEC = "ew-resize";
+const DURAK_YASAK_IMLEC = "not-allowed";
+const DURAK_SIL_IMLEC = `url("data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28"><path d="M3 2l8 19 3-8 8-3z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><path d="M16 20h9" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/><path d="M16 20h9" stroke="#111" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+)}") 3 2, pointer`;
 
 type BoyaSeciciElemani = HTMLElement & {
   deger: BoyaDegeri;
@@ -67,6 +72,9 @@ let cizgiIsabet: SVGLineElement | null = null;
 let cizimCizgi: SVGLineElement | null = null;
 let tutamaclar: Tutamac[] = [];
 let renkSeciciKabi: HTMLElement | null = null;
+let hoverDurakIndis: number | null = null;
+let ctrlBasili = false;
+let govdeImleciOnceki: string | null = null;
 let geciciOnizleme: {
   p1: Nokta;
   p2: Nokta;
@@ -385,6 +393,68 @@ function canliDomuModeleDondur(): void {
   }
 }
 
+function durakTutamaci(indis: number): SVGElement | null {
+  return tutamaclar.find((t) => t.tip === indis)?.el ?? null;
+}
+
+function durakSilinebilirMi(): boolean {
+  return !!aktifGradyan && duraklar(aktifGradyan).length > 2;
+}
+
+function durakImleci(indis: number, imlec: string): void {
+  const tutamac = durakTutamaci(indis);
+  if (tutamac) tutamac.style.cursor = imlec;
+}
+
+function durakImleciniGuncelle(indis: number, ctrl = ctrlBasili): void {
+  if (!ctrl) return durakImleci(indis, DURAK_NORMAL_IMLEC);
+  durakImleci(
+    indis,
+    durakSilinebilirMi() ? DURAK_SIL_IMLEC : DURAK_YASAK_IMLEC,
+  );
+}
+
+function govdeImleciZorla(imlec: string): void {
+  if (govdeImleciOnceki == null) govdeImleciOnceki = document.body.style.cursor;
+  document.body.style.cursor = imlec;
+}
+
+function govdeImleciBirak(): void {
+  if (govdeImleciOnceki == null) return;
+  document.body.style.cursor = govdeImleciOnceki;
+  govdeImleciOnceki = null;
+}
+
+function durakHover(indis: number, olay: PointerEvent): void {
+  hoverDurakIndis = indis;
+  durakImleciniGuncelle(indis, olay.ctrlKey || ctrlBasili);
+}
+
+function durakHoverBitir(indis: number): void {
+  if (hoverDurakIndis === indis) {
+    hoverDurakIndis = null;
+    durakImleci(indis, DURAK_NORMAL_IMLEC);
+  }
+}
+
+function durakKomutlaSil(indis: number): boolean {
+  if (!aktifGradyan || !baglamRef) return false;
+  const belge = baglamRef.depo.belge;
+  const stoplar = duraklar(aktifGradyan);
+  const durak = stoplar[indis];
+  if (!belge || !durak || stoplar.length <= 2) return false;
+  baglamRef.gecmis.calistir(new DugumCikarKomutu(belge, aktifGradyan, durak));
+  hoverDurakIndis = null;
+  return true;
+}
+
+function ctrlDurakImleciGuncelle(olay: KeyboardEvent): void {
+  if (olay.key !== "Control") return;
+  ctrlBasili = olay.type === "keydown";
+  if (hoverDurakIndis != null)
+    durakImleciniGuncelle(hoverDurakIndis, ctrlBasili);
+}
+
 function renkSeciciKapat(): void {
   renkSeciciKabi?.remove();
   renkSeciciKabi = null;
@@ -513,8 +583,10 @@ function imleriKur(): void {
     c.setAttribute("stroke", "#fff");
     c.setAttribute("stroke-width", "2");
     c.style.pointerEvents = "auto";
-    c.style.cursor = "ew-resize";
+    c.style.cursor = DURAK_NORMAL_IMLEC;
     c.addEventListener("pointerdown", (o) => surukleBasla(i, o));
+    c.addEventListener("pointermove", (o) => durakHover(i, o));
+    c.addEventListener("pointerleave", () => durakHoverBitir(i));
     c.addEventListener("dblclick", (o) => durakRenkSeciciAc(i, o));
     kat!.appendChild(c);
     tutamaclar.push({ tip: i, el: c });
@@ -595,6 +667,10 @@ function yerlestir(): void {
 function surukleBasla(tip: "p1" | "p2" | number, olay: PointerEvent): void {
   olay.preventDefault();
   olay.stopPropagation();
+  if (typeof tip === "number" && olay.ctrlKey) {
+    durakKomutlaSil(tip);
+    return;
+  }
   surukle = {
     tip,
     basEkran: { x: olay.clientX, y: olay.clientY },
@@ -622,8 +698,12 @@ function surukleIptalEt(): void {
   canliDomuModeleDondur();
   for (const tm of tutamaclar) {
     tm.el.style.opacity = "";
-    if (typeof tm.tip === "number") tm.el.setAttribute("stroke", "#fff");
+    if (typeof tm.tip === "number") {
+      tm.el.setAttribute("stroke", "#fff");
+      tm.el.style.cursor = DURAK_NORMAL_IMLEC;
+    }
   }
+  govdeImleciBirak();
   yerlestir();
 }
 
@@ -661,9 +741,16 @@ function surukleHareket(olay: PointerEvent): void {
     const sEl = s ? baglamRef.eleman(s.kimlik) : null;
     sEl?.setAttribute("offset", String(say(off)));
     const { p1, p2 } = uclar(aktifGradyan);
+    const cizgiDisinda = cizgiMesafesi(sx, sy, e) > DURAK_SILME_ESIGI;
     const silinecek =
-      duraklar(aktifGradyan).length > 2 &&
-      cizgiMesafesi(sx, sy, e) > DURAK_SILME_ESIGI;
+      duraklar(aktifGradyan).length > 2 && cizgiDisinda;
+    const imlec = cizgiDisinda
+      ? durakSilinebilirMi()
+        ? DURAK_SIL_IMLEC
+        : DURAK_YASAK_IMLEC
+      : DURAK_NORMAL_IMLEC;
+    durakImleci(surukle.tip, imlec);
+    govdeImleciZorla(imlec);
     if (s) canliSilmeAyarla(s, silinecek);
     geciciOnizleme = { p1, p2, durak: { indis: surukle.tip, offset: off } };
     yerlestir();
@@ -688,6 +775,7 @@ function surukleBirak(olay: PointerEvent): void {
   const aktifti = s.aktif;
   const canliSilindi = !!s.canliSilindi;
   geciciOnizleme = null;
+  govdeImleciBirak();
   if (!aktifti) {
     canliDomuModeleDondur();
     yerlestir();
@@ -818,6 +906,8 @@ const gradyanAraci: Arac = {
     katmaniKur(baglam);
     secimCoz = baglam.secim.dinle(() => senkronla());
     depoCoz = baglam.depo.dinle(() => senkronla());
+    window.addEventListener("keydown", ctrlDurakImleciGuncelle, true);
+    window.addEventListener("keyup", ctrlDurakImleciGuncelle, true);
     senkronla();
   },
 
@@ -833,13 +923,18 @@ const gradyanAraci: Arac = {
     window.removeEventListener("pointermove", surukleHareket);
     window.removeEventListener("pointerup", surukleBirak);
     window.removeEventListener("keydown", surukleKlavye, true);
+    window.removeEventListener("keydown", ctrlDurakImleciGuncelle, true);
+    window.removeEventListener("keyup", ctrlDurakImleciGuncelle, true);
     renkSeciciKapat();
+    govdeImleciBirak();
     kat?.remove();
     kat = null;
     cizgi = null;
     cizgiIsabet = null;
     cizimCizgi = null;
     tutamaclar = [];
+    hoverDurakIndis = null;
+    ctrlBasili = false;
     aktifNesne = null;
     aktifGradyan = null;
     surukle = null;
