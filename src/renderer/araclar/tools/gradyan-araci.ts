@@ -603,6 +603,28 @@ function surukleBasla(tip: "p1" | "p2" | number, olay: PointerEvent): void {
   (olay.target as Element).setPointerCapture?.(olay.pointerId);
   window.addEventListener("pointermove", surukleHareket);
   window.addEventListener("pointerup", surukleBirak);
+  window.addEventListener("keydown", surukleKlavye, true);
+}
+
+function surukleKlavye(olay: KeyboardEvent): void {
+  if (olay.key !== "Escape" || !surukle) return;
+  olay.preventDefault();
+  olay.stopPropagation();
+  surukleIptalEt();
+}
+
+function surukleIptalEt(): void {
+  window.removeEventListener("pointermove", surukleHareket);
+  window.removeEventListener("pointerup", surukleBirak);
+  window.removeEventListener("keydown", surukleKlavye, true);
+  surukle = null;
+  geciciOnizleme = null;
+  canliDomuModeleDondur();
+  for (const tm of tutamaclar) {
+    tm.el.style.opacity = "";
+    if (typeof tm.tip === "number") tm.el.setAttribute("stroke", "#fff");
+  }
+  yerlestir();
 }
 
 function surukleHareket(olay: PointerEvent): void {
@@ -642,6 +664,7 @@ function surukleHareket(olay: PointerEvent): void {
     const silinecek =
       duraklar(aktifGradyan).length > 2 &&
       cizgiMesafesi(sx, sy, e) > DURAK_SILME_ESIGI;
+    if (s) canliSilmeAyarla(s, silinecek);
     geciciOnizleme = { p1, p2, durak: { indis: surukle.tip, offset: off } };
     yerlestir();
     durakSilmeOnizleme(surukle.tip, silinecek);
@@ -652,6 +675,7 @@ function surukleHareket(olay: PointerEvent): void {
 function surukleBirak(olay: PointerEvent): void {
   window.removeEventListener("pointermove", surukleHareket);
   window.removeEventListener("pointerup", surukleBirak);
+  window.removeEventListener("keydown", surukleKlavye, true);
   const s = surukle;
   surukle = null;
   if (!s || !aktifGradyan || !baglamRef) return;
@@ -662,8 +686,10 @@ function surukleBirak(olay: PointerEvent): void {
   const sx = olay.clientX - orijin.left;
   const sy = olay.clientY - orijin.top;
   const aktifti = s.aktif;
+  const canliSilindi = !!s.canliSilindi;
   geciciOnizleme = null;
   if (!aktifti) {
+    canliDomuModeleDondur();
     yerlestir();
     return;
   }
@@ -698,6 +724,7 @@ function surukleBirak(olay: PointerEvent): void {
         new DugumCikarKomutu(belge, aktifGradyan, durak),
       );
     } else if (durak) {
+      if (canliSilindi) durakDomuGeriTak(durak);
       baglamRef.gecmis.calistir(
         new OznitelikDegistirKomutu(belge, durak, "offset", String(say(off))),
       );
@@ -805,6 +832,7 @@ const gradyanAraci: Arac = {
     depoCoz = null;
     window.removeEventListener("pointermove", surukleHareket);
     window.removeEventListener("pointerup", surukleBirak);
+    window.removeEventListener("keydown", surukleKlavye, true);
     renkSeciciKapat();
     kat?.remove();
     kat = null;
