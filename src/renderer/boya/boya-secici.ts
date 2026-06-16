@@ -271,7 +271,7 @@ export class BoyaSecici extends LitElement {
     super.disconnectedCallback();
   }
 
-  private ac(): void {
+  ac(): void {
     const b = this.deger;
     this.duraklar = [
       { offset: 0, renk: "rgb(0, 0, 0)" },
@@ -302,11 +302,14 @@ export class BoyaSecici extends LitElement {
     window.addEventListener("keydown", this.#klavye, true);
   }
 
-  private kapat(): void {
+  kapat(): void {
     if (!this.acik) return;
     this.#sonRenkleriKaydet();
     this.acik = false;
     this.#kapatDinleyici();
+    this.dispatchEvent(
+      new CustomEvent("kapandi", { bubbles: true, composed: true }),
+    );
   }
 
   /** Kapanışta kullanılan düz renk(ler)i son renklere işler (TK-37 #8). */

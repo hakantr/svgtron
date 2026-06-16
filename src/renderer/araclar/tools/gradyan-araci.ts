@@ -5,8 +5,15 @@ import {
   type Arac,
   type AracBaglami,
 } from "../arac";
-import type { Dugum } from "../../../cekirdek/belge/model/dugum";
-import { BilesikKomut } from "../../../cekirdek/komutlar/dugum-komutlari";
+import {
+  dugumOlustur,
+  type Dugum,
+} from "../../../cekirdek/belge/model/dugum";
+import {
+  BilesikKomut,
+  DugumCikarKomutu,
+  DugumEkleKomutu,
+} from "../../../cekirdek/komutlar/dugum-komutlari";
 import { OznitelikDegistirKomutu } from "../../../cekirdek/komutlar/oznitelik-degistir-komutu";
 import { secimKaydiBastir } from "../../../cekirdek/secim/secim-kayit-bastir";
 import { say } from "../../tuval/donusum";
@@ -18,10 +25,17 @@ import {
 import { noktaOfset, ofsetNokta, type Nokta } from "../../boya/gradyan-geometri";
 import { sonRenkler } from "../../boya/son-renkler";
 import { ayristir, metin } from "../../boya/renk";
-import type { GradyanDurak } from "../../boya/boya-degeri";
+import type { BoyaDegeri, GradyanDurak } from "../../boya/boya-degeri";
+import "../../boya/boya-secici";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ACCENT = "var(--vurgu, #4a90e2)";
+const DURAK_SILME_ESIGI = 20;
+
+type BoyaSeciciElemani = HTMLElement & {
+  deger: BoyaDegeri;
+  ac(): void;
+};
 
 /**
  * Gradyan aracı (TK-37 #3) — seçili nesnenin DOĞRUSAL gradyan dolgusunun
@@ -49,11 +63,23 @@ interface Tutamac {
   el: SVGElement;
 }
 let cizgi: SVGLineElement | null = null;
+let cizgiIsabet: SVGLineElement | null = null;
 let cizimCizgi: SVGLineElement | null = null;
 let tutamaclar: Tutamac[] = [];
+let renkSeciciKabi: HTMLElement | null = null;
+let geciciOnizleme: {
+  p1: Nokta;
+  p2: Nokta;
+  durak?: { readonly indis: number; readonly offset: number };
+} | null = null;
 
 // Sürükleme durumu (mutlak — birikme yok).
-let surukle: { tip: "p1" | "p2" | number } | null = null;
+let surukle: {
+  tip: "p1" | "p2" | number;
+  basEkran: Nokta;
+  aktif: boolean;
+  canliSilindi?: boolean;
+} | null = null;
 let cizim: {
   hedef: Dugum;
   basEkran: Nokta;
@@ -111,10 +137,39 @@ function gradyanDuraklari(g: Dugum): GradyanDurak[] {
       ];
 }
 
+function durakRengi(s: Dugum): string {
+  const renkHam = s.oznitelikler.get("stop-color") ?? "#000000";
+  const op = Number(s.oznitelikler.get("stop-opacity") ?? "1");
+  const rgba = ayristir(renkHam);
+  return rgba && Number.isFinite(op) && op < 1
+    ? metin({ ...rgba, a: Math.max(0, Math.min(1, op)) })
+    : renkHam;
+}
+
 function durakOfset(s: Dugum): number {
   const t = (s.oznitelikler.get("offset") ?? "0").trim();
   const n = t.endsWith("%") ? Number(t.slice(0, -1)) / 100 : Number(t);
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0;
+}
+
+function ofsettekiRenk(g: Dugum, offset: number): string {
+  const ds = duraklar(g)
+    .map((d) => ({ d, offset: durakOfset(d), renk: durakRengi(d) }))
+    .sort((a, b) => a.offset - b.offset);
+  if (ds.length === 0) return "#000000";
+  const once = [...ds].reverse().find((d) => d.offset <= offset) ?? ds[0]!;
+  const sonra = ds.find((d) => d.offset >= offset) ?? ds[ds.length - 1]!;
+  const c1 = ayristir(once.renk);
+  const c2 = ayristir(sonra.renk);
+  if (!c1 || !c2 || once === sonra) return once.renk;
+  const aralik = sonra.offset - once.offset;
+  const t = aralik === 0 ? 0 : (offset - once.offset) / aralik;
+  return metin({
+    r: c1.r + (c2.r - c1.r) * t,
+    g: c1.g + (c2.g - c1.g) * t,
+    b: c1.b + (c2.b - c1.b) * t,
+    a: c1.a + (c2.a - c1.a) * t,
+  });
 }
 
 /** Seçili nesnenin doğrusal gradyan dolgusunu (varsa) bulur. */
@@ -203,6 +258,199 @@ function olayObb(olay: PointerEvent, dugum: Dugum, baglam: AracBaglami): Nokta |
   return ekranGrad(olay.clientX - e.orijin.left, olay.clientY - e.orijin.top, e);
 }
 
+function durakOfsetiEkrandan(sx: number, sy: number, e: Esleme): number {
+  if (!aktifGradyan) return 0;
+  const { p1, p2 } = uclar(aktifGradyan);
+  return noktaOfset({ x: sx, y: sy }, gradEkran(p1, e), gradEkran(p2, e));
+}
+
+function tutamaclariYerlestir(
+  p1: Nokta,
+  p2: Nokta,
+  e: Esleme,
+  geciciDurak?: { readonly indis: number; readonly offset: number },
+): void {
+  if (!aktifGradyan) return;
+  const s1 = gradEkran(p1, e);
+  const s2 = gradEkran(p2, e);
+  if (cizgi) {
+    cizgi.setAttribute("x1", String(s1.x));
+    cizgi.setAttribute("y1", String(s1.y));
+    cizgi.setAttribute("x2", String(s2.x));
+    cizgi.setAttribute("y2", String(s2.y));
+  }
+  if (cizgiIsabet) {
+    cizgiIsabet.setAttribute("x1", String(s1.x));
+    cizgiIsabet.setAttribute("y1", String(s1.y));
+    cizgiIsabet.setAttribute("x2", String(s2.x));
+    cizgiIsabet.setAttribute("y2", String(s2.y));
+  }
+  const stoplar = duraklar(aktifGradyan);
+  for (const tm of tutamaclar) {
+    if (tm.tip === "p1" || tm.tip === "p2") {
+      const p = tm.tip === "p1" ? s1 : s2;
+      tm.el.setAttribute("x", String(p.x - 4.5));
+      tm.el.setAttribute("y", String(p.y - 4.5));
+    } else {
+      const s = stoplar[tm.tip];
+      if (!s) continue;
+      const offset =
+        geciciDurak?.indis === tm.tip
+          ? geciciDurak.offset
+          : durakOfset(s);
+      const pt = gradEkran(ofsetNokta(offset, p1, p2), e);
+      tm.el.setAttribute("cx", String(pt.x));
+      tm.el.setAttribute("cy", String(pt.y));
+    }
+  }
+}
+
+function cizgiMesafesi(sx: number, sy: number, e: Esleme): number {
+  if (!aktifGradyan) return 0;
+  const { p1, p2 } = uclar(aktifGradyan);
+  const a = gradEkran(p1, e);
+  const b = gradEkran(p2, e);
+  const vx = b.x - a.x;
+  const vy = b.y - a.y;
+  const len2 = vx * vx + vy * vy;
+  if (len2 === 0) return Math.hypot(sx - a.x, sy - a.y);
+  const t = Math.min(
+    1,
+    Math.max(0, ((sx - a.x) * vx + (sy - a.y) * vy) / len2),
+  );
+  return Math.hypot(sx - (a.x + vx * t), sy - (a.y + vy * t));
+}
+
+function durakSilmeOnizleme(indis: number, silinecek: boolean): void {
+  const tutamac = tutamaclar.find((t) => t.tip === indis);
+  if (!tutamac) return;
+  tutamac.el.style.opacity = silinecek ? "0.22" : "";
+  tutamac.el.setAttribute("stroke", silinecek ? "var(--hata, #e5484d)" : "#fff");
+}
+
+function domOznitelikModeldenYaz(el: Element, dugum: Dugum, ad: string): void {
+  const deger = dugum.oznitelikler.get(ad);
+  if (deger == null) el.removeAttribute(ad);
+  else el.setAttribute(ad, deger);
+}
+
+function durakDomuGeriTak(durak: Dugum): void {
+  if (!aktifGradyan || !baglamRef) return;
+  const gradEl = baglamRef.eleman(aktifGradyan.kimlik);
+  const durakEl = baglamRef.eleman(durak.kimlik);
+  if (!(gradEl instanceof SVGElement) || !(durakEl instanceof SVGElement))
+    return;
+  if (durakEl.parentNode === gradEl) return;
+
+  const modelIndis = aktifGradyan.cocuklar.indexOf(durak);
+  const sonraki = aktifGradyan.cocuklar
+    .slice(modelIndis + 1)
+    .map((d) => baglamRef?.eleman(d.kimlik) ?? null)
+    .find((el): el is Element => !!el && el.parentNode === gradEl);
+  gradEl.insertBefore(durakEl, sonraki ?? null);
+}
+
+function durakDomuCanliSil(durak: Dugum): void {
+  const durakEl = baglamRef?.eleman(durak.kimlik);
+  if (durakEl instanceof SVGElement && durakEl.parentNode) durakEl.remove();
+}
+
+function canliSilmeAyarla(durak: Dugum, silinecek: boolean): void {
+  if (!surukle || surukle.tip === "p1" || surukle.tip === "p2") return;
+  if (silinecek && !surukle.canliSilindi) {
+    durakDomuCanliSil(durak);
+    surukle.canliSilindi = true;
+  } else if (!silinecek && surukle.canliSilindi) {
+    durakDomuGeriTak(durak);
+    surukle.canliSilindi = false;
+  }
+}
+
+function canliDomuModeleDondur(): void {
+  if (!aktifGradyan || !baglamRef) return;
+  const gradEl = baglamRef.eleman(aktifGradyan.kimlik);
+  if (gradEl instanceof SVGElement) {
+    for (const ad of ["x1", "y1", "x2", "y2"]) {
+      domOznitelikModeldenYaz(gradEl, aktifGradyan, ad);
+    }
+  }
+  for (const durak of duraklar(aktifGradyan)) {
+    durakDomuGeriTak(durak);
+    const durakEl = baglamRef.eleman(durak.kimlik);
+    if (durakEl instanceof SVGElement) {
+      domOznitelikModeldenYaz(durakEl, durak, "offset");
+      domOznitelikModeldenYaz(durakEl, durak, "stop-color");
+      domOznitelikModeldenYaz(durakEl, durak, "stop-opacity");
+    }
+  }
+}
+
+function renkSeciciKapat(): void {
+  renkSeciciKabi?.remove();
+  renkSeciciKabi = null;
+}
+
+function durakRenkSeciciAc(indis: number, olay: MouseEvent): void {
+  olay.preventDefault();
+  olay.stopPropagation();
+  if (!aktifGradyan || !baglamRef) return;
+  const durak = duraklar(aktifGradyan)[indis];
+  const belge = baglamRef.depo.belge;
+  if (!durak || !belge) return;
+
+  renkSeciciKapat();
+  const kab = document.createElement("div");
+  Object.assign(kab.style, {
+    position: "fixed",
+    left: `${olay.clientX - 14}px`,
+    top: `${olay.clientY - 13}px`,
+    zIndex: "70",
+    WebkitAppRegion: "no-drag",
+  });
+  const secici = document.createElement("boya-secici") as BoyaSeciciElemani;
+  secici.deger = { tip: "duz", renk: durakRengi(durak) };
+  secici.addEventListener("degisti", (e) => {
+    const b = (e as CustomEvent<BoyaDegeri>).detail;
+    if (b.tip !== "duz") return;
+    const guncelBelge = baglamRef?.depo.belge;
+    if (!guncelBelge) return;
+    baglamRef?.gecmis.calistir(
+      new OznitelikDegistirKomutu(guncelBelge, durak, "stop-color", b.renk),
+    );
+  });
+  secici.addEventListener("kapandi", renkSeciciKapat);
+  kab.append(secici);
+  document.body.append(kab);
+  renkSeciciKabi = kab;
+  requestAnimationFrame(() => secici.ac());
+}
+
+function cizgiCiftTikla(olay: MouseEvent): void {
+  olay.preventDefault();
+  olay.stopPropagation();
+  if (!kat || !aktifGradyan || !baglamRef) return;
+  const belge = baglamRef.depo.belge;
+  const e = eslemeKur();
+  if (!belge || !e) return;
+  const sx = olay.clientX - e.orijin.left;
+  const sy = olay.clientY - e.orijin.top;
+  const offset = durakOfsetiEkrandan(sx, sy, e);
+  const yeni = dugumOlustur("stop", {
+    offset: String(say(offset)),
+    "stop-color": ofsettekiRenk(aktifGradyan, offset),
+  });
+  const sonraki = duraklar(aktifGradyan).find((d) => durakOfset(d) > offset);
+  const indeks = sonraki ? aktifGradyan.cocuklar.indexOf(sonraki) : undefined;
+  baglamRef.gecmis.calistir(
+    new DugumEkleKomutu(
+      belge,
+      aktifGradyan,
+      yeni,
+      indeks === -1 ? undefined : indeks,
+    ),
+  );
+}
+
 // --- Overlay ---
 
 function katmaniKur(baglam: AracBaglami): void {
@@ -219,11 +467,21 @@ function katmaniKur(baglam: AracBaglami): void {
 }
 
 function imleriKur(): void {
+  geciciOnizleme = null;
   kat?.replaceChildren();
   cizgi = null;
+  cizgiIsabet = null;
   cizimCizgi = null;
   tutamaclar = [];
   if (!kat || !aktifGradyan) return;
+
+  cizgiIsabet = document.createElementNS(SVG_NS, "line");
+  cizgiIsabet.style.stroke = "transparent";
+  cizgiIsabet.setAttribute("stroke-width", "14");
+  cizgiIsabet.style.pointerEvents = "stroke";
+  cizgiIsabet.style.cursor = "copy";
+  cizgiIsabet.addEventListener("dblclick", cizgiCiftTikla);
+  kat.appendChild(cizgiIsabet);
 
   cizgi = document.createElementNS(SVG_NS, "line");
   cizgi.style.stroke = ACCENT;
@@ -257,6 +515,7 @@ function imleriKur(): void {
     c.style.pointerEvents = "auto";
     c.style.cursor = "ew-resize";
     c.addEventListener("pointerdown", (o) => surukleBasla(i, o));
+    c.addEventListener("dblclick", (o) => durakRenkSeciciAc(i, o));
     kat!.appendChild(c);
     tutamaclar.push({ tip: i, el: c });
   });
@@ -327,29 +586,8 @@ function yerlestir(): void {
   if (!kat || !aktifGradyan) return;
   const e = eslemeKur();
   if (!e) return;
-  const { p1, p2 } = uclar(aktifGradyan);
-  const s1 = gradEkran(p1, e);
-  const s2 = gradEkran(p2, e);
-  if (cizgi) {
-    cizgi.setAttribute("x1", String(s1.x));
-    cizgi.setAttribute("y1", String(s1.y));
-    cizgi.setAttribute("x2", String(s2.x));
-    cizgi.setAttribute("y2", String(s2.y));
-  }
-  const stoplar = duraklar(aktifGradyan);
-  for (const tm of tutamaclar) {
-    if (tm.tip === "p1" || tm.tip === "p2") {
-      const p = tm.tip === "p1" ? s1 : s2;
-      tm.el.setAttribute("x", String(p.x - 4.5));
-      tm.el.setAttribute("y", String(p.y - 4.5));
-    } else {
-      const s = stoplar[tm.tip];
-      if (!s) continue;
-      const pt = gradEkran(ofsetNokta(durakOfset(s), p1, p2), e);
-      tm.el.setAttribute("cx", String(pt.x));
-      tm.el.setAttribute("cy", String(pt.y));
-    }
-  }
+  const { p1, p2 } = geciciOnizleme ?? uclar(aktifGradyan);
+  tutamaclariYerlestir(p1, p2, e, geciciOnizleme?.durak);
 }
 
 // --- Sürükleme ---
@@ -357,7 +595,11 @@ function yerlestir(): void {
 function surukleBasla(tip: "p1" | "p2" | number, olay: PointerEvent): void {
   olay.preventDefault();
   olay.stopPropagation();
-  surukle = { tip };
+  surukle = {
+    tip,
+    basEkran: { x: olay.clientX, y: olay.clientY },
+    aktif: false,
+  };
   (olay.target as Element).setPointerCapture?.(olay.pointerId);
   window.addEventListener("pointermove", surukleHareket);
   window.addEventListener("pointerup", surukleBirak);
@@ -370,6 +612,12 @@ function surukleHareket(olay: PointerEvent): void {
   const orijin = kat.getBoundingClientRect();
   const sx = olay.clientX - orijin.left;
   const sy = olay.clientY - orijin.top;
+  if (!surukle.aktif) {
+    const dx = olay.clientX - surukle.basEkran.x;
+    const dy = olay.clientY - surukle.basEkran.y;
+    if (Math.hypot(dx, dy) <= SURUKLEME_ESIGI) return;
+    surukle.aktif = true;
+  }
 
   if (surukle.tip === "p1" || surukle.tip === "p2") {
     const g = ekranGrad(sx, sy, e);
@@ -378,18 +626,27 @@ function surukleHareket(olay: PointerEvent): void {
     const gradEl = baglamRef.eleman(aktifGradyan.kimlik);
     gradEl?.setAttribute(`x${ek}`, String(say(g.x)));
     gradEl?.setAttribute(`y${ek}`, String(say(g.y)));
-  } else {
     const { p1, p2 } = uclar(aktifGradyan);
-    const off = noktaOfset(
-      ekranGrad(sx, sy, e),
-      p1,
-      p2,
-    );
+    geciciOnizleme = {
+      p1: surukle.tip === "p1" ? g : p1,
+      p2: surukle.tip === "p2" ? g : p2,
+    };
+    yerlestir();
+    return;
+  } else {
+    const off = durakOfsetiEkrandan(sx, sy, e);
     const s = duraklar(aktifGradyan)[surukle.tip];
     const sEl = s ? baglamRef.eleman(s.kimlik) : null;
     sEl?.setAttribute("offset", String(say(off)));
+    const { p1, p2 } = uclar(aktifGradyan);
+    const silinecek =
+      duraklar(aktifGradyan).length > 2 &&
+      cizgiMesafesi(sx, sy, e) > DURAK_SILME_ESIGI;
+    geciciOnizleme = { p1, p2, durak: { indis: surukle.tip, offset: off } };
+    yerlestir();
+    durakSilmeOnizleme(surukle.tip, silinecek);
+    return;
   }
-  yerlestir();
 }
 
 function surukleBirak(olay: PointerEvent): void {
@@ -404,6 +661,12 @@ function surukleBirak(olay: PointerEvent): void {
   const orijin = kat.getBoundingClientRect();
   const sx = olay.clientX - orijin.left;
   const sy = olay.clientY - orijin.top;
+  const aktifti = s.aktif;
+  geciciOnizleme = null;
+  if (!aktifti) {
+    yerlestir();
+    return;
+  }
 
   if (s.tip === "p1" || s.tip === "p2") {
     const g = ekranGrad(sx, sy, e);
@@ -425,13 +688,20 @@ function surukleBirak(olay: PointerEvent): void {
       ]),
     );
   } else {
-    const { p1, p2 } = uclar(aktifGradyan);
-    const off = noktaOfset(ekranGrad(sx, sy, e), p1, p2);
+    const off = durakOfsetiEkrandan(sx, sy, e);
     const durak = duraklar(aktifGradyan)[s.tip];
-    if (durak)
+    const silinecek =
+      duraklar(aktifGradyan).length > 2 &&
+      cizgiMesafesi(sx, sy, e) > DURAK_SILME_ESIGI;
+    if (durak && silinecek) {
+      baglamRef.gecmis.calistir(
+        new DugumCikarKomutu(belge, aktifGradyan, durak),
+      );
+    } else if (durak) {
       baglamRef.gecmis.calistir(
         new OznitelikDegistirKomutu(belge, durak, "offset", String(say(off))),
       );
+    }
   }
 }
 
@@ -535,14 +805,17 @@ const gradyanAraci: Arac = {
     depoCoz = null;
     window.removeEventListener("pointermove", surukleHareket);
     window.removeEventListener("pointerup", surukleBirak);
+    renkSeciciKapat();
     kat?.remove();
     kat = null;
     cizgi = null;
+    cizgiIsabet = null;
     cizimCizgi = null;
     tutamaclar = [];
     aktifNesne = null;
     aktifGradyan = null;
     surukle = null;
+    geciciOnizleme = null;
     cizim = null;
     baglamRef = null;
   },
