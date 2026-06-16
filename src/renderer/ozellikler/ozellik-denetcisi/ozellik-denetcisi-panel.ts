@@ -48,16 +48,54 @@ export class OzellikDenetcisiPanel extends LitElement {
       flex: 1 1 auto;
       min-height: 0;
       overflow: auto;
+      scrollbar-gutter: stable;
       font-family: system-ui, sans-serif;
       color: var(--metin);
+      background: var(--yuzey);
     }
-    .baslik {
-      padding: 0.55rem 0.75rem;
-      font-size: 0.7rem;
+    .panel-kafa {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 0.75rem 0.55rem;
+      border-bottom: 1px solid var(--kenarlik);
+      background: var(--yuzey);
+    }
+    .panel-etiket {
+      font-size: 0.62rem;
+      font-weight: 650;
+      line-height: 1.1;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--metin-soluk);
-      border-bottom: 1px solid var(--kenarlik);
+    }
+    .panel-baslik {
+      margin-top: 0.12rem;
+      font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.15;
+      color: var(--metin);
+    }
+    .panel-kimlik {
+      max-width: 42%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 0 1 auto;
+      padding: 0.17rem 0.4rem;
+      border: 1px solid var(--kenarlik);
+      border-radius: 5px;
+      background: var(--yuzey-2);
+      color: var(--metin-soluk);
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+    }
+    .panel-govde {
+      padding-bottom: 0.55rem;
     }
     .stil-modu {
       display: flex;
@@ -65,6 +103,7 @@ export class OzellikDenetcisiPanel extends LitElement {
       gap: 0.5rem;
       padding: 0.4rem 0.75rem;
       border-bottom: 1px solid var(--kenarlik);
+      background: var(--yuzey-2);
     }
     .stil-modu label {
       font-size: 0.72rem;
@@ -88,6 +127,10 @@ export class OzellikDenetcisiPanel extends LitElement {
       color: var(--metin-soluk);
     }
     .eleman {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      min-width: 0;
       padding: 0.5rem 0.75rem;
       font-size: 0.82rem;
       border-bottom: 1px solid var(--kenarlik);
@@ -98,6 +141,10 @@ export class OzellikDenetcisiPanel extends LitElement {
     }
     .eleman code {
       font-family: ui-monospace, monospace;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     /* Bölüm (Illustrator Properties deseni): ince ayraç + soluk küçük başlık,
        kart değil düz; gruplar dikey boşlukla ayrılır. */
@@ -333,7 +380,8 @@ export class OzellikDenetcisiPanel extends LitElement {
       flex-wrap: wrap;
       gap: 0.35rem;
       padding: 0.5rem 0.75rem;
-      border-top: 1px solid var(--kenarlik);
+      border-bottom: 1px solid var(--kenarlik);
+      background: var(--yuzey-2);
     }
     .hizli-dugme {
       display: inline-grid;
@@ -501,8 +549,19 @@ export class OzellikDenetcisiPanel extends LitElement {
 
   override render() {
     const dugum = this.secim.secili;
+    const baglamEtiketi = dugum
+      ? this.secim.secililer.length > 1
+        ? t("denetci.seciliSayisi", { sayi: this.secim.secililer.length })
+        : t("denetci.eleman")
+      : t("denetci.belge");
     return html`
-      <div class="baslik">${t("denetci.baslik")}</div>
+      <header class="panel-kafa">
+        <div>
+          <div class="panel-etiket">${baglamEtiketi}</div>
+          <div class="panel-baslik">${t("denetci.baslik")}</div>
+        </div>
+        <code class="panel-kimlik">${this.#kimlikMetni(dugum)}</code>
+      </header>
       <div class="stil-modu" title=${t("denetci.stilModu.ipucu")}>
         <label>${t("denetci.stilModu")}</label>
         <select
@@ -526,8 +585,16 @@ export class OzellikDenetcisiPanel extends LitElement {
           </option>
         </select>
       </div>
-      ${!dugum ? this.#tuvalGorunumu() : this.dugumGorunumu(dugum)}
+      <div class="panel-govde">
+        ${!dugum ? this.#tuvalGorunumu() : this.dugumGorunumu(dugum)}
+      </div>
     `;
+  }
+
+  #kimlikMetni(dugum: Dugum | null): string {
+    if (!dugum) return "<svg>";
+    const id = dugum.oznitelikler.get("id");
+    return `<${dugum.etiket}>${id ? ` #${id}` : ""}`;
   }
 
   /**
@@ -577,10 +644,10 @@ export class OzellikDenetcisiPanel extends LitElement {
         <code>&lt;${dugum.etiket}&gt;</code>
         ${id ? html`<code>#${id}</code>` : ""}
       </div>
+      ${this.#hizliEylemler()}
       ${setler.length === 0
         ? html`<div class="bos">${t("denetci.alanYok")}</div>`
         : setler.map((set) => this.#grupCiz(set, baglam))}
-      ${this.#hizliEylemler()}
     `;
   }
 

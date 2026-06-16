@@ -543,11 +543,13 @@ export class UygulamaKabugu extends LitElement {
       border-left: 1px solid var(--kenarlik);
       background: var(--yuzey);
       min-height: 0;
+      box-shadow: -1px 0 0 rgba(255, 255, 255, 0.03) inset;
     }
     .sag-tutamac {
-      width: 5px;
+      width: 6px;
       flex: 0 0 auto;
       cursor: ew-resize;
+      background: transparent;
     }
     .sag-tutamac:hover {
       background: var(--vurgu, #4a90e2);
@@ -559,6 +561,7 @@ export class UygulamaKabugu extends LitElement {
       overflow: auto;
       display: flex;
       flex-direction: column;
+      scrollbar-gutter: stable;
     }
     .sag-icerik[hidden] {
       display: none;
@@ -566,18 +569,19 @@ export class UygulamaKabugu extends LitElement {
     .sag-ray {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-      padding: 5px 4px;
+      gap: 4px;
+      padding: 6px 4px;
       border-left: 1px solid var(--kenarlik);
+      background: var(--yuzey-2);
       flex: 0 0 auto;
     }
     .sag-ray button {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       display: grid;
       place-items: center;
       border: 1px solid transparent;
-      border-radius: 6px;
+      border-radius: 5px;
       background: transparent;
       color: var(--metin-soluk);
       font-size: 0.82rem;
@@ -591,6 +595,7 @@ export class UygulamaKabugu extends LitElement {
     .sag-ray button.aktif {
       background: var(--vurgu, #4a90e2);
       color: var(--vurgu-metin, #fff);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
     }
   `;
 

@@ -83,6 +83,18 @@ export class HizalamaPaneli extends LitElement {
       display: block;
       flex: 0 0 auto;
       color: var(--metin);
+      background: var(--yuzey);
+    }
+    .baslik {
+      padding: 0.65rem 0.75rem 0.55rem;
+      font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.15;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--metin);
+      background: var(--yuzey);
+      border-bottom: 1px solid var(--kenarlik);
     }
     .satir {
       display: flex;
@@ -194,6 +206,7 @@ export class HizalamaPaneli extends LitElement {
     const grupVar = this.secim.secililer.some((d) => d.etiket === "g");
     const yol = this.#yolOgeleri();
     return html`
+      <div class="baslik">${t("hizala.baslik")}</div>
       <div class="referans" title=${t("hizala.referans.ipucu")}>
         <label>${t("hizala.referans")}</label>
         <select

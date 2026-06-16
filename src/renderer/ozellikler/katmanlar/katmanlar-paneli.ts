@@ -61,13 +61,21 @@ export class KatmanlarPaneli extends LitElement {
       font-family: system-ui, sans-serif;
       color: var(--metin);
       font-size: 0.8rem;
+      scrollbar-gutter: stable;
+      background: var(--yuzey);
     }
     .baslik {
-      padding: 0.55rem 0.75rem;
-      font-size: 0.7rem;
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      padding: 0.65rem 0.75rem 0.55rem;
+      font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.15;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--metin-soluk);
+      color: var(--metin);
+      background: var(--yuzey);
       border-bottom: 1px solid var(--kenarlik);
     }
     .satir {

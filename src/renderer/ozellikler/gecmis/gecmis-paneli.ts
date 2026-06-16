@@ -23,13 +23,21 @@ export class GecmisPaneli extends LitElement {
       flex: 1 1 auto;
       min-height: 0;
       color: var(--metin);
+      background: var(--yuzey);
     }
     .baslik {
+      position: sticky;
+      top: 0;
+      z-index: 4;
       flex: 0 0 auto;
-      padding: 0.45rem 0.7rem;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--metin-soluk);
+      padding: 0.65rem 0.75rem 0.55rem;
+      font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.15;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--metin);
+      background: var(--yuzey);
       border-bottom: 1px solid var(--kenarlik);
     }
     .liste {
